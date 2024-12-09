@@ -94,7 +94,17 @@ body {
 .divider span {
     padding: 0 1rem;
 }
-
+.login-link {
+    margin-top: 20px;  
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    height: 40px;
+    color: white;
+    text-decoration-line: underline;
+    text-underline-position: under;
+    
+}
 .google-btn {
     background-color: transparent;
     border: 1px solid white;
@@ -117,6 +127,12 @@ body {
 
 .google-btn img {
     height: 20px;
+}
+
+.error-message{
+    color: white;
+    font-size: 0.95rem;
+    display: none;
 }
 
 /* Responsive Adjustments */
