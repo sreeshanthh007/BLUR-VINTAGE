@@ -97,16 +97,64 @@ const signUp = async (req,res)=>{
 }
 
 
-// user register 
-loadRegister = async (req,res)=>{
-    try{
-        return res.render('register');
-    }catch(err){
-        console.log("register not found");
-        res.status(500).send("server error");
+
+
+const securePassword = async (password)=>{
+    try {
+        const hashedPassword = await bcrypt.hash(password,saltRound);
+
+        return hashedPassword;
+    } catch (error) {
+        console.log(error);
+        
     }
 }
+// for verifying
 
+const verifyOTP = async (req, res) => {
+    try {
+      const {verifyotp}  = req.body;
+
+      console.log(verifyotp)
+      console.log('session-otp',req.session.userOTP)
+
+      // Check if OTP matches the session's OTP
+      if (verifyotp == req.session.userOTP) {
+        const User = req.session.userData;
+        const passwordHash = await securePassword(User.password);
+
+        
+  
+        // Save the user to the database
+        const saveUser = new User({
+          firstName: User.firstName,
+          lastName: User.lastName,
+          email: User.email,
+          phoneNo: User.phoneNo,
+          password: passwordHash,
+        });
+       
+        await saveUser.save();
+
+          // Set the user ID in the session
+          req.session.user = saveUser._id;
+          console.log('session user',req.session.user) 
+  
+       
+  
+        // Send success response with redirect URL
+        return res.json({ success: true, redirectUrl: "/user/userhome" });
+      } else {
+        // OTP doesn't match
+        return res.status(400).json({ success: false, message: "Invalid OTP" });
+      }
+    } catch (err) {
+      console.error("Error verifying OTP:", err);
+  
+      // Send error response to the client
+      return res.status(500).json({ success: false, message: "Internal server error" });
+    }
+  };
 // user login
 
 loadLogin = async (req,res)=>{
@@ -117,6 +165,16 @@ loadLogin = async (req,res)=>{
         res.status(500).send("server error")
     }
 }
+// user register 
+loadRegister = async (req,res)=>{
+    try{
+        return res.render('register');
+    }catch(err){
+        console.log("register not found");
+        res.status(500).send("server error");
+    }
+}
+
  
 //  user homepage
 
@@ -144,11 +202,14 @@ otp_verification =  (req,res)=>{
 }
 
 
+
 module.exports={
     loadRegister,
     loadLogin,
     loadHome,
     pagenotFound,
     signUp,
-    otp_verification
+    otp_verification,
+    verifyOTP,
+   
 }

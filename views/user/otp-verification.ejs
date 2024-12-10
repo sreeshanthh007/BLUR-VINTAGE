@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OTP Verification</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="sweetalert2.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script> 
 
     <style>
         html, body {
@@ -103,14 +103,14 @@
                 <div class="otp-card">
                     <h2 class="text-center mb-4">OTP Verification</h2>
                     <p class="text-center mb-4">Enter the 6-digit code sent to your phone</p>
-                    <form action="/otp-verification" id="otp-form" method="post">
+                    <form action="/otp-verification" id="otp-form" method="post" onsubmit="return otpValidation()">
                         <div class="otp-input-group mb-4">
-                            <input type="text" class="form-control otp-input" maxlength="1" oninput="moveToNext(this,1)"  onsubmit= "return "  required>
-                            <input type="text" class="form-control otp-input" maxlength="1" oninput="moveToNext(this,2)" required>
-                            <input type="text" class="form-control otp-input" maxlength="1" oninput="moveToNext(this,3)" required>
-                            <input type="text" class="form-control otp-input" maxlength="1" oninput="moveToNext(this,4)" required>
-                            <input type="text" class="form-control otp-input" maxlength="1" oninput="moveToNext(this,5)" required>
-                            <input type="text" class="form-control otp-input" maxlength="1" oninput="moveToNext(this,6)" required>
+                            <input type="text" class="form-control otp-input" maxlength="1" oninput="moveToNext(this,1)">
+                            <input type="text" class="form-control otp-input" maxlength="1" oninput="moveToNext(this,2)">
+                            <input type="text" class="form-control otp-input" maxlength="1" oninput="moveToNext(this,3)">
+                            <input type="text" class="form-control otp-input" maxlength="1" oninput="moveToNext(this,4)">
+                            <input type="text" class="form-control otp-input" maxlength="1" oninput="moveToNext(this,5)">
+                            <input type="text" class="form-control otp-input" maxlength="1" oninput="moveToNext(this,6)">
                         </div>
                         <div class="d-grid">
                             <button type="submit" class="btn btn-primary btn-verify">Verify OTP</button>
@@ -119,7 +119,7 @@
                     <div class="text-center mt-3">
                         <p class="mb-2">
                             Didn't receive the code? 
-                            <a href="#" class="resend-link">Resend OTP</a>
+                            <a href="#" class="resend-link" id="resent-otp">Resend OTP</a>
                         </p>
                         <p class="timer" id="timer"> OTP Expires in 00:30</p>
                     </div>
@@ -130,12 +130,12 @@
 </body>
 </html>
 
-<script src="sweetalert2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 
 <script>
 
     // for moving to next box when entering
-
     function moveToNext(current,index){
         const inputs = document.querySelectorAll('.otp-input');
 
@@ -155,20 +155,56 @@
         if(time>0){
             time--;
             timeElement.textContent = time;
-        }else{
             timeElement.textContent = "OTP Expired"
+        }else{
             clearInterval(interval);
 
         }
     },1000);
 
 
-    //  for otp  validation
+    function otpValidation(){
+        const inputs = document.querySelectorAll('.otp-input');
+        let otp="";
 
-    function OTPvalidation(){
-        
+        inputs.forEach(nums=>{
+            otp+=nums.value;
+        });
+
+        $.ajax({
+            type:"post",
+            url:"/otp-verification",
+            data:{otp:otp},
+            success:function(response){
+                if(response.success){
+                    Swal.fire({
+                        icon:"success",
+                        title:"OTP verified",
+                        showConfirmButton:false,
+                        timer:1500,
+                    }).then(()=>{
+                        window.location.href = redirectUrl;
+                    })
+                }else{
+                    Swal.fire({
+                        icon:"error",
+                        text:response.message,
+
+                    })
+                }
+            },
+            error:function(){
+                Swal.fire({
+                icon:'error',
+                    title:"invalid otp",
+                    text:"please try again"
+                });
+            },
+        });
+        return false;
     }
 
+  
 
 
 </script>
