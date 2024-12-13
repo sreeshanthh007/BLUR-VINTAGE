@@ -33,7 +33,8 @@ const userSchema = mongoose.Schema({
      },
    googleId:{
     type:String,
-    unique:true 
+    unique:true ,
+    index:true
    },
 
    isBlocked:{

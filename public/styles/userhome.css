@@ -2,10 +2,18 @@ body {
     font-family: Arial, sans-serif;
     background-color: azure;
 }
-
 header {
-    border-bottom: 1px solid #e5e5e5;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
+
+/* Search Bar Styles */
+.form-control-sm {
+    border-radius: 20px 0 0 20px;
+    border: 1px solid #ced4da;
+    width: 150px;
+    transition: width 0.3s ease-in-out;
+}
+
 h1 {
     font-size: 1.2rem;
     font-weight: normal;
@@ -23,6 +31,7 @@ h1 {
     padding-top: 56.25%; /* 16:9 aspect ratio */
     margin: 20px 0; /* Vertical space between sections */
     overflow: hidden;
+    text-align: right;
   }
   
   .image-container img {
@@ -33,6 +42,13 @@ h1 {
     height: 100%;
     object-fit: cover;
     border-radius: 10px;
+  }
+  .child-text{
+   position: absolute;
+   top: 50%;
+   left: 50%;
+   padding: 5px 10px; /* Optional: Padding for better readability */
+   border-radius: 5px; /* Optional: Rounded corners */
   }
   .home-image{
     font-size: x-large;

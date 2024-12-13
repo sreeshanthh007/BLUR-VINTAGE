@@ -67,9 +67,10 @@
 </body>
 </html>
 
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 
 <script>
-    
     const firstNameField = document.getElementById('firstName');
     const lastNameField = document.getElementById('lastName');
     const emailField = document.getElementById('email');
@@ -181,8 +182,8 @@
     }
 
     // Event listener for form submission
-    registerForm.addEventListener('submit', function (e) {
-        // Validate all fields
+    registerForm.addEventListener('submit', async function (e) {
+        e.preventDefault();
         const isNameValid = nameValidateChecking();
         const isEmailValid = emailValidateChecking();
         const isPhoneValid = phoneValidateChecking();
@@ -190,7 +191,47 @@
 
         // Prevent form submission if any validation fails
         if (!isNameValid || !isEmailValid || !isPhoneValid || !isPasswordValid) {
-            e.preventDefault();
+           return;
+        }
+
+        const email = emailField.value.trim();
+        const firstName = firstNameField.value.trim();
+        const phoneNo = phoneNoField.value.trim();
+        const password = passwordField.value.trim();
+
+        const response = await fetch('/user/register',{
+            method:"post",
+            headers:{"content-Type":"application/json"},
+            body:JSON.stringify({email,firstName,password,phoneNo}),
+            
+        });
+        
+
+        const data = await response?.json()
+        console.log("frnd:",response)
+        if(!data.success){
+            Swal.fire({
+                icon:"error",
+                title:"user already Registered",
+                text:"the Email you entered is already in use"
+            });
+        }else if(data.success){
+            Swal.fire({
+                icon:"success",
+                title:"registered successfully",
+                text:"redirecting to otp verification",
+                timer:1000,
+            }).then(()=>{
+                window.location.href = data.redirectUrl;
+            })
+        }else{
+            Swal.fire({
+                icon:"error",
+                title:"error occured",
+                text:"check your internet and try again"
+            });
         }
     });
+
+
 </script>

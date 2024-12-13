@@ -15,6 +15,7 @@ passport.use(new googleStrategy({
 
 async (accessToken,refreshToken,profile,done)=>{
     try {
+        
         let user = await User.findOne({googleId:profile.id});
 
         if(user){
@@ -27,6 +28,7 @@ async (accessToken,refreshToken,profile,done)=>{
                 googleId:profile.id,
             });
             await user.save();
+
             return (null,user)
         }
 
