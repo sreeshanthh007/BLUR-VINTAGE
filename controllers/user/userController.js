@@ -62,7 +62,6 @@ const signUp = async (req,res)=>{
     console.log("user",findUser)
 
     if(findUser){
-        // return res.render('user/register',{message:"user with this email already exists",success:false});
         return res.json({success:false , message:"user with this email already exists"})
     }
 
@@ -284,6 +283,14 @@ const loadHome = async (req,res)=>{
 loadmen = async (req,res)=>{
     return res.render('user/userlandingpage')
 }
+// women page
+const loadWomen =   (req,res)=>{
+    return res.render('user/women');
+}
+// kids page
+const loadKids = (req,res)=>{
+    return res.render('user/kids');
+}
 // page not found
 
 pagenotFound = (req,res)=>{
@@ -323,6 +330,8 @@ module.exports={
     resent_otp,
     login,
     manage,
-    logOut
+    logOut,
+    loadWomen,
+    loadKids
    
 }

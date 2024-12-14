@@ -8,6 +8,7 @@ const passport = require('./config/passport.js')
 const env = require('dotenv').config();
 const mongodb = require('./config/mongodb');
 const userRouter = require('./routes/userRoutes')
+const adminRouter = require("./routes/adminRoutes.js")
 const authRoutes = require('./routes/authroutes.js');
 
 mongodb();
@@ -20,7 +21,7 @@ app.use(session({
     cookie:{
         secure:false,
         httpOnly:true,
-        maxAge: 10 * 60 * 1000
+        maxAge: 20 * 60 * 1000
     }
 
 }));
@@ -36,12 +37,15 @@ app.use(nocache());
 app.set("view engine","ejs");
 
 // app.set('views', [path.join(__dirname, 'views', 'user'), path.join(__dirname, 'views', 'admin')]);
+
 app.set('views',[path.join(__dirname,"views")]);
 
 app.use(express.static(path.join(__dirname,"public")));
 
 // for user needs
 app.use('/user',userRouter)
+// for admin
+app.use("/admin",adminRouter)
 // for google authenication
 app.use('/',authRoutes)
 
