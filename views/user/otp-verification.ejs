@@ -269,7 +269,7 @@ function resent_otp() {
     if(!response.ok){
         throw new Error("error occured in server");
     }
-    return response.json();
+    return response?.json();
 })
 .then((data)=>{
     if(data.success){

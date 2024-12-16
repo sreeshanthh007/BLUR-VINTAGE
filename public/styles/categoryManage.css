@@ -1,0 +1,152 @@
+body {
+    background-color: #f5f5f5;
+    min-height: 100vh;
+}
+
+.sidebar {
+    background-color: #e8e8e8;
+    min-height: 100vh;
+    position: fixed;
+    padding-top: 2rem;
+    width: 250px;
+}
+
+.main-content {
+    margin-left: 250px;
+    padding: 2rem;
+}
+
+.nav-link {
+    color: #333;
+    padding: 0.75rem 1.5rem;
+    transition: all 0.3s;
+}
+
+.nav-link:hover {
+    background-color: #d8d8d8;
+}
+
+.nav-link.active {
+    background-color: #000;
+    color: #fff;
+}
+
+.category-table {
+    background-color: #e8f4f4;
+    border-radius: 10px;
+    padding: 1rem;
+    margin-bottom: 2rem;
+}
+
+.table-header {
+    background-color: #000;
+    color: #fff;
+    border-radius: 6px;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1rem;
+}
+
+.category-row {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #d1e7e7;
+}
+
+.category-row:last-child {
+    border-bottom: none;
+}
+
+.form-section {
+    background-color: #e8f4f4;
+    border-radius: 10px;
+    padding: 2rem;
+}
+
+.form-control {
+    border: 1px solid #d1e7e7;
+    padding: 0.75rem;
+}
+
+.save-btn {
+    background-color: #000;
+    color: #fff;
+    border: none;
+    padding: 0.75rem 3rem;
+    border-radius: 5px;
+    transition: all 0.3s;
+}
+
+.save-btn:hover {
+    background-color: #333;
+}
+
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 24px;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 24px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background-color: #000;
+}
+
+input:checked + .slider:before {
+    transform: translateX(26px);
+}
+
+@media (max-width: 991.98px) {
+    .sidebar {
+        width: 200px;
+    }
+    .main-content {
+        margin-left: 200px;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .sidebar {
+        width: 100%;
+        position: relative;
+        min-height: auto;
+    }
+    .main-content {
+        margin-left: 0;
+        padding: 1rem;
+    }
+    .category-table {
+        padding: 0.5rem;
+    }
+    .form-section {
+        padding: 1rem;
+    }
+}

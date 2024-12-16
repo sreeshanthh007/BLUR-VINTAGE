@@ -217,81 +217,54 @@
                         </tr>
                     </thead>
                     <tbody>
+                        
+                        <%for(let i=0;i<userData.length;i++){%>
                         <tr>
-                            <td>1</td>
-                            <td>Aflah</td>
-                            <td>aflah1@gmail.com</td>
-                            <td>12345678910</td>
+                            <td><%=i+1%></td>
+                            <td><%=userData[i].firstName%></td>
+                            <td><%=userData[i].email%></td>
+                            <td><%=userData[i].phoneNo%></td>
                             <td>
+                                <%if(userData[i].isBlocked===false){%>
                                 <div class="d-flex gap-2">
+                                    <a href="/admin/blockUser?id=<%=userData[i]._id%>">
+
                                     <button class="btn btn-block">BLOCK</button>
+                                </a>
+                                    <%}else{%>
+                                    <a href="/admin/unblockUser?id=<%=userData[i]._id%>">
                                     <button class="btn btn-unblock">UNBLOCK</button>
+                                    </a>
+                                    <%}%>
+
                                 </div>
                             </td>
                         </tr>
-                        <tr>
-                            <td>2</td>
-                            <td>Azad</td>
-                            <td>azad@gmail.com</td>
-                            <td>12345678910</td>
-                            <td>
-                                <div class="d-flex gap-2">
-                                    <button class="btn btn-block">BLOCK</button>
-                                    <button class="btn btn-unblock">UNBLOCK</button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>3</td>
-                            <td>dulker</td>
-                            <td>dulker@gmail.com</td>
-                            <td>12345678910</td>
-                            <td>
-                                <div class="d-flex gap-2">
-                                    <button class="btn btn-block">BLOCK</button>
-                                    <button class="btn btn-unblock">UNBLOCK</button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>4</td>
-                            <td>farhan</td>
-                            <td>farhan@gmail.com</td>
-                            <td>12345678910</td>
-                            <td>
-                                <div class="d-flex gap-2">
-                                    <button class="btn btn-block">BLOCK</button>
-                                    <button class="btn btn-unblock">UNBLOCK</button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>5</td>
-                            <td>Mithun</td>
-                            <td>mithun@gmail.com</td>
-                            <td>12345678910</td>
-                            <td>
-                                <div class="d-flex gap-2">
-                                    <button class="btn btn-block">BLOCK</button>
-                                    <button class="btn btn-unblock">UNBLOCK</button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>6</td>
-                            <td>sabari</td>
-                            <td>sabari@gmail.com</td>
-                            <td>12345678910</td>
-                            <td>
-                                <div class="d-flex gap-2">
-                                    <button class="btn btn-block">BLOCK</button>
-                                    <button class="btn btn-unblock">UNBLOCK</button>
-                                </div>
-                            </td>
-                        </tr>
+                        <%}%>
                     </tbody>
                 </table>
             </div>
+        </div>
+        <div class="pagination-container">
+            <ul class="pagination justify-content-center mt-4">
+                <% if (currentPage > 1) { %>
+                    <li class="page-item">
+                        <a class="page-link" href="?page=<%= currentPage - 1 %>&search=<%= search %>">Previous</a>
+                    </li>
+                <% } %>
+        
+                <% for (let i = 1; i <= totalPages; i++) { %>
+                    <li class="page-item <%= currentPage === i ? 'active' : '' %>">
+                        <a class="page-link" href="?page=<%= i %>&search=<%= search %>"><%= i %></a>
+                    </li>
+                <% } %>
+        
+                <% if (currentPage < totalPages) { %>
+                    <li class="page-item">
+                        <a class="page-link" href="?page=<%= currentPage + 1 %>&search=<%= search %>">Next</a>
+                    </li>
+                <% } %>
+            </ul>
         </div>
     </main>
 

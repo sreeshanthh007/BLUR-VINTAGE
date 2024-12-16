@@ -2,15 +2,6 @@
 const user = require("../../models/userSchema");
 const mongoose = require('mongoose');
 const bcrypt = require("bcrypt");
-const { session } = require("passport");
-
-
-
-
-
-
-
-
 
 
 
@@ -54,6 +45,27 @@ const logOut = async (req,res)=>{
     })
 }
 
+const blockUser = async (req,res)=>{
+    try {
+        let id = req.query.id;
+        await user.updateOne({_id:id},{$set:{isBlocked:true}});
+
+        res.redirect("/admin/userManage");
+    } catch (error) {
+        console.log("error in block user",error);
+    }
+}
+
+const unblockUser = async (req,res)=>{
+    try {
+        let id = req.query.id;
+        await user.updateOne({_id:id},{$set:{isBlocked:false}});
+        res.redirect('/admin/userManage');
+
+    } catch (error) {
+        console.log("error in unblock user",error)
+    }
+}
 
 const loadlogin =  (req,res)=>{
     try {
@@ -79,7 +91,9 @@ const dashboard = (req,res)=>{
 }
 const userManage = (req,res)=>{
     res.render("admin/userManage");
+
 }
+
 
 
 
@@ -96,5 +110,7 @@ module.exports ={
     dashboard,
     login,
     userManage,
-    logOut
+    logOut,
+    blockUser,
+    unblockUser
 }

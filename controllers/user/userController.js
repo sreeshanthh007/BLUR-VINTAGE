@@ -291,6 +291,11 @@ const loadWomen =   (req,res)=>{
 const loadKids = (req,res)=>{
     return res.render('user/kids');
 }
+
+// buying interface
+const interface = (req,res)=>{
+    return res.render("user/buyingInterface");
+}
 // page not found
 
 pagenotFound = (req,res)=>{
@@ -332,6 +337,7 @@ module.exports={
     manage,
     logOut,
     loadWomen,
-    loadKids
+    loadKids,
+    interface
    
 }

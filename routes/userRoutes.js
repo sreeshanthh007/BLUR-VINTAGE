@@ -31,6 +31,8 @@ router.get('/women',userAuth,userController.loadWomen);
 
 router.get('/kids',userAuth,userController.loadKids)
 
+router.get("/buy",userController.interface);
+
 
 
 router.get('/manage',userAuth,userController.manage);
