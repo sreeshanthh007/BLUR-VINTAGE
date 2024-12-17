@@ -2,35 +2,40 @@
 const category = require("../../models/categorySchema");
 
 
-const categoryInfo = async (req,res)=>{
+const categoryInfo = async (req, res) => {
+    console.log("category info page loaded")
     try {
-        const page = req.query.page || 1;
-        const limit =4;
-        const skip = (page-1)*limit;
-        
+        const page = parseInt(req.query.page) || 1; 
+        const limit = 4;
+        const skip = (page - 1) * limit;
+
+        // Fetch category data with pagination
         const categoryData = await category.find({})
-        .sort({createdAt:-1})
-        .skip(skip)
-        .limit(limit)
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit);
+
+        console.log("categoryData:", categoryData); 
 
         const totalCategories = await category.countDocuments();
-        const totalpages = Math.ceil(totalCategories/limit);
+        const totalpages = Math.ceil(totalCategories / limit);
 
-        res.render('admin/category',{
-            cat:categoryData,
-            currentPage : page,
-            totalpages:totalpages,
-            totalCategories:totalCategories
-        })
+        res.render('admin/categorymanage', {
+            Category: categoryData, 
+            currentPage: page,
+            totalpages: totalpages,
+            totalCategories: totalCategories
+        });
     } catch (error) {
-        console.log("error in category info",error);
-
+        console.error("Error in categoryInfo:", error);
+        res.status(500).send("Internal Server Error");
     }
+};
 
-}
 
 const addCategory = async(req,res)=>{
     try {
+        console.log("add category body",req.body);
         const {name,description} = req.body;
 
         const existingCategory = await category.findOne({name});
@@ -43,7 +48,8 @@ const addCategory = async(req,res)=>{
             description
         });
         await newCategory.save();
-        return res.json({message:"category added successfully"});
+        return res.json({success:true,message:"category added successfully"});      
+        
 
     } catch (error) {
         console.log('error in add category',error)
@@ -51,12 +57,8 @@ const addCategory = async(req,res)=>{
     }
 
 }
-const loadCategory = (req,res)=>{
-    res.render('admin/categorymanage');
-}
-
 
 module.exports={
-    loadCategory,
-    addCategory
+    addCategory,
+    categoryInfo
 }

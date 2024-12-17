@@ -4,6 +4,8 @@ const router = express.Router();
 const admincontroller = require("../controllers/admin/adminController");
 const userManageController = require("../controllers/admin/customerController")
 const categoryController = require('../controllers/admin/categoryController')
+const multer = require('multer');
+const upload = multer();
 const {userAuth,adminAuth} = require("../middlewares/auth");
 
 router.get('/login',admincontroller.loadlogin);
@@ -17,9 +19,10 @@ router.get('/userManage',adminAuth,userManageController.userInfo);
 router.get('/blockUser',adminAuth,admincontroller.blockUser )
 router.get('/unblockUser',adminAuth,admincontroller.unblockUser);
 
-router.get('/category',adminAuth,categoryController.loadCategory);
+router.get('/category',adminAuth,categoryController.categoryInfo);
 
-router.get('/addcategory',adminAuth,categoryController.addCategory);
+router.post('/Category',adminAuth,upload.none(),categoryController.addCategory);
+// router.get('/Category',adminAuth,);
 
 
 
