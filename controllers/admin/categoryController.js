@@ -1,6 +1,5 @@
 
-const category = require("../../models/categorySchema");
-
+const Category = require("../../models/categorySchema");
 
 const categoryInfo = async (req, res) => {
     console.log("category info page loaded")
@@ -10,14 +9,14 @@ const categoryInfo = async (req, res) => {
         const skip = (page - 1) * limit;
 
         // Fetch category data with pagination
-        const categoryData = await category.find({})
+        const categoryData = await Category.find({})
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(limit);
 
         console.log("categoryData:", categoryData); 
 
-        const totalCategories = await category.countDocuments();
+        const totalCategories = await Category.countDocuments();
         const totalpages = Math.ceil(totalCategories / limit);
 
         res.render('admin/categorymanage', {
@@ -38,12 +37,12 @@ const addCategory = async(req,res)=>{
         console.log("add category body",req.body);
         const {name,description} = req.body;
 
-        const existingCategory = await category.findOne({name});
+        const existingCategory = await Category.findOne({name});
 
         if(existingCategory){
             return res.status(400).json({success:false,message:"the category already exist !"})
         }
-        const newCategory = new category({
+        const newCategory = new Category({
             name,
             description
         });
@@ -58,7 +57,80 @@ const addCategory = async(req,res)=>{
 
 }
 
+const loadeditCategory = async (req,res)=>{
+    try {
+       console.log("djflskdjfsjf")
+        const {editId} = req.params
+        console.log("edit id",editId)
+
+        const category = await Category.findById(editId)   // in find by id, it should give in () because the findbyid is a method that will deafult find the id. we dont give that in {()}
+        console.log("load category",category)
+        if(!category){
+            console.log("cannot find load edit category ")
+        }
+        res.render("admin/editcategory",{category:category})
+    } catch (error) {
+        console.log("error in backend edit category");
+        res.status(400);
+        
+    }
+}
+const editCategory = async (req,res)=>{
+    try {
+        const {categoryId} = req.params;
+        console.log("edit category ",categoryId);
+        const{name,description,isListed}=req.body
+
+        console.log("name description,islisted",req.body)
+
+        const updatedCategory = await Category.findByIdAndUpdate(
+            categoryId,
+            {name,description,isListed:isListed==="on"},
+            {new:true}
+        );
+
+        if(!updatedCategory){
+            console.log("updated category not found");
+        }
+        res.redirect('/admin/category')
+    
+    } catch (error) {
+        console.log("error in updating category");
+        res.status(400);
+        
+    }
+}
+
+
+toggler = async (req,res)=>{
+    try {
+        
+        const {categoryId} = req.params;
+        const {isListed} = req.body;
+        console.log("islisted body",isListed)
+
+       const upadteCategory =  await Category.findByIdAndUpdate(categoryId,{isListed:isListed},{new:true});
+       if(!upadteCategory){
+        res.status(400).json({success:false,message:"category not found"})
+       }
+        res.status(200).json({message:"changed !",
+            success:true,
+            upadteCategory
+        });
+    } catch (error) {
+        console.log("error in backend toggler");
+        res.status(400).json({message:"server error"});
+        
+    }
+}
+
+
+
+
 module.exports={
     addCategory,
-    categoryInfo
+    categoryInfo,
+    toggler,
+    loadeditCategory,
+    editCategory
 }

@@ -3,7 +3,8 @@ const express = require("express");
 const router = express.Router();
 const admincontroller = require("../controllers/admin/adminController");
 const userManageController = require("../controllers/admin/customerController")
-const categoryController = require('../controllers/admin/categoryController')
+const categoryController = require('../controllers/admin/categoryController');
+const productController = require('../controllers/admin/productController')
 const multer = require('multer');
 const upload = multer();
 const {userAuth,adminAuth} = require("../middlewares/auth");
@@ -21,10 +22,15 @@ router.get('/unblockUser',adminAuth,admincontroller.unblockUser);
 
 router.get('/category',adminAuth,categoryController.categoryInfo);
 
-router.post('/Category',adminAuth,upload.none(),categoryController.addCategory);
-// router.get('/Category',adminAuth,);
+router.post('/category',adminAuth,upload.none(),categoryController.addCategory);
+
+router.post('/category/toggle/:categoryId',adminAuth,categoryController.toggler)
+router.get('/editcategory/:editId',categoryController.loadeditCategory)
+router.post('/editcategory/:categoryId',categoryController.editCategory)     
 
 
+router.get('/productpage',productController.loadproduct)
+router.get('/addproduct',productController.addproduct)
 
 
 

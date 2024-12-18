@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Product - BLUR VINTAGE ★</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="/styles/addproductpage.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
+    <style>
+        .image-upload-box {
+            position: relative;
+        }
+
+        .cropper-preview {
+            max-width: 100%;
+            border: 2px solid #ccc;
+            margin-top: 10px;
+        }
+
+        #preview-1, #preview-2, #preview-3, #preview-4 {
+            display: none; /* Hide preview initially */
+            margin-top: 10px;
+        }
+
+        .image-upload-box img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="d-flex flex-column flex-lg-row">
+        <!-- Sidebar -->
+        <%-include('../partials/admin/sidebar.ejs')%>
+
+        <!-- Main Content -->
+        <main class="container w-100" style="margin-top: 100px;">
+            <div class="container-fluid py-4">
+                <div class="add-product-section">
+                    <h2 class="mb-4">Add new product</h2>
+                    <div class="row">
+                        <!-- Image Upload Section -->
+                        <div class="col-lg-5 mb-4 mb-lg-0">
+                            <div class="image-grid">
+                                <div class="row g-3">
+                                    <div class="col-6">
+                                        <div class="image-upload-box">
+                                            <input type="file" accept="image/*" id="img-1" class="image-input">
+                                            <img src="" alt="Product view 1" class="img-fluid" id="pre-1">
+                                            <img id="preview-1" src="" alt="Cropped Preview 1" class="cropper-preview">
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="image-upload-box">
+                                            <input type="file" accept="image/*" id="img-2" class="image-input">
+                                            <img src="" alt="Product view 2" class="img-fluid" id="pre-2">
+                                            <img id="preview-2" src="" alt="Cropped Preview 2" class="cropper-preview">
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="image-upload-box">
+                                            <input type="file" accept="image/*" id="img-3" class="image-input">
+                                            <img src="" alt="Product view 3" class="img-fluid" id="pre-3">
+                                            <img id="preview-3" src="" alt="Cropped Preview 3" class="cropper-preview">
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="image-upload-box">
+                                            <input type="file" accept="image/*" id="img-4" class="image-input">
+                                            <img src="" alt="Product view 4" class="img-fluid" id="pre-4">
+                                            <img id="preview-4" src="" alt="Cropped Preview 4" class="cropper-preview">
+                                        </div>
+                                    </div>\
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Product Details Form -->
+                        <div class="col-lg-7">
+                            <form id="formValidation" onsubmit="return validateForm()" method="post" action="/admin/addproduct">
+                                <!-- Add your product details form here -->
+                                <div class="mb-3">
+                                    <label class="form-label">Product name</label>
+                                    <input type="text" class="form-control">
+                                    <div class="text-danger" id="productName-error"></div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Sizes</label>
+                                    <div class="size-buttons">
+                                        <input type="checkbox" class="btn-check" id="size-s" autocomplete="off">
+                                        <label class="btn btn-outline-dark me-2" for="size-s">S</label>
+
+                                        <input type="checkbox" class="btn-check" id="size-xs" autocomplete="off">
+                                        <label class="btn btn-outline-dark me-2" for="size-xs">XS</label>
+
+                                        <input type="checkbox" class="btn-check" id="size-m" autocomplete="off">
+                                        <label class="btn btn-outline-dark me-2" for="size-m">M</label>
+
+                                        <input type="checkbox" class="btn-check" id="size-l" autocomplete="off">
+                                        <label class="btn btn-outline-dark me-2" for="size-l">L</label>
+
+                                        <input type="checkbox" class="btn-check" id="size-xl" autocomplete="off">
+                                        <label class="btn btn-outline-dark me-2" for="size-xl">XL</label>
+
+                                        <input type="checkbox" class="btn-check" id="size-xxl" autocomplete="off">
+                                        <label class="btn btn-outline-dark" for="size-xxl">XXL</label>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-8 mb-3">
+                                        <label class="form-label">Description</label>
+                                        <textarea class="form-control" rows="4"></textarea>
+                                        <div class="text-danger" id="description-error"></div>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label">Materials</label>
+                                        <textarea class="form-control" rows="4"></textarea>
+                                        <div class="text-danger" id="materialNameError"></div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-8 mb-3">
+                                        <label class="form-label">Category</label>
+                                        <select id="categoryDropdown" name="category" class="form-select">
+
+                                            
+                                            <option value="
+                                                
+
+                                            ></option>
+                                            
+                                        <select name="" id=""></select>
+                                        <div class="text-danger" id="categoryError"></div>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label">Stock quantity</label>
+                                        <input type="number" class="form-control">
+                                        <div class="text-danger" id="quantity-errorr"></div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-4">
+                                    <label class="form-label">Price</label>
+                                    <input type="number" class="form-control">
+                                    <div class="text-danger" id="regularPrice-error"></div>
+                                </div>
+
+                                <div class="text-end">
+                                    <button type="submit" class="btn btn-dark px-4" id="addproductBtn">Add Product</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+
+    <script>
+        let cropper1, cropper2, cropper3, cropper4;
+
+        function initCropper(imageId, previewId, cropperVariable) {
+            const image = document.getElementById(imageId);
+            const preview = document.getElementById(previewId);
+
+            if (image && !window[cropperVariable]) {
+                window[cropperVariable] = new Cropper(image, {
+                    aspectRatio: 1,
+                    viewMode: 1,
+                    preview: preview,
+                    guides: true,
+                    background: false,
+                    zoomable: true,
+                    crop(event) {
+                        const canvas = window[cropperVariable].getCroppedCanvas();
+                        preview.src = canvas.toDataURL();
+                        document.getElementById(previewId).style.display = 'block';  // Show preview
+                    }
+                });
+            }
+        }
+
+        function handleImageChange(event, imageId, previewId, cropperVariable) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = document.getElementById(imageId);
+                img.src = e.target.result;
+                initCropper(imageId, previewId, cropperVariable);
+            };
+
+            reader.readAsDataURL(event.target.files[0]);
+        }
+
+        // Image 1
+        document.getElementById('img-1').addEventListener('change', function(event) {
+            handleImageChange(event, 'pre-1', 'preview-1', 'cropper1');
+        });
+
+        // Image 2
+        document.getElementById('img-2').addEventListener('change', function(event) {
+            handleImageChange(event, 'pre-2', 'preview-2', 'cropper2');
+        });
+
+        // Image 3
+        document.getElementById('img-3').addEventListener('change', function(event) {
+            handleImageChange(event, 'pre-3', 'preview-3', 'cropper3');
+        });
+
+        // Image 4
+        document.getElementById('img-4').addEventListener('change', function(event) {
+            handleImageChange(event, 'pre-4', 'preview-4', 'cropper4');
+        });
+    </script>
+</body>
+</html>

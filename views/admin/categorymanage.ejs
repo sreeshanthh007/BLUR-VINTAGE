@@ -26,7 +26,6 @@
                         </tr>
                     </thead>
                     <tbody>
-
                         <% Category.reverse().forEach((category, index) => { %>
                             <tr class="category-row align-items-center">
                                 <td class="col-1"><%= category.name %></td>
@@ -40,7 +39,7 @@
                                                <%= category.isListed ? 'checked' : '' %>>
                                         <span class="slider"></span>
                                     </label>
-                                    <i class="bi bi-pencil-square"></i>
+                                    <i class="bi bi-pencil-square" onclick="editCategory('<%=category._id%>')"></i>
                                 </td>
                             </tr>
                         <% }); %>
@@ -60,15 +59,15 @@
                     <% } %>
                   </div>
             <!-- Add New Category Form -->
-            <div class="form-section">
-                <div class="d-flex justify-content-between align-items-center mb-4">
+            <div class="form-section mt-5">
+                <div class="d-flex justify-content-between align-items-center mb-5">
                     <h2 class="m-0">Add New Category</h2>
                     <div class="d-flex align-items-center">
-                        <span class="me-2">List / Unlist :</span>
+                        <!-- <span class="me-2">List / Unlist :</span>
                         <label class="toggle-switch">
                             <input type="checkbox" checked>
                             <span class="slider"></span>
-                        </label>
+                        </label> -->
                     </div>
                 </div>
 
@@ -219,4 +218,43 @@ function clearErrorMessages() {
             elm.style.display="none";
         });
     }
+
+
+    document.querySelectorAll('.isListedToggle').forEach((checkbox)=>{
+        checkbox.addEventListener('change', async (event)=>{
+            const categoryId = event.target.dataset.categoryId;
+            const isListed = event.target.checked;
+
+            console.log("category id in frondend",categoryId);
+            console.log("islisted id in frondend",isListed);
+            
+
+            try {
+                    const response = await fetch(`/admin/category/toggle/${categoryId}`,{
+                        method:"post",
+                        headers: {"Content-Type" : "application/json"},
+                        body:JSON.stringify({isListed:isListed})
+                    });
+
+                    if(response.ok){
+                        const result = await response.json();
+                        console.log("toogle success",result.message);
+                    }else{
+                        console.log("error in toogling ");
+                        event.target.checked = !isListed
+                    }
+            } catch (error) {
+                console.log("error in toogling fetch");
+                event.target.checked = !isListed;
+            }
+        });
+    });
+
+    function editCategory(categoryId){
+        console.log("nabds")
+        window.location.href = `/admin/editcategory/${categoryId }`
+    }
+
+
+    
 </script>

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Category - BLUR VINTAGE ★</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="/styles/editcategory.css">
+</head>
+<body>
+    <div class="d-flex flex-column flex-lg-row">
+        <!-- Sidebar -->
+        <%-include('../partials/admin/sidebar.ejs')%>
+
+        <!-- Main Content -->
+        <main class="container w-100">
+            <div class="container-fluid py-4 mt-5">
+                <div class="edit-category-card mx-auto">
+                    <div class="card-body p-4">
+                        <h2 class="mb-4">Edit Category</h2>
+                        <form action="/admin/editcategory/<%= category._id %>" method="POST">
+                            <div class="mb-3">
+                                <label for="categoryName" class="form-label">Name:</label>
+                                <input type="text" class="form-control" id="categoryName" value="<%= category.name %>" name="name">
+                            </div>
+                            <div class="mb-4">
+                                <label for="categoryDescription" class="form-label">Description:</label>
+                                <textarea class="form-control" id="categoryDescription" name="description"><%= category.description %></textarea>
+                            </div>
+                            <div>
+                                <label for="isListed">Is Listed:</label>
+                                <input type="checkbox" id="isListed" name="isListed" <%= category.isListed ? 'checked' : '' %>>
+                            </div>
+                            <div class="text-center">
+                                <button type="submit" class="save-btn">SAVE</button>
+                            </div>
+                        </form>                        
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
+
