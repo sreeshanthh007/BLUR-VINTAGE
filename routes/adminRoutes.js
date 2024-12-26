@@ -59,7 +59,7 @@ router.get('/unblockProduct',productController.unBlockProduct);
 
 router.get('/editproduct',productController.loadEditProduct);
 
-router.post('/editproduct',newUploads.array('images',6),productController.editProduct);
+router.post('/editproduct/:id',newUploads.array('images'),productController.editProduct);
 
 
 

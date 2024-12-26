@@ -102,12 +102,14 @@ const addProducts = async (req, res) => {
 
   const editProduct = async (req, res) => {
     try {
+      
       const id = req.params.id;
-      console.log("productId",id) 
+      console.log("edit product controller",id);
+      
       const productData = req.body;
   
       // Find the product by ID
-      let product = await Product.findById({_id:id});
+      let product = await Product.findById(id);
       if (!product) {
         console.log("product not found")
         return res.status(404).json("Product not found");
@@ -119,7 +121,7 @@ const addProducts = async (req, res) => {
         _id: { $ne:id },
       });
       if (existingProduct) {
-        return res.status(400).json("Product with this name already exists, please try with another name");
+        return res.status(400).send({success:false,message:"Product with this name already exists, please try with another name"});
       }
   
       const processedImages = product.productImage || []; // Retain existing images if no new ones are uploaded
@@ -149,8 +151,6 @@ const addProducts = async (req, res) => {
           processedImages.push(`/uploads/product-images/${uniqueFileName}`);
         }
       }
-  
-      // Find the category (optional validation, based on your requirement)
       const category = await Category.findOne({ name: productData.category });
       if (!category) {
         return res.status(400).json("Invalid category name");
@@ -159,30 +159,32 @@ const addProducts = async (req, res) => {
       // Update product details
       product.productName = productData.productName;
       product.description = productData.description;
-      product.category = category._id; // Save category ID
-      product.regularPrice = productData.regularPrice;
-      product.salePrice = productData.salePrice;
+      product.category = category._id;
+      product.Price = productData.Price;
       product.quantity = productData.quantity;
       product.productImage = processedImages;
-      product.status = "Available"; // Update status if required
+      product.status = "Available";
   
       await product.save();
       res.redirect("/admin/productpage"); // Redirect back to the products page
     } catch (error) {
-      console.error("Error while editing product:", error.message); 
+      console.error("Error while editing product:", error.message,error.stack); 
     }
   };
 
 
   const loadEditProduct= async(req,res)=>{
     try {
-      const listData = await product.find({});
-      console.log("")
+      const productId = req.query.id;
+
+      const productDetails = await product.findOne({_id:productId});
+      const category = await Category.find();
+
+      console.log("products in edit product",productDetails)
+
         res.render("admin/editproduct", {
-            products: listData,
-            cat:category ,
-            currentPage:page,
-            totalPages:totalPages
+            details:productDetails,
+            cat:category
         });
     } catch (error) {
         console.error("Error loading products:", error);
