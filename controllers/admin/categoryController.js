@@ -37,7 +37,9 @@ const addCategory = async(req,res)=>{
         console.log("add category body",req.body);
         const {name,description} = req.body;
 
-        const existingCategory = await Category.findOne({name});
+        const trimmedName = name.trim();
+
+        const existingCategory = await Category.findOne({name:trimmedName});
 
         if(existingCategory){
             return res.status(400).json({success:false,message:"the category already exist !"})
@@ -59,7 +61,6 @@ const addCategory = async(req,res)=>{
 
 const loadeditCategory = async (req,res)=>{
     try {
-       console.log("djflskdjfsjf")
         const {editId} = req.params
         console.log("edit id",editId)
 
@@ -78,10 +79,28 @@ const loadeditCategory = async (req,res)=>{
 const editCategory = async (req,res)=>{
     try {
         const {categoryId} = req.params;
+
         console.log("edit category ",categoryId);
+
         const{name,description,isListed}=req.body
 
+        if(name==""){
+            req.flash("error","enter a name");
+            return res.redirect(`/admin/editcategory/${categoryId}`)
+        }else if(description==""){
+            req.flash("error","enter description");
+            return res.redirect(`/admin/editcategory/${categoryId}`)
+        }
+
         console.log("name description,islisted",req.body)
+
+        const existingCategory = await Category.findOne({name:name});
+
+        if(existingCategory){
+            req.flash("error","category name already exists");
+
+            return res.redirect(`/admin/editcategory/${categoryId}`)
+        }
 
         const updatedCategory = await Category.findByIdAndUpdate(
             categoryId,
@@ -92,10 +111,11 @@ const editCategory = async (req,res)=>{
         if(!updatedCategory){
             console.log("updated category not found");
         }
-        res.redirect('/admin/category')
+        req.flash("success","category updated successfully")
+        res.redirect("/admin/category")
     
     } catch (error) {
-        console.log("error in updating category");
+        console.log("error in updating category",error.message,error.stack);
         res.status(400);
         
     }

@@ -6,34 +6,39 @@ const env = require('dotenv').config();
 
 
 passport.use(new googleStrategy({
-    clientID:process.env.GOOGLE_CLIENT_ID,
-    clientSecret:process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL:'/auth/google/callback',
+    clientID: process.env.GOOGLE_CLIENT_ID,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    callbackURL: '/auth/google/callback',
 },
-
-
-
-async (accessToken,refreshToken,profile,done)=>{
+async (accessToken, refreshToken, profile, done) => {
     try {
-        
-        let user = await User.findOne({googleId:profile.id});
+        // Check if the user exists by Google ID
+        let user = await User.findOne({ googleId: profile.id });
 
-        if(user){
-            return done(null,user);
-        }else{
-
-            user = new User({
-            firstName:profile.displayName,
-                email:profile.emails[0].value,
-                googleId:profile.id,
-            });
-            await user.save();
-
-            return (null,user)
+        if (user) {
+            return done(null, user); // User already exists, no need to create a new one
         }
 
+        // Check if the email is already registered
+       user = await User.findOne({ email: profile.emails[0].value });
+        
+        if (user) {
+            return done(null, user); // Email already exists, log them in
+        }
+
+        // Create a new user if not found
+        user = new User({
+            firstName: profile.displayName,
+            email: profile.emails[0].value,
+            googleId: profile.id,
+        });
+
+        await user.save(); // Save the new user
+        return done(null, user); // Log in the newly created user
+
+
     } catch (error) {
-        return done(null,error);
+        return done(error,null);
 
     }
 }
@@ -41,7 +46,9 @@ async (accessToken,refreshToken,profile,done)=>{
 
 
  passport.serializeUser((user,done)=>{
-    done(null,user.id);
+
+    console.log("serialixe",user)
+   return done(null,user.id);
 })
 
 passport.deserializeUser((id, done) => {

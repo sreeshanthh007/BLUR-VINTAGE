@@ -11,21 +11,22 @@
     <div class="container-fluid p-0">
         <div class="login-container row g-0">
             <div class="col-lg-6 form-side d-flex align-items-center">
-                <div class="w-100 px-3 px-md-5">
+                <div class=" px-3 px-md-5" style="max-width: 442px;">
                     <h1 class="mb-4">Log in to<br>Explore</h1>
                     <form method="post" action="/user/login">
                         <div class="mb-4">
-                            <label for="email" class="form-label">ENTER YOUR EMAIL</label>
+                            <label for="email" class="form-label">Enter  Your Email</label>
                             <input type="email" class="form-control" id="email" name="email" required>
                         </div>
                         
-                        <div class="mb-3">
-                            <label for="password" class="form-label">PASSWORD</label>
+                        <div class="mb-4">
+                            <label for="password" class="form-label">Enter Your Password</label>
                             <input type="password" class="form-control" id="password" name="password"required>
                         </div>
-                        <div class="text-end">
-                            <a href="#" class="forgot-password">Forgot your Password?</a>
+                        <div style="text-align: right; margin-bottom: 2rem;">
+                            <a href="#" style="text-decoration: none; color: brown;">Forgot Your Password?</a>
                         </div>
+                        
                             <%if(locals.message && message.length>0){%>
                                 <div class="alert text-danger">
                                     <%=message%>
@@ -34,6 +35,13 @@
 
                         <div class="text-center mt-4">
                             <button type="submit" class="login-btn">LOG IN</button>
+                        </div>
+
+                        <div class="mt-4">
+                            <hr>
+                            <div class="text-center mt-3">
+                                <span>New User? <a href="/user/register" style="text-decoration: none; color: brown;">Create an Account</a></span>
+                            </div>
                         </div>
                     </form>
                 </div>

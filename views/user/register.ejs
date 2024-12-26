@@ -17,8 +17,9 @@
         <!-- Form Side -->
         <div class="form-side rounded border">
             <div class="container-fluid">
+                <h3 class="text-center mb-4 fw-light">Welcome to Blur Vintage</h3>
                 <h1 class="text-center mb-4 fw-bold">REGISTER</h1>
-                <form method="post" action="/user/register" id="register-Form">
+                <form id="register-Form">
                     <div class="row g-3">
                         <div class="col-12 col-sm-6">
                             <input type="text" class="form-control" placeholder="First Name"  name="firstName" id="firstName">
@@ -30,13 +31,13 @@
                         </div>
                     </div>
                     
-                    <input type="email" class="form-control mt-3" placeholder="ENTER YOUR EMAIL" name="email" id="email">
+                    <input type="email" class="form-control mt-3" placeholder="Enter Your Email" name="email" id="email">
                     <div id="error3" class="error-message"></div>
-                    <input type="tel" class="form-control mt-3" placeholder="ENTER YOUR PHONE NO"  name="phoneNo" id="phoneNo">
+                    <input type="tel" class="form-control mt-3" placeholder="Enter Your Phone Number"  name="phoneNo" id="phoneNo">
                     <div id="error4" class="error-message"></div>
-                    <input type="password" class="form-control mt-3" placeholder="ENTER YOUR PASSWORD" name="password" id="password">
+                    <input type="password" class="form-control mt-3" placeholder="Enter Your Password" name="password" id="password">
                     <div id="error5" class="error-message"></div>
-                    <input type="password" class="form-control mt-3" placeholder="CONFIRM PASSWORD" name="confirm_password" id="confirmpassowrd">
+                    <input type="password" class="form-control mt-3" placeholder="Confirm Password" name="confirm_password" id="confirmpassowrd">
                     <div id="error6" class="error-message"></div>
                     
                     <div class="text-center mt-4">
@@ -196,13 +197,14 @@
 
         const email = emailField.value.trim();
         const firstName = firstNameField.value.trim();
+        const lastName = lastNameField.value.trim()
         const phoneNo = phoneNoField.value.trim();
         const password = passwordField.value.trim();
 
         const response = await fetch('/user/register',{
             method:"post",
             headers:{"content-Type":"application/json"},
-            body:JSON.stringify({email,firstName,password,phoneNo}),
+            body:JSON.stringify({email,firstName,password,phoneNo,lastName}),
             
         });
         
@@ -229,7 +231,9 @@
                 icon:"error",
                 title:"error occured",
                 text:"check your internet and try again"
-            });
+            }).then(()=>{
+                window.location.href = data.redirectUrl
+            })
         }
     });
 

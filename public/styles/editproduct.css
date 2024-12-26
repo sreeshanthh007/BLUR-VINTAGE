@@ -1,0 +1,47 @@
+.content-main {
+    padding: 2rem 0;
+}
+
+.card {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Adjust form inputs for better readability */
+.form-control, .form-select {
+    max-width: 100%;
+}
+
+/* Improve spacing for smaller screens */
+@media (max-width: 767px) {
+    .mb-4 {
+        margin-bottom: 1.5rem !important;
+    }
+}
+
+/* Style the image upload container */
+.image-upload-container {
+    border: 2px dashed #ccc;
+    padding: 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.image-upload-container:hover {
+    background-color: #f8f9fa;
+}
+
+/* Style the submit button */
+.btn-primary {
+    width: 100%;
+    padding: 0.75rem;
+    font-size: 1.1rem;
+}
+
+@media (min-width: 768px) {
+    .btn-primary {
+        width: auto;
+        padding: 0.5rem 2rem;
+    }
+}
+

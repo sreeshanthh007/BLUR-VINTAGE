@@ -8,7 +8,7 @@ const userInfo = async (req,res)=>{
         if(req.query.search){
             search = req.query.search;
         }
-        let page = 1;
+        let page = parseInt(req.query.page)||1
        
         const limit =5;
         const userData = await user.find({
@@ -35,10 +35,11 @@ const userInfo = async (req,res)=>{
         const totalPages = Math.ceil(count / limit);
 
         res.render("admin/userManage",{
-            userData,
+            users:userData,
             currentPage:page,
             totalPages,
             search,
+            limit
         });
     } catch (error) {
         console.log('error in userinfo',error);

@@ -2,6 +2,7 @@
 const express = require('express');
 const router = express.Router();
 const userController = require('../controllers/user/userController');
+const productController = require('../controllers/user/productdetails')
 
 const {userAuth,adminAuth} = require('../middlewares/auth')
 
@@ -21,21 +22,20 @@ router.post('/login',userController.login);
 
 router.post('/logout',userController.logOut);
 
-router.get('/home',userAuth,userController.loadHome);
-
-router.get('/pagenotFound',userController.pagenotFound);
-
-router.get('/men',userAuth,userController.loadmen);
-
-router.get('/women',userAuth,userController.loadWomen);
-
-router.get('/kids',userAuth,userController.loadKids)
-
-router.get("/buy",userController.interface);
+router.get('/home',userController.loadHome);
 
 
+router.get('/men',userController.loadmen);
 
-router.get('/manage',userAuth,userController.manage);
+router.get('/women',userController.loadWomen);
+
+router.get('/kids',userController.loadKids)
+
+router.get("/buy",productController.productDetails);
+
+
+
+router.get('/manage',userController.manage);
 
 
 

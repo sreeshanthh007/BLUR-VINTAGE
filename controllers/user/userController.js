@@ -3,8 +3,10 @@
 const bcrypt = require('bcrypt');
 const saltRound = 10;
 const node_mailer = require('nodemailer')
-const user = require('../../models/userSchema');
+const Users = require('../../models/userSchema');
 const env = require('dotenv').config();
+const Category = require('../../models/categorySchema');
+const Product = require('../../models/productSchema');
 
 
 // generating otp
@@ -19,9 +21,7 @@ async function sendVerificationEmail(email,otp){
     try{
         const transport = node_mailer.createTransport({
             service:"Gmail",
-            port:587,
             requireTLS:true,
-            secure:false,
             auth:{
                 user:process.env.NODE_MAILER_EMAIL,
                 pass:process.env.NODE_MAILER_PASSWORD
@@ -42,10 +42,11 @@ async function sendVerificationEmail(email,otp){
             
         })
 
-        return info.accepted.length>0
+        console.log("Email send response:", info);
+        return info.accepted && info.accepted.length > 0;
 
     }catch(err){
-        console.log('error occured while sending otp',err);
+        console.log('error occured while sending otp',err.message,err.stack);
         return false;
     }
 }
@@ -55,10 +56,10 @@ async function sendVerificationEmail(email,otp){
 // signup post
 const signUp = async (req,res)=>{
    try {
-    const { firstName,lastName,phoneNo,email,password} = req.body;
-    console.log("body",req.body)
+    const { firstName,phoneNo,email,password,lastName} = req.body;
+    
 
-    const findUser = await user.findOne({email});
+    const findUser = await Users.findOne({email});
     console.log("user",findUser)
 
     if(findUser){
@@ -87,10 +88,9 @@ const signUp = async (req,res)=>{
 
 
    } catch (error) {
-    console.log("error occured in register");
+    console.log("error occured in register",error.message);
     res.status(500).send("error occured");
    }
-
 }
 
 
@@ -122,6 +122,7 @@ const verifyOTP = async (req, res) => {
       // Check if OTP matches the session's OTP
       if (ReceivedOTP == req.session.userOTP) {
         const User = req.session.userData;
+      
 
         console.log("user",User)
         
@@ -129,14 +130,14 @@ const verifyOTP = async (req, res) => {
         
   
         // Save the user to the database
-        const saveUser = new user({
+        const saveUser = new Users({
           firstName: User.firstName,
           lastName: User.lastName,
           email: User.email,
           phoneNo: User.phoneNo,
           password: passwordHash,
         });
-       console.log(saveUser)
+       console.log("saved",saveUser)
         await saveUser.save();
 
           // Set the user ID in the session
@@ -197,7 +198,7 @@ const login = async (req,res)=>{
     try {
         const {email,password} = req.body;
 
-        const findUser = await user.findOne({isAdmin:0,email:email});
+        const findUser = await Users.findOne({isAdmin:0,email:email});
 
         if(!findUser){
             return res.render('user/login',{message:"user not found"})
@@ -212,6 +213,7 @@ const login = async (req,res)=>{
             return res.render('user/login',{message:"password didnt match"});
         }
         req.session.user = findUser._id
+        console.log('login user',req.session.user)
 
         res.redirect("/user/home");
 
@@ -264,24 +266,65 @@ loadRegister = async (req,res)=>{
 
 const loadHome = async (req,res)=>{
     try{
-        const userId = req.session.user;
-        const userData = await user.findOne({_id:userId});
-        console.log(userData)
-        console.log(userId)
+        const userId = req.session.user || req.session?.passport?.user;
+        let userData = null;
+       
+
         if(userId){
-            res.render('user/userhome',{user:userData});
+            userData = await Users.findOne({_id:userId});
+            console.log("loadhome user",userData);
+
+            if(userData && userData.isBlocked){
+                console.log("user is blocked");
+                return res.redirect("/user/register");
+            }
         }
-        
+        if(!userData){
+            return res.render("user/userhome");
+        }else{
+            return res.render("user/userhome",)
+        }
+
+      
     }catch(err){
-        console.log("page not found");
+        console.log("page not found",err.message);
+
         res.status(500).send("server error")
+
     }
 }
 
 // user men page
 
 loadmen = async (req,res)=>{
-    return res.render('user/userlandingpage')
+ 
+    
+    try{
+        const user =   req.session.user;
+
+        const categories = await Category.find({isListed:true});
+        let productData = await Product.find({
+            isBlocked:false,
+            category:{$in:categories.map(category=>category._id)},quantity:{$gt:0}
+        })
+        productData = productData.slice(0,4);
+    
+        if(user){
+            const userData = await Users.findOne({_id:user._id});
+            console.log("loadmen",userData);
+            res.render('user/userlandingpage',{
+                data:userData,
+                products:productData,
+    
+            })
+        }else{
+            res.render('user/userlandingpage',{
+                products:productData
+            })
+        }
+    } catch (error) {
+    console.log("error in loadmen",error.message)
+  }
 }
 // women page
 const loadWomen =   (req,res)=>{
@@ -293,32 +336,29 @@ const loadKids = (req,res)=>{
 }
 
 // buying interface
-const interface = (req,res)=>{
-    return res.render("user/buyingInterface");
-}
-// page not found
+// const interface = (req,res)=>{
+//     return res.render("user/buyingInterface");
+// }
+// page not found   
 
-pagenotFound = (req,res)=>{
-    try{
-        return res.render("notFound")
-    }catch(err){
-        console.log("page not found");
-        res.redirect('/pagenotFound')
-    }
-}
 otp_verification =  (req,res)=>{
     return res.render('user/otp-verification');
 
 }
 manage= async (req,res)=>{
-    const userId = req.session.user;
-    const userData = await user.findOne({_id:userId});
-    console.log(userData)
-    console.log(userId)
+    try {
+        const userId = req.session.user || req.session?.passport?.user;;
+    console.log("user id",userId)
+    const userData = await Users.findOne({_id:userId});
+    console.log("this is user data",userData)
     if(userId){
         res.render('user/userManage',{user:userData});
+    }else{
+        res.render("user/userManage")
     }
-    
+    } catch (error) {
+        console.log("errror in user manage",error.message)
+    }
 }
 
 
@@ -327,7 +367,6 @@ module.exports={
     loadRegister,
     loadLogin,
     loadHome,
-    pagenotFound,
     signUp,
     otp_verification,
     verifyOTP,
@@ -338,6 +377,6 @@ module.exports={
     logOut,
     loadWomen,
     loadKids,
-    interface
+   
    
 }

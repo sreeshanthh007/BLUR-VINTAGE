@@ -46,6 +46,7 @@
                         
                     </tbody>
                 </table>
+
                 <div class="pagination-container d-flex justify-content-center">
                     <% if (currentPage > 1) { %>
                     <a href="?page=<%= currentPage - 1 %>">&laquo; Previous</a>
@@ -57,7 +58,7 @@
                     <% } %> <% } %> <% if (currentPage < totalpages) { %>
                     <a href="?page=<%= currentPage + 1 %>">Next &raquo;</a>
                     <% } %>
-                  </div>
+                </div>
             <!-- Add New Category Form -->
             <div class="form-section mt-5">
                 <div class="d-flex justify-content-between align-items-center mb-5">
@@ -106,9 +107,9 @@
         return;
     }
 
-    // Form submission using FormData
+    
     const form = document.getElementById('category-form');
-    const formData = new FormData(form);
+    const formData = new FormData(form); // Form submission using FormData
     fetch("/admin/category", {
         method: "POST",
         body: formData,
@@ -132,7 +133,11 @@
                     location.reload();
                 });
             } else {
-                throw new Error(data.message || "Unknown error occurred");
+                Swal.fire({
+                    icon:"error",
+                    title:"error",
+                    text:data.message
+                })
             }
         })
         .catch((err) => {
@@ -250,9 +255,11 @@ function clearErrorMessages() {
         });
     });
 
+
+
+
     function editCategory(categoryId){
-        console.log("nabds")
-        window.location.href = `/admin/editcategory/${categoryId }`
+        window.location.href = (`/admin/editcategory/${categoryId}`)
     }
 
 

@@ -2,6 +2,7 @@ const express = require('express');
 const app =express();
 const session = require('express-session');
 const nocache = require('nocache');
+const flash = require("connect-flash")
 const path = require('path');
 const bodyparser = require('body-parser')
 const passport = require('./config/passport.js')
@@ -28,7 +29,12 @@ app.use(session({
 
 app.use(passport.initialize())
 app.use(passport.session());
+app.use(flash());
 
+app.use((req, res, next) => {
+    res.locals.messages = req.flash();  // This makes the flash messages available in templates
+    next();
+});
 app.use(bodyparser.urlencoded({extended:true}))
 app.use(express.json());
 app.use(nocache());

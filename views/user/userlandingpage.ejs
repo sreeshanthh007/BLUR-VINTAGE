@@ -3,119 +3,21 @@
     <!-- Header -->
     <main class="container-fluid px-2 px-sm-3 px-md-4 py-3 py-md-5">
         <div class="row g-2 g-sm-3 g-md-4">
-            <!-- Product Card -->
+            <% for (let i = 0; i < products.length; i++) { %>
             <div class="col-6 col-sm-4 col-lg-3">
                 <div class="product-card">
                     <div class="product-image-container">
-                        <img src="/images/girls.jpeg" alt="COTTON RIPSTOP JACKET" class="img-fluid">
+                        <a href="/user/buy?id=<%= products[i]._id %>">
+                            <img src="<%= products[i].productImage[0] %>" alt="<%= products[i].productName %>" class="img-fluid">
+                        </a>
                     </div>
-                    <h3 class="product-title">COTTON RIPSTOP JACKET</h3>
-                    <p class="product-price">Rs.1799/-</p>
+                    <h3 class="product-title"><%= products[i].productName %></h3>
+                    <p class="product-price" style="font-weight: bolder;"><%= products[i].Price %></p>
                 </div>
             </div>
-            <!-- Repeat for other products -->
-            <div class="col-6 col-sm-4 col-lg-3">
-                <div class="product-card">
-                    <div class="product-image-container">
-                        <img src="/images/girls.jpeg"" alt="EMBOSSED WOOL SWEATER" class="img-fluid">
-                    </div>
-                    <h3 class="product-title">EMBOSSED WOOL SWEATER</h3>
-                    <p class="product-price">Rs.1799/-</p>
-                </div>
-            </div>
-            <div class="col-6 col-sm-4 col-lg-3">
-                <div class="product-card">
-                    <div class="product-image-container">
-                        <img src="/images/girls.jpeg"" alt="GC COTTON EMBROIDERED HAT" class="img-fluid">
-                    </div>
-                    <h3 class="product-title">GC COTTON EMBROIDERED HAT</h3>
-                    <p class="product-price">Rs.1799/-</p>
-                </div>
-            </div>
-            <div class="col-6 col-sm-4 col-lg-3">
-                <div class="product-card">
-                    <div class="product-image-container">
-                        <img src="/images/girls.jpeg"" alt="LOOSE FIT FLANNEL SHIRT" class="img-fluid">
-                    </div>
-                    <h3 class="product-title">LOOSE FIT FLANNEL SHIRT</h3>
-                    <p class="product-price">Rs.1799/-</p>
-                </div>
-            </div>
-            <div class="col-6 col-sm-4 col-lg-3">
-                <div class="product-card">
-                    <div class="product-image-container">
-                        <img src="/images/girls.jpeg"" alt="LOOSE FIT PRINTED HOODIE" class="img-fluid">
-                    </div>
-                    <h3 class="product-title">LOOSE FIT PRINTED HOODIE</h3>
-                    <p class="product-price">Rs.1799/-</p>
-                </div>
-            </div>
-            <div class="col-6 col-sm-4 col-lg-3">
-                <div class="product-card">
-                    <div class="product-image-container">
-                        <img src="/images/girls.jpeg"" alt="BAGGY JEANS" class="img-fluid">
-                    </div>
-                    <h3 class="product-title">BAGGY JEANS</h3>
-                    <p class="product-price">Rs.1799/-</p>
-                </div>
-            </div>
-            <div class="col-6 col-sm-4 col-lg-3">
-                <div class="product-card">
-                    <div class="product-image-container">
-                        <img src="/images/girls.jpeg"" alt="REGULAR FIT DENIM OVERSHIRT" class="img-fluid">
-                    </div>
-                    <h3 class="product-title">REGULAR FIT DENIM OVERSHIRT</h3>
-                    <p class="product-price">Rs.1799/-</p>
-                </div>
-            </div>
-            <div class="col-6 col-sm-4 col-lg-3">
-                <div class="product-card">
-                    <div class="product-image-container">
-                        <img src="/images/girls.jpeg"" alt="OVERSIZED FIT COTTON SWEATSHIRT" class="img-fluid">
-                    </div>
-                    <h3 class="product-title">OVERSIZED FIT COTTON SWEATSHIRT</h3>
-                    <p class="product-price">Rs.1799/-</p>
-                </div>
-            </div>
-            <div class="col-6 col-sm-4 col-lg-3">
-                <div class="product-card">
-                    <div class="product-image-container">
-                        <img src="/images/girls.jpeg"" alt="OVERSIZED FIT COTTON SWEATSHIRT" class="img-fluid">
-                    </div>
-                    <h3 class="product-title">OVERSIZED FIT COTTON SWEATSHIRT</h3>
-                    <p class="product-price">Rs.1799/-</p>
-                </div>
-            </div>
-            <div class="col-6 col-sm-4 col-lg-3">
-                <div class="product-card">
-                    <div class="product-image-container">
-                        <img src="/images/girls.jpeg"" alt="OVERSIZED FIT COTTON SWEATSHIRT" class="img-fluid">
-                    </div>
-                    <h3 class="product-title">OVERSIZED FIT COTTON SWEATSHIRT</h3>
-                    <p class="product-price">Rs.1799/-</p>
-                </div>
-            </div>
-            <div class="col-6 col-sm-4 col-lg-3">
-                <div class="product-card">
-                    <div class="product-image-container">
-                        <img src="/images/girls.jpeg"" alt="OVERSIZED FIT COTTON SWEATSHIRT" class="img-fluid">
-                    </div>
-                    <h3 class="product-title">OVERSIZED FIT COTTON SWEATSHIRT</h3>
-                    <p class="product-price">Rs.1799/-</p>
-                </div>
-            </div>
-            <div class="col-6 col-sm-4 col-lg-3">
-                <div class="product-card">
-                    <div class="product-image-container">
-                        <img src="/images/girls.jpeg"" alt="OVERSIZED FIT COTTON SWEATSHIRT" class="img-fluid">
-                    </div>
-                    <h3 class="product-title">OVERSIZED FIT COTTON SWEATSHIRT</h3>
-                    <p class="product-price">Rs.1799/-</p>
-                </div>
-            </div>
+            <% } %>
         </div>
     </main>
-
     <%-include ("../../views/partials/user/footer")%>
 </body>
 </html>

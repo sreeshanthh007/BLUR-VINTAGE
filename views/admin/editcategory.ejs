@@ -19,14 +19,28 @@
                 <div class="edit-category-card mx-auto">
                     <div class="card-body p-4">
                         <h2 class="mb-4">Edit Category</h2>
-                        <form action="/admin/editcategory/<%= category._id %>" method="POST">
+                        <!-- Display Flash Messages -->
+                    <% if (messages && messages.error) { %>
+                        <div class="alert alert-danger">
+                            <%= messages.error %>
+                        </div>
+                    <% } %>
+                    <% if (messages && messages.success) { %>
+                        <div class="alert alert-success">
+                            <%= messages.success %>
+                        </div>
+                    <% } %>
+                        <form action="/admin/editcategory/<%= category._id %>" method="POST" id="edit-category-f">
                             <div class="mb-3">
+                                
                                 <label for="categoryName" class="form-label">Name:</label>
                                 <input type="text" class="form-control" id="categoryName" value="<%= category.name %>" name="name">
+                                <span id="name-error" class="text-danger"></span>
                             </div>
                             <div class="mb-4">
                                 <label for="categoryDescription" class="form-label">Description:</label>
                                 <textarea class="form-control" id="categoryDescription" name="description"><%= category.description %></textarea>
+                                <span id="description-error" class="text-danger"></span>
                             </div>
                             <div>
                                 <label for="isListed">Is Listed:</label>
@@ -46,3 +60,10 @@
 </body>
 </html>
 
+
+<script>
+
+
+
+
+</script>

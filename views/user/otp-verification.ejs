@@ -170,7 +170,7 @@
     let result = "";
     const otpInputs = document.querySelectorAll('.otp-input');
     
-    // Concatenate OTP values from the input fields
+    
     otpInputs.forEach((input) => {
         result += input.value;
     });
@@ -195,7 +195,6 @@
                 Swal.fire({
                     icon: "success",
                     title: "OTP verified successfully\nRedirecting to login page",
-
                     showConfirmButton: false,
                     timer: 1500,
                 }).then(() => {
@@ -257,7 +256,6 @@ function resent_otp() {
         }
     },1000)
 
-
     fetch('/user/resend-otp',{
     method:"POST",
     headers:{
@@ -296,8 +294,5 @@ function resent_otp() {
 });
 
 }
-
-
-
 </script>
 
