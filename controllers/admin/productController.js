@@ -104,9 +104,10 @@ const addProducts = async (req, res) => {
     try {
       
       const id = req.params.id;
-      console.log("edit product controller",id);
+     
       
       const productData = req.body;
+      console.log("edit product controller",productData);
   
       // Find the product by ID
       let product = await Product.findById(id);
@@ -114,7 +115,7 @@ const addProducts = async (req, res) => {
         console.log("product not found")
         return res.status(404).json("Product not found");
       }
-  
+      console.log("product in edut ",product)
       // Check if the updated product name already exists (excluding the current product)
       const existingProduct = await Product.findOne({
         productName: productData.productName,
@@ -160,13 +161,16 @@ const addProducts = async (req, res) => {
       product.productName = productData.productName;
       product.description = productData.description;
       product.category = category._id;
-      product.Price = productData.Price;
+      product.Price =  productData.regularPrice;
       product.quantity = productData.quantity;
       product.productImage = processedImages;
       product.status = "Available";
-  
+      
+      
       await product.save();
-      res.redirect("/admin/productpage"); // Redirect back to the products page
+
+      return res.json({ success: true, redirectUrl: "/admin/productpage" });
+    // Redirect back to the products page
     } catch (error) {
       console.error("Error while editing product:", error.message,error.stack); 
     }
@@ -184,7 +188,7 @@ const addProducts = async (req, res) => {
 
         res.render("admin/editproduct", {
             details:productDetails,
-            cat:category
+            cat:category  
         });
     } catch (error) {
         console.error("Error loading products:", error);

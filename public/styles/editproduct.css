@@ -1,3 +1,14 @@
+.content-main {
+    min-height: 100vh;
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+}
+
+.card {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    border-radius: 0.5rem;
+}
+
 .error-message {
     color: #ef4444;
     font-size: 0.875rem;
@@ -60,33 +71,33 @@
     opacity: 1;
 }
 
-.cropper-content {
-position: relative;
-background-color: white;
-padding: 1rem;
-border-radius: 0.5rem;
-max-width: 600px;
-width: 90%;
-max-height: 600px;
-overflow: auto;
-display: flex;
-flex-direction: column;
-align-items: center;
-}
 .cropper-container {
-display: flex;
-align-items: center;
-justify-content: center;
-position: fixed;
-top: 0;
-left: 0;
-right: 0;
-bottom: 0;
-background-color: rgba(0, 0, 0, 0.5);
-z-index: 1050;
-overflow: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1050;
+    overflow: auto;
 }
 
+.cropper-content {
+    position: relative;
+    background-color: white;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    max-width: 600px;
+    width: 90%;
+    max-height: 600px;
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
 
 .btn {
     display: inline-flex;
@@ -105,7 +116,6 @@ overflow: auto;
 
 .btn-primary:hover {
     background-color: #2563eb;
-    
 }
 
 .btn-secondary {
@@ -116,3 +126,11 @@ overflow: auto;
 .btn-secondary:hover {
     background-color: #d1d5db;
 }
+
+@media (max-width: 767px) {
+    .image-preview {
+        width: 80px;
+        height: 80px;
+    }
+}
+

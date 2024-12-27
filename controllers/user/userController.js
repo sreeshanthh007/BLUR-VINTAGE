@@ -296,19 +296,26 @@ const loadHome = async (req,res)=>{
 
 // user men page
 
-loadmen = async (req,res)=>{
+const loadmen = async (req,res)=>{
  
     
-    try{
-        const user =   req.session.user;
+    try {
+        const user = req.session.user;
 
-        const categories = await Category.find({isListed:true});
-        let productData = await Product.find({
-            isBlocked:false,
-            category:{$in:categories.map(category=>category._id)},quantity:{$gt:0}
-        })
-        productData = productData.slice(0,4);
-    
+        // Find the "men" category
+        const menCategory = await Category.findOne({ isListed: true, name: "men" });
+        if (!menCategory) {
+            // If the "men" category is not found, render an empty list
+            return res.render("user/userlandingpage", { products: [] });
+        }
+
+        // Fetch products for the "men" category
+        const productData = await Product.find({
+            isBlocked: false,
+            category: menCategory._id, // Filter by "men" category ID
+            quantity: { $gt: 0 },      // Only include products with quantity > 0
+        });
+        // productData = productData.slice(0,4);
         if(user){
             const userData = await Users.findOne({_id:user._id});
             console.log("loadmen",userData);
@@ -327,19 +334,65 @@ loadmen = async (req,res)=>{
   }
 }
 // women page
-const loadWomen =   (req,res)=>{
-    return res.render('user/women');
+const loadWomen =  async (req,res)=>{
+
+    try {
+        const user = req.session.user;
+
+        // Find the "women" category
+        const womenCategory = await Category.findOne({ isListed: true, name: "women" });
+        if (!womenCategory) {
+            // If the "women" category is not found, render an empty list
+            return res.render("user/women", { products: [] });
+        }
+
+        // Fetch products for the "women" category
+        const productData = await Product.find({
+            isBlocked: false,
+            category: womenCategory._id, // Filter by "women" category ID
+            quantity: { $gt: 0 },        // Only include products with quantity > 0
+        });
+    if(user){
+        res.render("user/women",{
+            products:productData
+        })
+    }else{
+        res.render('user/women',{
+            products:productData
+        });
+    }
+   } catch (error) {
+    console.log("error in loadwomen",error.message,error.stack);
+    
+   }
 }
 // kids page
-const loadKids = (req,res)=>{
-    return res.render('user/kids');
-}
+const loadKids =async (req,res)=>{
+  try {
+    const user = req.session.user;
+    const kidsCategory = await Category.findOne({isListed:true,name:"kids"});
+    if(!kidsCategory){
+        return res.render('user/kids',{products:[]});
+    }
+    const productData = await Product.find({
+        isBlocked:false,
+        category:kidsCategory._id,
+        quantity:{$gt:0}
+    });
 
-// buying interface
-// const interface = (req,res)=>{
-//     return res.render("user/buyingInterface");
-// }
-// page not found   
+    if(user){
+        res.render('user/kids',{
+            products:productData
+        })
+    }else{
+        res.render("user/kids",{
+            products:productData
+        });
+    }
+  } catch (error) {
+    
+  }
+}  
 
 otp_verification =  (req,res)=>{
     return res.render('user/otp-verification');
