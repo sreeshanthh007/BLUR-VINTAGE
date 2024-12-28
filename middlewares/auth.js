@@ -1,5 +1,6 @@
 
-const user = require("../models/userSchema");
+
+const User = require("../models/userSchema");
 
 const userAuth = async (req,res,next)=>{
     try {
@@ -26,6 +27,7 @@ const adminAuth = async (req, res, next) => {
         res.status(500).send("Internal server error");
     }
 };
+
 
 
 module.exports = {

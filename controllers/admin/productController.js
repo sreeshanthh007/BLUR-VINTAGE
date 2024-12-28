@@ -105,6 +105,7 @@ const addProducts = async (req, res) => {
       
       const id = req.params.id;
      
+
       
       const productData = req.body;
       console.log("edit product controller",productData);

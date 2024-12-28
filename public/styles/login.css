@@ -78,6 +78,31 @@ h1 {
     cursor: pointer;
     transition: background-color 0.3s ease, transform 0.2s ease;
 }
+.google-btn {
+    background-color: #ffffff;
+    border: 1px solid #ddd;
+    color: #444;
+    font-size: 1rem;
+    padding: 0.75rem 2rem;
+    border-radius: 25px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    text-align: center;
+}
+
+.google-btn:hover {
+    background-color: #f7f7f7;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.google-icon {
+    width: 20px; /* Set the width */
+    height: 20px; /* Set the height */
+    object-fit: contain; /* Maintain aspect ratio */
+}
 
 .login-btn:hover {
     background-color: #4a1c1c;

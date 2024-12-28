@@ -63,7 +63,7 @@ const signUp = async (req,res)=>{
     console.log("user",findUser)
 
     if(findUser){
-        return res.json({success:false , message:"user with this email already exists"})
+        return res.json({success:false , message:"the email is already in use"})
     }
 
     const otp = generateOTP();
