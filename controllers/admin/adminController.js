@@ -21,7 +21,10 @@ const login = async (req,res)=>{
         return res.json({success:false,message:"invalid mail or password"});
     }
 
-    req.session.admin = admin._id;
+    req.session.admin = {
+        id:admin._id,
+        role:"admin"
+    }
     console.log("admin session",req.session.admin)
 
     return res.json({success:true,redirectUrl:"/admin/dashboard"}); 

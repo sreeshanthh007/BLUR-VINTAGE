@@ -17,10 +17,10 @@ const userAuth = async (req,res,next)=>{
 const adminAuth = async (req, res, next) => {
     try {
         const isAdmin = req.session.admin;
-        if (isAdmin) {
+        if (isAdmin && isAdmin.role=="admin") {
              next();
         } else {
-            res.redirect("/admin/login");
+            res.status(403).json({success:false,message:"unauthorized access"})
         }
     } catch (err) {
         console.error("Error in admin middleware:", err);

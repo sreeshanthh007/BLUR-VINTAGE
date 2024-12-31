@@ -11,21 +11,22 @@ const mongodb = require('./config/mongodb');
 const userRouter = require('./routes/userRoutes')
 const adminRouter = require("./routes/adminRoutes.js")
 const authRoutes = require('./routes/authroutes.js');
+const adminAccess = require("./middlewares/auth.js")
 
 mongodb();
 
 
 app.use(session({
-    secret:'yourSecretKey',
-    resave:false,
-    saveUninitialized:true,
-    cookie:{
-        secure:false,
-        httpOnly:true,
-        maxAge: 20 * 60 * 1000
+    secret: 'yourSecretKey',
+    resave: false,
+    saveUninitialized: true,
+    cookie: {
+        secure: false, // Set to true if you're using https
+        httpOnly: true,
+        maxAge: 3600000 // 1 hour in milliseconds
     }
-
 }));
+
 
 app.use(passport.initialize())
 app.use(passport.session());
@@ -52,6 +53,10 @@ app.use(express.static(path.join(__dirname,"public")));
 app.use('/user',userRouter)
 // for admin
 app.use("/admin",adminRouter)
+// prevent users  accessing admin
+
+app.use("/admin",adminAccess.adminAuth)
+
 // for google authenication
 app.use('/',authRoutes)
 

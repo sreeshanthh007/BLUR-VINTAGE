@@ -83,7 +83,15 @@
         border: none;
         padding: 0.75rem;
     }
-    
+    .is-valid {
+    border-color: #198754 !important;
+    background-color: #f8fff9 !important;
+}
+
+.is-invalid {
+    border-color: #dc3545 !important;
+    background-color: #fff8f8 !important;
+}
     .btn-save {
         background-color: #333;
         color: white;
@@ -166,7 +174,7 @@
                     <nav class="nav flex-column">
                         <a href="#" class="nav-link active"><i class="bi bi-person me-2"></i>Account Overview</a>
                         <a href="#" class="nav-link"><i class="bi bi-bag me-2"></i>My Orders</a>
-                        <a href="#" class="nav-link"><i class="bi bi-geo-alt me-2"></i>Manage Address</a>
+                        <a href="/user/address" class="nav-link"><i class="bi bi-geo-alt me-2"></i>Manage Address</a>
                         <a href="#" class="nav-link"><i class="bi bi-wallet2 me-2"></i>Wallet</a>
                         <a href="#" class="nav-link"><i class="bi bi-shield-lock me-2"></i>Manage Password</a>
                         <a href="#" class="nav-link"><i class="bi bi-heart me-2"></i>Wishlist</a>
@@ -179,26 +187,30 @@
             <div class="col-lg-9">
                 <div class="profile-section" style="background-color: whitesmoke;">
                     <h3 class="mb-4" style="text-align: center; font-weight: bold;">Edit your Profile</h3>
-                    <form>
+                    <form action="/user/manage" method="post" id="updateForm">
                         <div class="mb-3 ">
                             <label for="firstName" class="form-label ">First name</label>
-                            <input type="text" class="form-control" id="firstName" required>
+                            <input type="text" class="form-control" name="firstName" id="firstName" required" value="<%=user? user.firstName : ""%>">
+                            <div class="text-danger error-message"></div>
                         </div>
                         <div class="mb-3">
                             <label for="lastName" class="form-label">Last Name</label>
-                            <input type="text" class="form-control" id="lastName" required>
+                            <input type="text" class="form-control" name="lastName" id="lastName" required value="<%=user ? user.lastName : 'empty'%>">
+                            <div class="text-danger error-message"></div>
                         </div>
                         <div class="mb-3">
                             <label for="email" class="form-label">Email</label>
-                            <input type="email" class="form-control" id="email" required>
+                            <input type="email" class="form-control"  id="email" name="email" required value="<%= user ? user.email : "" %>" readonly>
+                            <div class="text-danger error-message"></div>
                         </div>
                         <div class="mb-3">
                             <label for="phone" class="form-label">Phone Number</label>
-                            <input type="tel" class="form-control" id="phone" required>
+                            <input type="tel" class="form-control" name="phoneNo" id="phone" required value="<%=user ? user.phoneNo : ""%>">
+                            <div class="text-danger error-message"></div>
                         </div>
                         <div class="d-flex justify-content-end gap-3">
                             <button type="button" class="btn btn-cancel">Cancel</button>
-                            <button type="submit" class="btn btn-save" style="background-color: #000; color: white;">Save Changes</button>
+                            <button type="submit" id="saveChangesBtn" class="btn btn-save" style="background-color: #000; color: white;">Save Changes</button>
                         </div>
                     </form>
                 </div>
@@ -248,4 +260,139 @@
             });
         }
     });
+
+
+    const form = document.getElementById('updateForm');
+const firstName = document.getElementById('firstName');
+const lastName = document.getElementById('lastName');
+const email = document.getElementById('email');
+const phone = document.getElementById('phone');
+
+// Validation patterns
+const patterns = {
+    firstName: /^[A-Za-z]{2,30}$/,
+    lastName: /^[A-Za-z]{2,30}$/,
+    email: /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/,
+    phone: /^[0-9]{10}$/
+};
+
+// Error messages
+const errorMessages = {
+    firstName: 'First name should be 2-30 characters long and contain only letters',
+    lastName: 'Last name should be 2-30 characters long and contain only letters',
+    email: 'Please enter a valid email address',
+    phone: 'Please enter a valid 10-digit phone number'
+};
+
+// Function to show error
+function showError(input, message) {
+    const errorDiv = input.nextElementSibling;
+    errorDiv.textContent = message;
+    input.classList.remove('is-valid');
+    input.classList.add('is-invalid');
+}
+
+// Function to show success
+function showSuccess(input) {
+    const errorDiv = input.nextElementSibling;
+    errorDiv.textContent = '';
+    input.classList.remove('is-invalid');
+    input.classList.add('is-valid');
+}
+
+// Function to validate a field
+function validateField(input, pattern) {
+    if (!pattern.test(input.value)) {
+        showError(input, errorMessages[input.id]);
+        return false;
+    } else {
+        showSuccess(input);
+        return true;
+    }
+}
+
+// Add live validation to input fields
+[firstName, lastName, phone].forEach(input => {
+    input.addEventListener('input', () => {
+        validateField(input, patterns[input.id]);
+    });
+
+    // Also validate on blur
+    input.addEventListener('blur', () => {
+        if (input.value.trim() === '') {
+            showError(input, 'This field is required');
+        } else {
+            validateField(input, patterns[input.id]);
+        }
+    });
+});
+
+
+
+
+updateForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    // Validate all fields
+    let isValid = true;
+    [firstName, lastName, phone].forEach(input => {
+        if (input.value.trim() === '') {
+            showError(input, 'This field is required');
+            isValid = false;
+        } else if (!validateField(input, patterns[input.id])) {
+            isValid = false;
+        }
+    });
+
+    if (!isValid) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Validation Error',
+            text: 'Please check all fields and try again'
+        });
+        return;
+    }
+
+    // If validation passes, proceed with your existing form submission logic
+    const formData = new FormData(updateForm);
+    const formObject = Object.fromEntries(formData.entries());
+
+    try {
+        const response = await fetch("/user/manage", {
+            method: "post",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(formObject),
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            Swal.fire({
+                icon: "success",
+                title: "Updated!",
+                text: "Your details have been successfully updated",
+            }).then(() => {
+                window.location.reload();
+            });
+        } else {
+            Swal.fire({
+                icon: "error",
+                title: "Error",
+                text: result.message
+            });
+        }
+    } catch (error) {
+        console.log("Error in sending data to backend in userdetails", error);
+        Swal.fire({
+            icon: "error",
+            title: "Error",
+            text: "An unexpected error occurred. Please try again later."
+        });
+    }
+});
+
+
+
 </script>

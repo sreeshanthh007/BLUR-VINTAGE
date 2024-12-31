@@ -2,7 +2,8 @@
 const express = require('express');
 const router = express.Router();
 const userController = require('../controllers/user/userController');
-const productController = require('../controllers/user/productdetails')
+const productController = require('../controllers/user/productdetails');
+const userDetailscController = require("../controllers/user/userDetails")
 
 const {userAuth,adminAuth} = require('../middlewares/auth')
 
@@ -33,10 +34,15 @@ router.get('/kids',userController.loadKids)
 
 router.get("/buy",productController.productDetails);
 
+router.get("/manage",userDetailscController.manage)
 
+router.post("/manage",userDetailscController.updateDetails)
 
-router.get('/manage',userController.manage);
-
+router.get('/address', userAuth, userDetailscController.getAddresses);
+router.post('/add', userAuth, userDetailscController.addAddress);
+router.get('/edit/:id', userAuth, userDetailscController.getAddressById);
+router.put('/edit/:id', userAuth, userDetailscController.updateAddress);
+router.delete('/delete/:id', userAuth, userDetailscController.deleteAddress);
 
 
 

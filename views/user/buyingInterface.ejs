@@ -23,42 +23,28 @@
                     
                     <!-- Main Image Container -->
                     <div class="main-image-container mb-3">
-                        <%for(let i=0;i<images.length;i++){%>
+                        <% for (let i = 0; i < images.length; i++) { %>
                         <div class="image-zoom">
-                            <img src="<%=images[i]%>" 
+                            <img src="<%= images[i] %>?v=<%= Date.now() %>" 
                                  alt="Product main view" 
                                  class="img-fluid">
                         </div>
-                        <!-- Action Buttons -->
-                        <!-- <div class="action-buttons">
-                            <button class="action-btn wishlist-btn">
-                                <i class="bi bi-heart"></i>
-                            </button>
-                            <button class="action-btn share-btn">
-                                <i class="bi bi-share"></i>
-                            </button>
-                        </div> -->
-                        <%}%>
+                        <% } %>
                     </div>
-                    
 
                     <!-- Thumbnails -->
                     <div class="thumbnails-container">
                         <div class="thumbnails-scroll">
-                            <div class="thumbnail active">
-                                <img src="<%=images[1]%>" 
-                                     alt="Product view 1">
+                            <% for (let i = 0; i < images.length; i++) { %>
+                            <div class="thumbnail-wrapper">
+                                <div class="thumbnail <%= i === 0 ? 'active' : '' %>">
+                                    <img src="<%= images[i] %>" alt="Product view <%= i + 1 %>">
+                                </div>
                             </div>
-                            <div class="thumbnail">
-                                <img src="<%=images[2]%>" 
-                                     alt="Product view 2">
-                            </div>
-                            <div class="thumbnail">
-                                <img src="<%=images[3]%>" 
-                                     alt="Product view 3">
-                            </div>
+                            <% } %>
                         </div>
                     </div>
+                    
                 </div>
                
             </div>
@@ -218,11 +204,11 @@
             </div>
         </section>
     </main>
-    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <!-- Footer -->
     <%-include ("../../views/partials/user/footer")%>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
     <script>
         // Enhanced zoom functionality
         document.querySelectorAll('.image-zoom').forEach(container => {

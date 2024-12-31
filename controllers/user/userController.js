@@ -117,7 +117,7 @@ const verifyOTP = async (req, res) => {
       console.log("Received OTP:",ReceivedOTP);
 
 
-      console.log('session-otp',req.session.userOTP)
+      console.log('session-otp',req.session.userOTP)    
 
       // Check if OTP matches the session's OTP
       if (ReceivedOTP == req.session.userOTP) {
@@ -398,21 +398,6 @@ otp_verification =  (req,res)=>{
     return res.render('user/otp-verification');
 
 }
-manage= async (req,res)=>{
-    try {
-        const userId = req.session.user || req.session?.passport?.user;;
-    console.log("user id",userId)
-    const userData = await Users.findOne({_id:userId});
-    console.log("this is user data",userData)
-    if(userId){
-        res.render('user/userManage',{user:userData});
-    }else{
-        res.render("user/userManage")
-    }
-    } catch (error) {
-        console.log("errror in user manage",error.message)
-    }
-}
 
 
 
@@ -426,7 +411,6 @@ module.exports={
     loadmen,
     resent_otp,
     login,
-    manage,
     logOut,
     loadWomen,
     loadKids,

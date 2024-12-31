@@ -22,19 +22,31 @@ const storage = multer.diskStorage({
     }
 });
 
-const newUploads = multer({storage:storage});
+const newUploads = multer({ storage: multer.memoryStorage() });
 
+// admin login starts
 router.get('/login',admincontroller.loadlogin);
 router.post("/login",admincontroller.login);
+// admin login ends
+
+// dashboard starts
 router.get('/dashboard',adminAuth,admincontroller.dashboard)
+// dashboard ends
 
+// admin logout
 router.get("/logout",admincontroller.logOut)
+// admin logout ends
 
+// usermanage starts
 router.get('/userManage',adminAuth,userManageController.userInfo);
+// user manage ends
 
+// blocking and unblocking user starts
 router.get('/blockUser',adminAuth,admincontroller.blockUser )
 router.get('/unblockUser',adminAuth,admincontroller.unblockUser);
+// blocking and unblocking ends
 
+// category starts
 router.get('/category',adminAuth,categoryController.categoryInfo);
 
 router.post('/category',adminAuth,upload.none(),categoryController.addCategory);
@@ -44,6 +56,7 @@ router.post('/category/toggle/:categoryId',adminAuth,categoryController.toggler)
 router.get('/editcategory/:editId',categoryController.loadeditCategory)
 
 router.post('/editcategory/:categoryId',categoryController.editCategory)     
+// category ends
 
 // loadingg the productpage 
 router.get('/productpage',adminAuth,productController.loadproduct)
@@ -56,10 +69,13 @@ router.post('/addproduct',adminAuth,newUploads.array('images',6),productControll
 router.get('/blockProduct',productController.blockProduct);
 
 router.get('/unblockProduct',productController.unBlockProduct);
+// block and unblock product ends
 
+// edit product
 router.get('/editproduct',productController.loadEditProduct);
 
-router.post('/editproduct/:id',newUploads.array('images',4),productController.editProduct);
+router.post('/editproduct/:id',newUploads.array('images'),productController.editProduct);
+
 
 
 
