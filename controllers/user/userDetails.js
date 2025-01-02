@@ -1,7 +1,8 @@
 const users = require("../../models/userSchema");
-const Address = require('../../models/adressSchema');
 
 
+
+// user profile
 const manage= async (req,res)=>{
     try {
         const userId = req.session.user || req.session?.passport?.user;;
@@ -20,6 +21,7 @@ const manage= async (req,res)=>{
     }
 }
 
+// profile update controller
 const updateDetails = async(req,res)=>{
    try {
     console.log("body in update details",req.body);
@@ -48,95 +50,30 @@ const updateDetails = async(req,res)=>{
 
 }
 
+// manage address
+const getAddress = async (req,res)=>{
+    return res.render("user/addressManage");
+}
 
+// edit address
+const editAddress = async(req,res)=>{
+    return res.render('user/editAddress');
+}
 
+// add address
 
-const getAddresses = async (req, res) => {
-    try {
-        const addresses = await Address.find({ userId: req.user._id });
-        res.render('user/address', { addresses });
-    } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
-    }
-};
-
-const addAddress = async (req, res) => {
-    try {
-        const { name, street, city, state, pincode, phone } = req.body;
-        const newAddress = new Address({
-            userId: req.user._id,
-            name,
-            street,
-            city,
-            state,
-            pincode,
-            phone
-        });
-        await newAddress.save();
-        res.redirect('/user/address');
-    } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
-    }
-};
-
-const getAddressById = async (req, res) => {
-    try {
-        const address = await Address.findOne({
-            _id: req.params.id,
-            userId: req.user._id
-        });
-        if (!address) {
-            return res.status(404).json({ success: false, message: 'Address not found' });
-        }
-        res.render('editAddress', { address });
-    } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
-    }
-};
-
-const updateAddress = async (req, res) => {
-    try {
-        const { name, street, city, state, pincode, phone } = req.body;
-        const updatedAddress = await Address.findOneAndUpdate(
-            { _id: req.params.id, userId: req.user._id },
-            { name, street, city, state, pincode, phone },
-            { new: true }
-        );
-        if (!updatedAddress) {
-            return res.status(404).json({ success: false, message: 'Address not found' });
-        }
-        res.redirect('/user/address');
-    } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
-    }
-};
-
-const deleteAddress = async (req, res) => {
-    try {
-        const deletedAddress = await Address.findOneAndDelete({
-            _id: req.params.id,
-            userId: req.user._id
-        });
-        if (!deletedAddress) {
-            return res.status(404).json({ success: false, message: 'Address not found' });
-        }
-        res.json({ success: true });
-    } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
-    }
-};
-
-
+const addAddress = async(req,res)=>{
+    return res.render("user/addAddress");
+}
 
 module.exports={
     manage,
     updateDetails,
-    getAddresses,
+    getAddress,
+    editAddress,
     addAddress,
-    getAddressById,
-    updateAddress,
-    deleteAddress
 }
+
 
 
 

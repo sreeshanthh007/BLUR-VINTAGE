@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Address - BLUR VINTAGE ★</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="/styles/usersidebar.css">
+</head>
+<body>
+    <!-- Header -->
+   <%-include ('../../views/partials/user/header')%>
+
+   
+   <div class="container py-4">
+    <!-- Centered Heading -->
+    <h2 class="h4 d-flex justify-content-center mb-4 fw-bold">Manage Address</h2>
+    
+    <div class="row">
+        <!-- Sidebar -->
+        <%- include ('../../views/partials/user/userSidebar')%>
+
+        <!-- Main Content -->
+        <div class="col-lg-9">
+            <div class="bg-white p-4 rounded-3">
+                <div class="d-flex justify-content-end mb-4">
+                    <a href="/user/addAddress">
+                    <button class="btn btn-dark rounded-3">Add Address</button>
+                </a>
+                </div>
+                
+                <div class="address-card">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h3 class="h5 mb-3"></h3>
+                            <p class="mb-2"></p>
+                            <p class="mb-0 text-muted"></p>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <a href="/user/editAddress">
+                            <button class="btn btn-outline-secondary btn-sm"><i class="bi bi-pencil"></i></button>
+                            </a>
+                            <button class="btn btn-outline-danger btn-sm"><i class="bi bi-trash"></i></button>
+                        
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+    <!-- Footer -->
+    <%-include ("../../views/partials/user/footer")%>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

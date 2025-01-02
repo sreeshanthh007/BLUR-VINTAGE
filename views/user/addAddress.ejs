@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Add Address - BLUR VINTAGE ★</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css"
+    />
+    <link rel="stylesheet" href="/styles/usersidebar.css" />
+    <style>
+      :root {
+        --blur-gray: #f5f5f5;
+        --blur-dark: #212121;
+        --blur-light-gray: #e0e0e0;
+      }
+
+      body {
+        background-color: var(--blur-gray);
+        font-family: system-ui, -apple-system, sans-serif;
+      }
+
+      .header {
+        background-color: var(--blur-gray);
+        padding: 1rem 0;
+        border-bottom: 1px solid var(--blur-light-gray);
+      }
+      */ .form-control {
+        background-color: var(--blur-light-gray);
+        border: none;
+        padding: 0.75rem;
+        height: auto;
+      }
+
+      .error-message {
+        margin-top: 0.25rem;
+        font-size: 0.875rem;
+      }
+      .form-control.is-invalid {
+        border-color: #dc3545;
+        background-image: none;
+      }
+      .form-control.is-valid {
+        border-color: #198754;
+        background-image: none;
+      }
+      @media (max-width: 768px) {
+        .header {
+          padding: 0.5rem 0;
+        }
+
+        .search-container {
+          max-width: 100%;
+          margin: 1rem 0;
+        }
+
+        .sidebar {
+          margin-bottom: 2rem;
+        }
+
+        .profile-icon {
+          width: 80px;
+          height: 80px;
+        }
+
+        .form-section {
+          padding: 1rem !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Header -->
+    <%-include ('../../views/partials/user/header.ejs')%>
+
+    <!-- Main Content -->
+    <div class="container py-4">
+      <div class="row">
+        <!-- Sidebar -->
+        <%-include ('../../views/partials/user/userSidebar')%>
+
+        <!-- Edit Address Form -->
+        <div class="col-md-9">
+          <div class="bg-white rounded-3 form-section p-5">
+            <h2 class="h4 mb-4">Add Address</h2>
+            <form id="addressForm">
+              <div class="row g-4">
+                <div class="col-md-6">
+                  <label class="form-label">FULL NAME</label>
+                  <input type="text" class="form-control" id="fullName" />
+                  <div class="text-danger error-message"></div>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">PHONE NO.</label>
+                  <input type="tel" class="form-control"  id="phone"/>
+                  <div class="text-danger error-message"></div>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">LANDMARK</label>
+                  <input type="text" class="form-control" id="landmark" />
+                  <div class="text-danger error-message"></div>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">COUNTRY</label>
+                  <input type="text" class="form-control"  id="country"/>
+                  <div class="text-danger error-message"></div>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">CITY</label>
+                  <input type="text" class="form-control" id="city"/>
+                  <div class="text-danger error-message"></div>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">STATE</label>
+                  <input type="text" class="form-control" id="state"/>
+                  <div class="text-danger error-message"></div>
+                </div>
+                <div class="col-md-12">
+                  <label class="form-label">PINCODE</label>
+                  <input type="text" class="form-control" id="pincode" />
+                  <div class="text-danger error-message"></div>
+                </div>
+                <div class="col-12 text-end mt-4">
+                  <button type="button" class="btn btn-cancel me-2">
+                    CANCEL
+                  </button>
+                  <button type="submit" class="btn btn-dark">
+                    ADD ADDRESS
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <%- include ('../../views/partials/user/footer')%>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+      const form = document.getElementById("addressForm");
+      const fullName = document.getElementById("fullName");
+      const phone = document.getElementById("phone");
+      const landmark = document.getElementById("landmark");
+      const country = document.getElementById("country");
+      const city = document.getElementById("city");
+      const state = document.getElementById("state");
+      const pincode = document.getElementById("pincode");
+
+      // Validation patterns
+      const patterns = {
+        fullName: /^[A-Za-z\s]{3,50}$/,
+        phone: /^[0-9]{10}$/,
+        landmark: /^[A-Za-z0-9\s,.'-]{3,100}$/,
+        country: /^[A-Za-z\s]{2,50}$/,
+        city: /^[A-Za-z\s]{2,50}$/,
+        state: /^[A-Za-z\s]{2,50}$/,
+        pincode: /^[0-9]{6}$/,
+      };
+
+      // Error messages
+      const errorMessages = {
+        fullName:
+          "Full name should be 3-50 characters long and contain only letters",
+        phone: "Please enter a valid 10-digit phone number",
+        landmark: "Landmark should be 3-100 characters long",
+        country: "Country should contain only letters",
+        city: "City should contain only letters",
+        state: "State should contain only letters",
+        pincode: "Please enter a valid 6-digit pincode",
+      };
+
+      // Function to show error
+      function showError(input, message) {
+        const errorDiv = input.nextElementSibling;
+        if (!errorDiv || !errorDiv.classList.contains("error-message")) {
+          const newErrorDiv = document.createElement("div");
+          newErrorDiv.className = "error-message text-danger small";
+          input.parentNode.insertBefore(newErrorDiv, input.nextSibling);
+          newErrorDiv.textContent = message;
+        } else {
+          errorDiv.textContent = message;
+        }
+        input.classList.remove("is-valid");
+        input.classList.add("is-invalid");
+      }
+
+      // Function to show success
+      function showSuccess(input) {
+        const errorDiv = input.nextElementSibling;
+        if (errorDiv && errorDiv.classList.contains("error-message")) {
+          errorDiv.textContent = "";
+        }
+        input.classList.remove("is-invalid");
+        input.classList.add("is-valid");
+      }
+
+      // Function to validate a field
+      function validateField(input, pattern) {
+        if (input.value.trim() === "") {
+          showError(input, "This field is required");
+          return false;
+        }
+        if (!pattern.test(input.value)) {
+          showError(input, errorMessages[input.id]);
+          return false;
+        }
+        showSuccess(input);
+        return true;
+      }
+
+
+
+      
+// Add live validation to all input fields
+[fullName, phone, landmark, country, city, state, pincode].forEach(input => {
+    input.addEventListener('input', () => {
+        validateField(input, patterns[input.id]);
+    });
+
+    // Also validate on blur
+    input.addEventListener('blur', () => {
+        if (input.value.trim() === '') {
+            showError(input, 'This field is required');
+        } else {
+            validateField(input, patterns[input.id]);
+        }
+    });
+});
+
+// Form submission handler
+form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    
+    const isValidFullName = validateField(fullName, patterns.fullName);
+    const isValidPhone = validateField(phone, patterns.phone);
+    const isValidLandmark = validateField(landmark, patterns.landmark);
+    const isValidCountry = validateField(country, patterns.country);
+    const isValidCity = validateField(city, patterns.city);
+    const isValidState = validateField(state, patterns.state);
+    const isValidPincode = validateField(pincode, patterns.pincode);
+})
+    </script>
+  </body>
+</html>

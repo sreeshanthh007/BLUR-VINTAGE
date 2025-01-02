@@ -16,31 +16,40 @@ const productSchema = new Schema({
         ref:"Category",
         required:true,
 
-    },
-    Price:{
-        type:Number,
-        required:true
-    },
+    },  
     productOffer:{
         type:Number,
         default:0,
     },
-    quantity:{
-        type:Number,
-        default:true
-    },
-    color:{
-        type:String,
-        required:true
-    },
-    colorName:{
-        type:String,
-        required:true
-    },
-    productImage:{
-        type:[String],
-        required:true,
-    },
+    variants: [{
+        color: {
+            type: String,
+            required: true
+        },
+        colorName:{
+            type:String,
+            required:true
+        },
+        size: {
+            type: String,
+            required: true
+        },
+        stock: {
+            type: Number,
+            required: true,
+            default: 0
+        },
+        price: {
+            type: Number,
+            required: true
+        },
+        productImage:{
+            type:[String],
+            required:true,
+        },
+    }],
+   
+  
     isBlocked:{
         type:Boolean,
         default:false
@@ -53,8 +62,8 @@ const productSchema = new Schema({
     },
     createdOn:{
         type:Date,
-        date:Date.now(),
-    }
+        default:Date.now,
+    },
 },{timestamps:true});
 
 const product = mongoose.model("Product",productSchema);

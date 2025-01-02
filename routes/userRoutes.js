@@ -38,11 +38,16 @@ router.get("/manage",userDetailscController.manage)
 
 router.post("/manage",userDetailscController.updateDetails)
 
-router.get('/address', userAuth, userDetailscController.getAddresses);
-router.post('/add', userAuth, userDetailscController.addAddress);
-router.get('/edit/:id', userAuth, userDetailscController.getAddressById);
-router.put('/edit/:id', userAuth, userDetailscController.updateAddress);
-router.delete('/delete/:id', userAuth, userDetailscController.deleteAddress);
+// manage address page
+router.get("/address",userDetailscController.getAddress);
+
+// edit address page
+router.get("/editAddress",userDetailscController.editAddress);
+
+// add address page
+
+
+router.get("/addAddress",userDetailscController.addAddress)
 
 
 

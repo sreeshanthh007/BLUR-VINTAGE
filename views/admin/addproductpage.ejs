@@ -33,39 +33,53 @@
                                
                                 <div class="mb-4">
                                     <label class="form-label">Full description</label>
-                                    <textarea placeholder="Type here" id="descriptionid" name="description" class="form-control" rows="4"></textarea>
+                                    <textarea placeholder="Type here" id="descriptionid" name="description" class="form-control" rows="4" itemid="description"></textarea>
                                     <div id="description-error" class="error-message"></div>
                                 </div>
+                                     <!-- New Variants Section -->
+                    <div class="mb-4">
+                        <label class="form-label">Product Variants</label>
+                        <div id="variantsContainer">
+                            <div class="variant-item mb-3 p-3 border rounded">
                                 <div class="row">
-                                    <div class="col-lg-4">
-                                        <div class="mb-4">
-                                            <label class="form-label">price</label>
-                                            <input placeholder="$" name="Price" type="number" step="0.01" class="form-control">
-                                            <div id="Price-error" class="error-message"></div>
-                                        </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label">Size</label>
+                                        <select name="variants[0][size]" class="form-control">
+                                            <option value="">Select Size</option>
+                                            <option value="XS">XS</option>
+                                            <option value="S">S</option>
+                                            <option value="M">M</option>
+                                            <option value="L">L</option>
+                                            <option value="XL">XL</option>
+                                            <option value="XXL">XXL</option>
+                                        </select>
                                     </div>
-                                    <div class="col-lg-4">
-                                        <div class="mb-4">
-                                            <label class="form-label">Quantity</label>
-                                            <input placeholder="" name="quantity" type="number" class="form-control">
-                                            <div id="quantity-error" class="error-message"></div>
-                                        </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label">Color</label>
+                                        <input type="color" name="variants[0][color]" class="form-control">
                                     </div>
-                                    <div class="col-lg-1">
-                                        <div class="mb-4">
-                                            <label class="form-label">Color</label>
-                                            <input placeholder="" name="color" type="color" class="form-control">
-                                            <div id="quantity-error" class="error-message"></div>
-                                        </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label">Color Name</label>
+                                        <input type="text" name="variants[0][colorName]" class="form-control">
                                     </div>
-                                    <div class="col-lg-3">
-                                        <div class="mb-4">
-                                            <label class="form-label">Color Name</label>
-                                            <input placeholder="" name="colorName" type="text" class="form-control">
-                                            <div id="quantity-error" class="error-message"></div>
-                                        </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">Price</label>
+                                        <input type="number" step="0.01" name="variants[0][price]" class="form-control" id="variantPrice">
+                                        <span id="variantPriceError" class="text-danger"></span>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label">Stock</label>
+                                        <input type="number" name="variants[0][stock]" class="form-control">
+                                    </div>
+                                    <div class="col-md-2 d-flex align-items-end">
+                                        <button type="button" class="btn btn-danger remove-variant" style="display: none;">Remove</button>
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+                        <button type="button" id="addVariant" class="btn btn-secondary mt-2">Add Variant</button>
+                        <div id="variants-error" class="error-message"></div>
+                    </div>
                                 <div class="mb-4">
                                     <label class="form-label">Category</label>
                                     <select class="form-select" name="category">
@@ -108,6 +122,72 @@
         <script src="https://cdn.jsdelivr.net/npm/cropperjs/dist/cropper.min.js"></script>
         <script>
             document.addEventListener('DOMContentLoaded', function() {
+
+                const variantsContainer = document.getElementById('variantsContainer');
+                const addVariantButton = document.getElementById('addVariant');
+                let variantCount = 1;
+
+
+
+                addVariantButton.addEventListener('click', function() {
+                const variantTemplate = `
+                    <div class="variant-item mb-3 p-3 border rounded">
+                        <div class="row">
+                            <div class="col-md-2">
+                                <label class="form-label">Size</label>
+                                <select name="variants[${variantCount}][size]" class="form-control">
+                                    <option value="">Select Size</option>
+                                    <option value="XS">XS</option>
+                                    <option value="S">S</option>
+                                    <option value="M">M</option>
+                                    <option value="L">L</option>
+                                    <option value="XL">XL</option>
+                                    <option value="XXL">XXL</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">Color</label>
+                                <input type="color" name="variants[${variantCount}][color]" class="form-control">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">Color Name</label>
+                                <input type="text" name="variants[${variantCount}][colorName]" class="form-control">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">Price</label>
+                                <input type="number" step="0.01" name="variants[${variantCount}][price]" class="form-control">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">Stock</label>
+                                <input type="number" name="variants[${variantCount}][stock]" class="form-control">
+                            </div>
+                            <div class="col-md-2 d-flex align-items-end">
+                                <button type="button" class="btn btn-danger remove-variant">Remove</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                variantsContainer.insertAdjacentHTML('beforeend', variantTemplate);
+                variantCount++;
+                updateRemoveButtons();
+            });
+
+            variantsContainer.addEventListener('click', function(e) {
+                if (e.target.classList.contains('remove-variant')) {
+                    e.target.closest('.variant-item').remove();
+                    updateRemoveButtons();
+                }
+            });
+
+            function updateRemoveButtons() {
+                const removeButtons = document.querySelectorAll('.remove-variant');
+                if (removeButtons.length === 1) {
+                    removeButtons[0].style.display = 'none';
+                } else {
+                    removeButtons.forEach(button => button.style.display = 'block');
+                }
+            }   
+
                 const form = document.getElementById('addProductForm');
                 const dropZone = document.getElementById('dropZone');
                 const fileInput = document.getElementById('fileInput');
@@ -234,13 +314,34 @@
                         updateImagePreviews();
                     }
                 });
-        
-               form.addEventListener('submit', (e) => {
-            e.preventDefault();
-            console.log("Form submission triggered");
-            if (validateForm()) {
-                console.log("Validation successful");
-                const formData = new FormData(form);
+                
+                const addProductForm = document.getElementById("addProductForm");
+                addProductForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+            
+                  if (validateForm()) {
+
+                const formData = new FormData();
+
+                formData.append("productName",document.getElementById("product_name").value);
+                formData.append("description", document.getElementById("descriptionid").value);
+                formData.append("category", document.querySelector('select[name="category"]').value);
+
+                const variants =[];
+
+                document.querySelectorAll(".variant-item").forEach(item =>{
+                    const variant ={
+                        size: item.querySelector('select[name^="variants"][name$="[size]"]').value,
+                        color: item.querySelector('input[name^="variants"][name$="[color]"]').value,
+                        colorName:item.querySelector('input[name^="variants"][name$="[colorName]"]').value,
+                        price: item.querySelector('input[name^="variants"][name$="[price]"]').value,
+                        stock: item.querySelector('input[name^="variants"][name$="[stock]"]').value
+                    };
+                    variants.push(variant);
+                });
+
+                formData.append("variants",JSON.stringify(variants));
+                
                 const uploadPromises = croppedImages.map((imageSrc, index) =>
                     fetch(imageSrc)
                         .then(res => res.blob())
@@ -249,77 +350,100 @@
                         })
                 );
         
-                Promise.all(uploadPromises).then(() => {
-                    // Submit the form after all images are appended
-                    fetch('/admin/addproduct', {
-                        method: 'POST',
-                        body: formData
-                    }).then(response => {
-                        if (response.ok) {
-                            Swal.fire({
-                                icon:"success",
-                                title:"product added successfully",
-                                timer:1000
-                            }).then(()=>{
-                                window.location.href = '/admin/productpage';
-                            })
-                            
-                        } else {
-                            Swal.fire({
-                                icon:"error",
-                                title:"the product already exists",
-                            });
-                        }
-                    });
+                try {
+               await Promise.all(uploadPromises);
+            
+                const response = await fetch('/admin/addproduct', {
+                method: 'POST',
+                body: formData
+            });
+
+              if (response.ok) {
+                Swal.fire({
+                    icon: "success",
+                    title: "Product added successfully",
+                    timer: 1000
+                }).then(() => {
+                    window.location.href = '/admin/productpage';
                 });
-            }
-        });
+              } else {
+                Swal.fire({
+                    icon: "error",
+                    title: "The product already exists",
+                });
+             }
+         } catch (error) {
+            console.error('Error:', error);
+            Swal.fire({
+                icon: "error",
+                title: "An error occurred",
+             });
+         }
+      }
+});
         
-                function validateForm() {
-                    let isValid = true;
-                    const errorElements = document.querySelectorAll('.error-message');
-                    errorElements.forEach(el => el.textContent = '');
-        
-                    const productName = document.getElementById('product_name').value.trim();
-                    if (!productName) {
-                        document.getElementById('productName-error').textContent = 'Product name is required.';
-                        isValid = false;
-                    }
-        
-                  
-        
-                    const description = document.getElementById('descriptionid').value.trim();
-                    if (!description) {
-                        document.getElementById('description-error').textContent = 'Description is required.';
-                        isValid = false;
-                    }
-        
-                    const regularPrice = document.querySelector('input[name="Price"]').value;
-                    if (!regularPrice || isNaN(regularPrice) || Number(regularPrice) <= 0) {
-                        document.getElementById('Price-error').textContent = 'Enter a valid price.';
-                        isValid = false;
-                    }
+    function validateForm() {
+    let isValid = true;
+    const errorElements = document.querySelectorAll('.error-message');
+    errorElements.forEach(el => el.textContent = '');
+
+    // Product name validation
+    const productName = document.getElementById('product_name').value.trim();
+    if (!productName) {
+        document.getElementById('productName-error').textContent = 'Product name is required.';
+        isValid = false;
+    }
+
+    // Description validation
+    const description = document.getElementById('descriptionid').value.trim();
+    if (!description) {
+        document.getElementById('description-error').textContent = 'Description is required.';
+        isValid = false;
+    }
+
+    // Category validation
+    const category = document.querySelector('select[name="category"]').value;
+    if (!category) {
+        document.getElementById('category-error').textContent = 'Please select a category.';
+        isValid = false;
+    }
+
+    // Image validation
+    if (croppedImages.length < 1) {
+        document.getElementById('images-error').textContent = 'Please upload at least one image.';
+        isValid = false;
+    }
+
+    const price = document.getElementById("variantPrice").value;
+    if(price<=0){
+        document.getElementById('variantPriceError').textContent="price should be greater than zero"
+        isValid=false
+    }
+
+    // Variant validation
+    const variants = document.querySelectorAll('.variant-item');
+    let hasValidVariant = false;
+
+    variants.forEach((variant) => {
+        const size = variant.querySelector('select[name^="variants"][name$="[size]"]').value;
+        const color = variant.querySelector('input[name^="variants"][name$="[color]"]').value;
+        const colorName = variant.querySelector('input[name^="variants"][name$="[colorName]"]').value;
+        const price = variant.querySelector('input[name^="variants"][name$="[price]"]').value;
+        const stock = variant.querySelector('input[name^="variants"][name$="[stock]"]').value;
+
+        if (size && color && colorName && price && stock) {
+            hasValidVariant = true;
+        }
+    });
+
+    if (!hasValidVariant) {
+        document.getElementById('variants-error').textContent = 'At least one complete variant is required.';
+        isValid = false;
+    }
 
 
-                    const quantity = document.querySelector('input[name="quantity"]').value;
-                    if (!quantity || isNaN(quantity) || Number(quantity) <= 0) {
-                        document.getElementById('quantity-error').textContent = 'Enter a valid quantity.';
-                        isValid = false;
-                    }
-        
-                    const category = document.querySelector('select[name="category"]').value;
-                    if (!category) {
-                        document.getElementById('category-error').textContent = 'Please select a category.';
-                        isValid = false;
-                    }
-        
-                    if (croppedImages.length < 1) {
-                        document.getElementById('images-error').textContent = 'Please upload at least one image.';
-                        isValid = false;
-                    }
-        
-                    return isValid;
-                }
+    return isValid;
+}
             });
         
             window.addEventListener('resize', function () {

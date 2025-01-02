@@ -6,7 +6,7 @@ const path = require('path');
 const sharp = require('sharp');
 const User = require('../../models/userSchema');
 const Category = require('../../models/categorySchema');
-const product = require('../../models/productSchema');
+const { json } = require('stream/consumers');
 
 
 
@@ -27,75 +27,95 @@ loadAddCategory = async(req,res)=>{
 
 }
 
-
-
 // add product
 const addProducts = async (req, res) => {
     try {
-      const productData = req.body;
-      
-      const existingProduct = await Product.findOne({
-        productName: productData.productName,
-      });
-      if (existingProduct) {
-        return res.status(400).json("Product already exists, please try with another name");
-      }
-  
-      const processedImages = [];
-      if (req.files && req.files.length > 0) {
-        const uploadDirectory = path.join("public", "uploads", "product-images");
-  
+        console.log("files", req.files);
+        const productData = req.body;
+        console.log("data", productData);
         
-        if (!fs.existsSync(uploadDirectory)) {
-          fs.mkdirSync(uploadDirectory, { recursive: true });
+        const variant = JSON.parse(productData.variants);
+        console.log("body", variant);
+ 
+        const existingProduct = await Product.findOne({
+            productName: productData.productName,
+        });
+ 
+        if (existingProduct) {
+            return res.status(400).json("Product already exists, please try with another name");
         }
-  
-       
-        for (let i = 0; i < req.files.length; i++) {
-          const originalImagePath = req.files[i].path;
-          const fileExtension = path.extname(req.files[i].originalname);
-          const uniqueFileName = `${Date.now()}-${i}${fileExtension}`;
-          const resizedImagePath = path.join(uploadDirectory, uniqueFileName);
-  
-          await sharp(originalImagePath)
-            .resize({ width: 440, height: 440, fit: sharp.fit.cover })
-            .sharpen({ sigma: 1.5 })
-            .jpeg({ quality: 95 })
-            .toColourspace('srgb')
-            .toFile(resizedImagePath);
-  
-          processedImages.push(`/uploads/product-images/${uniqueFileName}`);
+ 
+        const processedImages = [];
+        if (req.files && req.files.length > 0) {
+            const uploadDirectory = path.join("public", "uploads", "product-images");
+ 
+            if (!fs.existsSync(uploadDirectory)) {
+                fs.mkdirSync(uploadDirectory, { recursive: true });
+            }
+            console.log("files",req.files);
+            
+            for (let i = 0; i < req.files.length; i++) {
+                try {
+                    const originalImagePath = req.files[i].buffer;
+                    const fileExtension = path.extname(req.files[i].originalname);
+                    const uniqueFileName = `${Date.now()}-${i}${fileExtension}`;
+                    const resizedImagePath = path.join(uploadDirectory, uniqueFileName);
+ 
+                    await sharp(originalImagePath)
+                        .resize({ width: 440, height: 440, fit: sharp.fit.cover })
+                        .sharpen({ sigma: 1.5 })
+                        .jpeg({ quality: 95 })
+                        .toColourspace('srgb')
+                        .toFile(resizedImagePath);
+ 
+                    processedImages.push(`/uploads/product-images/${uniqueFileName}`);
+                } catch (imageError) {
+                    console.error("Error processing image:", imageError);
+                    return res.status(500).json("Error processing image");
+                }
+            }
         }
-      }
-  
-     
-      const category = await Category.findOne({ name: productData.category });
-      if (!category) {
-        return res.status(400).json("Invalid category name");
-      }
-  
-     
-      const newProduct = new Product({
-        productName: productData.productName,
-        description: productData.description,
-        category: category._id, 
-        Price: productData.Price,
-        color:productData.color,
-        colorName:productData.colorName,
-        createdOn: new Date(),
-        quantity: productData.quantity,
-        productImage: processedImages,
-        status: "Available", 
-      });
-  
-      await newProduct.save();
+ 
+        const category = await Category.findOne({ name: productData.category });
+        console.log("category is", category);
+ 
+        if (!category) {
+            return res.status(400).json("Invalid category name");
+        }
+ 
+        const variantsWithImages = variant.map((variant, index) => {
+            const startIndex = index * 3;
+            const imagesForVariant = processedImages.slice(startIndex, startIndex + 3);
+ 
+            return {
+                color: variant.color,
+                colorName: variant.colorName,
+                size: variant.size,
+                stock: parseInt(variant.stock, 10),
+                price: parseFloat(variant.price),
+                productImage: imagesForVariant,
+            };
+        });
+ 
+        const newProduct = new Product({
+            productName: productData.productName,
+            description: productData.description,
+            category: category._id,
+            productOffer: productData.productOffer || 0,
+            variants: variantsWithImages,
 
-    return res.status(200).json({success:true,message:"product added successfully"})
+            status: productData.status || "Available",
+            createdOn: new Date(),
+        });
+ 
+        await newProduct.save();
+        return res.status(200).json({success: true, message: "product added successfully"});
+ 
     } catch (error) {
-      console.error("Error while adding product:", error);
+        console.error("Error while adding product:", error.message, error.stack);
+        return res.status(500).json("Error adding product");
     }
-  };
-
+ };
 
   // edit product
 
@@ -271,7 +291,7 @@ const editProduct = async (req, res) => {
 const loadEditProduct = async (req, res) => {
     try {
       const productId = req.query.id;
-      const productDetails = await Product.findOne({ _id: productId }).populate('category');
+      const productDetails = await Product.findOne({ _id: productId }).populate('category',);
       console.log("product details",productDetails);
       
       const category = await Category.find();
@@ -299,10 +319,13 @@ const loadproduct = async (req, res) => {
   
       // Fetch data for the current page in descending order (e.g., by creation date)
       const products = await Product.find()
+          .populate('category','name')
           .sort({ createdAt: -1 })  
           .skip((page - 1) * pageSize)
           .limit(pageSize);
-
+          
+        console.log("products in page render",products);
+        
 
         const category=await Category.find({isListed:true});
         console.log("category",category);
@@ -357,5 +380,5 @@ module.exports = {
     blockProduct,
     unBlockProduct,
     loadEditProduct,
-    editProduct
+    editProduct,
 }

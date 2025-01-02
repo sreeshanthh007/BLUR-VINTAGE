@@ -65,6 +65,7 @@ router.get('/addproduct',adminAuth,productController.loadAddCategory);
 // also adding the product
 router.post('/addproduct',adminAuth,newUploads.array('images',6),productController.addProducts)
 
+
 // block and unblock product
 router.get('/blockProduct',productController.blockProduct);
 
