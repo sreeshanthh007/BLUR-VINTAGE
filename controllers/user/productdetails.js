@@ -16,20 +16,9 @@ const productDetails=async (req,res)=>{
         const productData=await Product.findById(productId).populate({
             path:"category",
         });
-        
-        
-        
-
-        const findcategory=productData.category;
-
-
-        console.log("productData.qyuantity",productData.quantity);
-
         res.render('user/buyingInterface',{
             user:userData,
             product:productData,
-            quantity:productData.quantity,
-            category:findcategory,
             images:productData.productImage,
 
         })

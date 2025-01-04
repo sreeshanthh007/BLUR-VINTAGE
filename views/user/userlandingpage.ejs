@@ -4,17 +4,32 @@
     <main class="container-fluid px-2 px-sm-3 px-md-4 py-3 py-md-5">
         <div class="row g-2 g-sm-3 g-md-4">
             <% for (let i = 0; i < products.length; i++) { %>
-            <div class="col-6 col-sm-4 col-lg-3">
-                <div class="product-card">
-                    <div class="product-image-container">
-                        <a href="/user/buy?id=<%= products[i]._id %>">
-                            <img src="<%= products[i].productImage[0] %>" alt="<%= products[i].productName %>" class="img-fluid">
-                        </a>
+                <div class="col-6 col-sm-4 col-lg-3">
+                    <div class="product-card">
+                        <div class="product-image-container">
+                            <a href="/user/buy?id=<%= products[i]._id %>">
+                                <% if (products[i].variants && products[i].variants.length > 0 && 
+                                      products[i].variants[0].productImage && products[i].variants[0].productImage.length > 0) { %>
+                                    <img src="<%= products[i].variants[0].productImage[0] %>" 
+                                         alt="<%= products[i].productName %>" 
+                                         class="img-fluid">
+                                <% } else { %>
+                                    <img src="/images/default-product.jpg" 
+                                         alt="No image available" 
+                                         class="img-fluid">
+                                <% } %>
+                            </a>
+                        </div>
+                        <h3 class="product-title"><%= products[i].productName %></h3>
+                        <% if (products[i].variants && products[i].variants.length > 0) { %>
+                            <p class="product-price" style="font-weight: bolder;">
+                                Rs/-<%= products[i].variants[0].price %>
+                            </p>
+                        <% } else { %>
+                            <p class="product-price" style="font-weight: bolder;">Price not available</p>
+                        <% } %>
                     </div>
-                    <h3 class="product-title"><%= products[i].productName %></h3>
-                    <p class="product-price" style="font-weight: bolder;"><%= products[i].Price %></p>
                 </div>
-            </div>
             <% } %>
         </div>
     </main>

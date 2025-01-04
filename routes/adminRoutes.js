@@ -21,8 +21,17 @@ const storage = multer.diskStorage({
         cb(null, `${uuidv4()}.${ext}`); // Unique filename
     }
 });
-
-const newUploads = multer({ storage: multer.memoryStorage() });
+const newUploads = multer({
+    storage: multer.memoryStorage(), // stores the memory good gor processing with sharp
+    fileFilter: function(req, file, cb) {
+        // Accept images only
+        if (!file.originalname.match(/\.(jpg|JPG|jpeg|JPEG|png|PNG|gif|GIF|webp|WEBP)$/)) {
+            req.fileValidationError = 'Only image files are allowed!';
+            return cb(null, false);
+        }
+        cb(null, true);
+    }
+}).any();
 
 // admin login starts
 router.get('/login',admincontroller.loadlogin);
@@ -63,7 +72,7 @@ router.get('/productpage',adminAuth,productController.loadproduct)
 // adding the product
 router.get('/addproduct',adminAuth,productController.loadAddCategory);
 // also adding the product
-router.post('/addproduct',adminAuth,newUploads.array('images',6),productController.addProducts)
+router.post('/addproduct',adminAuth,newUploads,productController.addProducts)
 
 
 // block and unblock product
@@ -75,7 +84,7 @@ router.get('/unblockProduct',productController.unBlockProduct);
 // edit product
 router.get('/editproduct',productController.loadEditProduct);
 
-router.post('/editproduct/:id',newUploads.array('images'),productController.editProduct);
+router.post('/editproduct/:id',newUploads,productController.editProduct);
 
 
 

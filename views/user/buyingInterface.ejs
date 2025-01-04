@@ -7,6 +7,37 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css">
     <link rel="stylesheet" href="/styles/buyingInterface.css">
+    <style>
+        .color-circle {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 2px solid #ddd;
+    cursor: pointer;
+}
+
+.color-circle:hover {
+    border-color: #999;
+}
+
+.color-circle.active {
+    border-color: #000;
+}
+.size-btn {
+        padding: 8px 16px;
+        border: 1px solid #ccc;
+        background-color: white;
+        color: black;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    .size-btn.active {
+        background-color: white; /* Bootstrap primary color */
+        color: white;
+        border-color:white
+    }
+    </style>
 </head>
 <body>
     <!-- Header -->
@@ -23,57 +54,67 @@
                     
                     <!-- Main Image Container -->
                     <div class="main-image-container mb-3">
-                        <% for (let i = 0; i < images.length; i++) { %>
-                        <div class="image-zoom">
-                            <img src="<%= images[i] %>?v=<%= Date.now() %>" 
-                                 alt="Product main view" 
-                                 class="img-fluid">
-                        </div>
+                        <% if (product.variants && product.variants.length > 0) { %>
+                            <% product.variants[0].productImage.forEach(image => { %>
+                                <div class="image-zoom">
+                                    <img src="<%= image %>?v=<%= Date.now() %>" 
+                                         alt="Product main view" 
+                                         class="img-fluid">
+                                </div>
+                            <% }) %>
                         <% } %>
                     </div>
+    
 
-                    <!-- Thumbnails -->
-                    <div class="thumbnails-container">
-                        <div class="thumbnails-scroll">
-                            <% for (let i = 0; i < images.length; i++) { %>
-                            <div class="thumbnail-wrapper">
-                                <div class="thumbnail <%= i === 0 ? 'active' : '' %>">
-                                    <img src="<%= images[i] %>" alt="Product view <%= i + 1 %>">
-                                </div>
-                            </div>
-                            <% } %>
-                        </div>
-                    </div>
                     
+                    <!-- Thumbnails -->
+                <div class="thumbnails-container">
+                    <div class="thumbnails-scroll">
+                        <% if (product.variants && product.variants.length > 0) { %>
+                            <% product.variants[0].productImage.forEach((image, index) => { %>
+                                <div class="thumbnail-wrapper">
+                                    <div class="thumbnail <%= index === 0 ? 'active' : '' %>">
+                                        <img src="<%= image %>" alt="Product view <%= index + 1 %>">
+                                    </div>
+                                </div>
+                            <% }) %>
+                        <% } %>
+                    </div>
                 </div>
-               
             </div>
+        </div>
 
             <!-- Product Details -->
             <div class="col-12 col-lg-5">
                 <div class="product-details">
                     
-                    <h2 class="product-title"><%=product.productName%></h2>
-                    <p class="product-price"><%=product.Price%></p>
-
+                    <h2 class="product-title fs-3 fw-bold"><%=product.productName%></h2>
+                    <p class="product-price fs-4"> Rs/- <%=    product.variants[0].price%></p>
+               
                     <!-- Color Options -->
                     <div class="color-options mb-4">
-
+                        <h6 class="mb-2">Available Colors:</h6>
                         <div class="d-flex gap-2">
-                           
-                                <input type="color" name="" id="" value="<%product.color%>" disabled>
-                           
+                            <% product.variants.forEach(variant => { %>
+                                <div class="color-circle" 
+                                     style="background-color: <%= variant.color %>;" 
+                                     title="<%= variant.colorName %>"
+                                     data-color="<%= variant.color %>">
+                                </div>
+                            <% }) %>
                         </div>
                     </div>
-
                     <!-- Size Options -->
                     <div class="size-options mb-4">
                         <div class="d-flex gap-2 flex-wrap">
-                            <button class="size-btn">XS</button>
-                            <button class="size-btn">S</button>
-                            <button class="size-btn active">M</button>
-                            <button class="size-btn">L</button>
-                            <button class="size-btn">XL</button>
+                            <% 
+                            const uniqueSizes = [...new Set(product.variants.map(v => v.size))];
+                            uniqueSizes.forEach((size, index) => { 
+                            %>
+                                <button class="size-btn <%= index === 0 ? 'active' : '' %>" data-size="<%= size %>">
+                                    <%= size %>
+                                </button>
+                            <% }) %>
                         </div>
                     </div>
 
@@ -245,6 +286,41 @@
                 mainImage.src = thumbImage.src;
             });
         });
+
+
+        document.querySelectorAll('.size-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            // Remove 'active' class from all buttons
+            document.querySelectorAll('.size-btn').forEach(btn => btn.classList.remove('active'));
+
+            // Add 'active' class to the clicked button
+            this.classList.add('active');
+
+            // Get the selected size
+            const selectedSize = this.dataset.size;
+            console.log("Selected size:", selectedSize);
+            // Use `selectedSize` as needed in your application
+        });
+    });
+
+
+
+    const colorCircles = document.querySelectorAll('.color-circle');
+    const priceDisplay = document.querySelector('.product-price');
+
+    colorCircles.forEach(circle => {
+        circle.addEventListener('click', () => {
+            // Remove active class from all circles
+            colorCircles.forEach(c => c.classList.remove('active'));
+            // Add active class to clicked circle
+            circle.classList.add('active');
+            // Update price
+            const price = circle.dataset.price;
+            priceDisplay.textContent = `₹${price}`;
+        });
+    });
+
+    
     </script>
 </body>
 </html>

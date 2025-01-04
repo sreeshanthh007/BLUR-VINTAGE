@@ -51,7 +51,7 @@ const logOut = async (req,res)=>{
 const blockUser = async (req,res)=>{
     try {
         let id = req.query.id;
-        await user.updateOne({_id:id},{$set:{isBlocked:true}});
+      await user.updateOne({_id:id},{$set:{isBlocked:true}});
 
         res.redirect("/admin/userManage");
     } catch (error) {

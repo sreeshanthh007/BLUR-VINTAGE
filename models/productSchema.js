@@ -47,19 +47,18 @@ const productSchema = new Schema({
             type:[String],
             required:true,
         },
+        status:{
+            type:String,
+            enum:["Available","out of stock","discontinued"],
+            required:true,
+            default:"Available"
+        },
     }],
-   
-  
     isBlocked:{
         type:Boolean,
         default:false
     },
-    status:{
-        type:String,
-        enum:["Available","out of stock","discontinued"],
-        required:true,
-        default:"Available"
-    },
+   
     createdOn:{
         type:Date,
         default:Date.now,

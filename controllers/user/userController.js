@@ -313,8 +313,10 @@ const loadmen = async (req,res)=>{
         const productData = await Product.find({
             isBlocked: false,
             category: menCategory._id, // Filter by "men" category ID
-            quantity: { $gt: 0 },      // Only include products with quantity > 0
-        });
+        })
+        .populate("category")
+        .lean()
+        .select("productName variants category")
         // productData = productData.slice(0,4);
         if(user){
             const userData = await Users.findOne({_id:user._id});
@@ -334,7 +336,7 @@ const loadmen = async (req,res)=>{
   }
 }
 // women page
-const loadWomen =  async (req,res)=>{
+const loadWomen =  async (req,res)=>{       
 
     try {
         const user = req.session.user;
@@ -350,8 +352,10 @@ const loadWomen =  async (req,res)=>{
         const productData = await Product.find({
             isBlocked: false,
             category: womenCategory._id, // Filter by "women" category ID
-            quantity: { $gt: 0 },        // Only include products with quantity > 0
-        });
+        })
+        .populate("category")
+        .select("productName variants category")
+        .lean();
     if(user){
         res.render("user/women",{
             products:productData
@@ -371,14 +375,18 @@ const loadKids =async (req,res)=>{
   try {
     const user = req.session.user;
     const kidsCategory = await Category.findOne({isListed:true,name:"kids"});
+
     if(!kidsCategory){
         return res.render('user/kids',{products:[]});
     }
     const productData = await Product.find({
         isBlocked:false,
         category:kidsCategory._id,
-        quantity:{$gt:0}
-    });
+        
+    })
+    .select("productName variants category")
+    .lean()
+    .populate("category")
 
     if(user){
         res.render('user/kids',{
