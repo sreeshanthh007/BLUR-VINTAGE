@@ -42,12 +42,18 @@ router.post("/manage",userDetailscController.updateDetails)
 router.get("/address",userDetailscController.getAddress);
 
 // edit address page
-router.get("/editAddress",userDetailscController.editAddress);
+router.get("/editAddress/:id",userDetailscController.editAddress);
 
 // add address page
+router.get("/addAddress",userDetailscController.loadAddAddress);
+router.post("/addAddress",userDetailscController.addAddress);
 
+// delete address
+router.get("/deleteAddress",userDetailscController.deleteAddress);
 
-router.get("/addAddress",userDetailscController.addAddress)
+// update address
+router.put("/editAddress/:id",userDetailscController.updateAddress)
+
 
 
 

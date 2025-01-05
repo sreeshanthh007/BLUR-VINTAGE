@@ -92,44 +92,44 @@
               <div class="row g-4">
                 <div class="col-md-6">
                   <label class="form-label">FULL NAME</label>
-                  <input type="text" class="form-control" id="fullName" />
+                  <input type="text" class="form-control" id="fullName" name="name" />
                   <div class="text-danger error-message"></div>
                 </div>
                 <div class="col-md-6">
                   <label class="form-label">PHONE NO.</label>
-                  <input type="tel" class="form-control"  id="phone"/>
+                  <input type="tel" class="form-control"  id="phone" name="phone"/>
                   <div class="text-danger error-message"></div>
                 </div>
                 <div class="col-md-6">
                   <label class="form-label">LANDMARK</label>
-                  <input type="text" class="form-control" id="landmark" />
-                  <div class="text-danger error-message"></div>
-                </div>
-                <div class="col-md-6">
-                  <label class="form-label">COUNTRY</label>
-                  <input type="text" class="form-control"  id="country"/>
+                  <input type="text" class="form-control" id="landmark"  name="landMark"/>
                   <div class="text-danger error-message"></div>
                 </div>
                 <div class="col-md-6">
                   <label class="form-label">CITY</label>
-                  <input type="text" class="form-control" id="city"/>
+                  <input type="text" class="form-control" id="city" name="city"/>
+                  <div class="text-danger error-message"></div>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">COUNTRY</label>
+                  <input type="text" class="form-control" id="country" name="country"/>
                   <div class="text-danger error-message"></div>
                 </div>
                 <div class="col-md-6">
                   <label class="form-label">STATE</label>
-                  <input type="text" class="form-control" id="state"/>
+                  <input type="text" class="form-control" id="state" name="state"/>
                   <div class="text-danger error-message"></div>
                 </div>
                 <div class="col-md-12">
                   <label class="form-label">PINCODE</label>
-                  <input type="text" class="form-control" id="pincode" />
+                  <input type="text" class="form-control" id="pincode" name="pincode" />
                   <div class="text-danger error-message"></div>
                 </div>
                 <div class="col-12 text-end mt-4">
                   <button type="button" class="btn btn-cancel me-2">
                     CANCEL
                   </button>
-                  <button type="submit" class="btn btn-dark">
+                  <button type="submit" class="btn btn-dark" id="submitBtn">
                     ADD ADDRESS
                   </button>
                 </div>
@@ -144,110 +144,160 @@
     <%- include ('../../views/partials/user/footer')%>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script>
+   document.addEventListener("DOMContentLoaded", () => {
+  // Get form elements
       const form = document.getElementById("addressForm");
-      const fullName = document.getElementById("fullName");
-      const phone = document.getElementById("phone");
-      const landmark = document.getElementById("landmark");
-      const country = document.getElementById("country");
-      const city = document.getElementById("city");
-      const state = document.getElementById("state");
-      const pincode = document.getElementById("pincode");
+     const fullName = document.getElementById("fullName");
+    const phone = document.getElementById("phone");
+    const landmark = document.getElementById("landmark");
+    const city = document.getElementById("city");
+   const state = document.getElementById("state");
+   const pincode = document.getElementById("pincode");
+   const country = document.getElementById("country");
 
-      // Validation patterns
-      const patterns = {
-        fullName: /^[A-Za-z\s]{3,50}$/,
-        phone: /^[0-9]{10}$/,
-        landmark: /^[A-Za-z0-9\s,.'-]{3,100}$/,
-        country: /^[A-Za-z\s]{2,50}$/,
-        city: /^[A-Za-z\s]{2,50}$/,
-        state: /^[A-Za-z\s]{2,50}$/,
-        pincode: /^[0-9]{6}$/,
-      };
+  // Validation patterns
+  const patterns = {
+    fullName: /^[A-Za-z\s]{3,50}$/,
+    phone: /^[0-9]{10}$/,
+    landmark: /^[A-Za-z0-9\s,.'-]{3,100}$/,
+    city: /^[A-Za-z\s]{2,50}$/,
+    state: /^[A-Za-z\s]{2,50}$/,
+    country: /^[A-Za-z\s]{2,50}$/,
+    pincode: /^[0-9]{6}$/,
+  };
 
-      // Error messages
-      const errorMessages = {
-        fullName:
-          "Full name should be 3-50 characters long and contain only letters",
-        phone: "Please enter a valid 10-digit phone number",
-        landmark: "Landmark should be 3-100 characters long",
-        country: "Country should contain only letters",
-        city: "City should contain only letters",
-        state: "State should contain only letters",
-        pincode: "Please enter a valid 6-digit pincode",
-      };
+  // Error messages
+  const errorMessages = {
+    fullName: "Full name should be 3-50 characters long and contain only letters",
+    phone: "Please enter a valid 10-digit phone number",
+    landmark: "Landmark should be 3-100 characters long",
+    city: "City should contain only letters",
+    state: "State should contain only letters",
+    country: "State should contain only letters",
+    pincode: "Please enter a valid 6-digit pincode",
+  };
 
-      // Function to show error
-      function showError(input, message) {
-        const errorDiv = input.nextElementSibling;
-        if (!errorDiv || !errorDiv.classList.contains("error-message")) {
-          const newErrorDiv = document.createElement("div");
-          newErrorDiv.className = "error-message text-danger small";
-          input.parentNode.insertBefore(newErrorDiv, input.nextSibling);
-          newErrorDiv.textContent = message;
-        } else {
-          errorDiv.textContent = message;
-        }
-        input.classList.remove("is-valid");
-        input.classList.add("is-invalid");
-      }
+  // Function to show error
+  function showError(input, message) {
+    const errorDiv = input.nextElementSibling;
+    if (!errorDiv || !errorDiv.classList.contains("error-message")) {
+      const newErrorDiv = document.createElement("div");
+      newErrorDiv.className = "error-message text-danger small";
+      input.parentNode.insertBefore(newErrorDiv, input.nextSibling);
+      newErrorDiv.textContent = message;
+    } else {
+      errorDiv.textContent = message;
+    }
+    input.classList.remove("is-valid");
+    input.classList.add("is-invalid");
+  }
 
-      // Function to show success
-      function showSuccess(input) {
-        const errorDiv = input.nextElementSibling;
-        if (errorDiv && errorDiv.classList.contains("error-message")) {
-          errorDiv.textContent = "";
-        }
-        input.classList.remove("is-invalid");
-        input.classList.add("is-valid");
-      }
+  // Function to show success
+  function showSuccess(input) {
+    const errorDiv = input.nextElementSibling;
+    if (errorDiv && errorDiv.classList.contains("error-message")) {
+      errorDiv.textContent = "";
+    }
+    input.classList.remove("is-invalid");
+    input.classList.add("is-valid");
+  }
 
-      // Function to validate a field
-      function validateField(input, pattern) {
-        if (input.value.trim() === "") {
-          showError(input, "This field is required");
-          return false;
-        }
-        if (!pattern.test(input.value)) {
-          showError(input, errorMessages[input.id]);
-          return false;
-        }
-        showSuccess(input);
-        return true;
-      }
+  // Function to validate a field
+  function validateField(input, pattern) {
+    if (!input) return true;
+    if (input.value.trim() === "") {
+      showError(input, "This field is required");
+      return false;
+    }
+    if (!pattern.test(input.value)) {
+      showError(input, errorMessages[input.id]);
+      return false;
+    }
+    showSuccess(input);
+    return true;
+  }
 
+  // Add live validation to all input fields
+  const inputs = [fullName, phone, landmark, city, state, pincode].filter(
+    (input) => input !== null
+  );
 
+  inputs.forEach((input) => {
+    input.addEventListener("input", () => {
+      validateField(input, patterns[input.id]);
+    });
 
-      
-// Add live validation to all input fields
-[fullName, phone, landmark, country, city, state, pincode].forEach(input => {
-    input.addEventListener('input', () => {
+    input.addEventListener("blur", () => {
+      if (input.value.trim() === "") {
+        showError(input, "This field is required");
+      } else {
         validateField(input, patterns[input.id]);
+      }
     });
+  });
 
-    // Also validate on blur
-    input.addEventListener('blur', () => {
-        if (input.value.trim() === '') {
-            showError(input, 'This field is required');
-        } else {
-            validateField(input, patterns[input.id]);
-        }
-    });
-});
-
-// Form submission handler
-form.addEventListener('submit', (e) => {
+  // Form submission handler
+  form.addEventListener("submit", async (e) => {
     e.preventDefault();
-    
-    const isValidFullName = validateField(fullName, patterns.fullName);
-    const isValidPhone = validateField(phone, patterns.phone);
-    const isValidLandmark = validateField(landmark, patterns.landmark);
-    const isValidCountry = validateField(country, patterns.country);
-    const isValidCity = validateField(city, patterns.city);
-    const isValidState = validateField(state, patterns.state);
-    const isValidPincode = validateField(pincode, patterns.pincode);
-})
+
+    // Validate all fields before submission
+    const isValid = inputs.every((input) => validateField(input, patterns[input.id]));
+
+    if (!isValid) {
+      return;
+    }
+
+    const formData = {
+      name: fullName.value.trim(),
+      phone: phone.value.trim(),
+      landMark: landmark.value.trim(),
+      city: city.value.trim(),
+      state: state.value.trim(),
+      country: country.value.trim(),
+      pincode: pincode.value.trim(),
+    };
+
+    try {
+      const response = await fetch("/user/addAddress", {
+        method: "post",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const responseData = await response.json();
+
+      if (responseData.success) {
+        Swal.fire({
+          icon: "success",
+          text: responseData.message,
+          title: "Success",
+          timer: 1500,
+        }).then(() => {
+          window.location.href = responseData.redirectUrl;
+        });
+      } else {
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: responseData.message,
+        });
+      }
+    } catch (error) {
+      console.error("Error in addaddress fetch:", error.message);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "An unexpected error occurred. Please try again.",
+      });
+    }
+  });
+});
+  
     </script>
   </body>
 </html>

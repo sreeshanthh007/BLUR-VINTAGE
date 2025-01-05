@@ -16,36 +16,49 @@
    <div class="container py-4">
     <!-- Centered Heading -->
     <h2 class="h4 d-flex justify-content-center mb-4 fw-bold">Manage Address</h2>
-    
+    <div class="d-flex justify-content-end mb-4">
+        <a href="/user/addAddress">
+            <button class="btn btn-dark rounded-3">Add Address</button>
+        </a>
+    </div>
     <div class="row">
         <!-- Sidebar -->
         <%- include ('../../views/partials/user/userSidebar')%>
 
         <!-- Main Content -->
         <div class="col-lg-9">
-            <div class="bg-white p-4 rounded-3">
-                <div class="d-flex justify-content-end mb-4">
-                    <a href="/user/addAddress">
-                    <button class="btn btn-dark rounded-3">Add Address</button>
-                </a>
-                </div>
-                
-                <div class="address-card">
-                    <div class="d-flex justify-content-between align-items-start">
-                        <div>
-                            <h3 class="h5 mb-3"></h3>
-                            <p class="mb-2"></p>
-                            <p class="mb-0 text-muted"></p>
+            <div class="bg-white p-5 rounded-3">
+                <% if (addresses && addresses.length > 0) { %>
+                    <% addresses.forEach(function(address) { %>
+                        <div class="address-card mb-4 p-4 border rounded">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <p class="mb-2"><strong>Name:</strong> <%= address.name %></p>
+                                    <p class="mb-2"><strong>Landmark:</strong> <%= address.landMark %></p>
+                                    <p class="mb-2"><strong>City:</strong> <%= address.city %></p>
+                                    <p class="mb-2"><strong>State:</strong> <%= address.state %></p>
+                                    <p class="mb-2"><strong>Pincode:</strong> <%= address.pincode %></p>
+                                    <p class="mb-2"><strong>Phone:</strong> <%= address.phone %></p>
+                                </div>
+                                <div class="d-flex gap-4">
+                                    <a href="/user/editAddress/<%= address._id %>">
+                                        <button class="btn btn-outline-secondary btn-sm">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                    </a>
+                                    <button class="btn btn-outline-danger btn-sm" 
+                                            onclick="deleteAddress('<%= address._id %>')">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
                         </div>
-                        <div class="d-flex gap-2">
-                            <a href="/user/editAddress">
-                            <button class="btn btn-outline-secondary btn-sm"><i class="bi bi-pencil"></i></button>
-                            </a>
-                            <button class="btn btn-outline-danger btn-sm"><i class="bi bi-trash"></i></button>
-                        
-                        </div>
+                    <% }); %>
+                <% } else { %>
+                    <div class="text-center py-4">
+                        <p class="mb-0">No addresses found. Please add an address.</p>
                     </div>
-                </div>
+                <% } %>
             </div>
         </div>
     </div>
@@ -56,5 +69,25 @@
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </body>
 </html>
+
+
+<script>
+    function deleteAddress(addressId){
+        Swal.fire({
+            icon:"warning",
+            title:"are you sure",
+            text:"you want to delete this address ?",
+            showCancelButton:true,
+            confirmButtonColor:'#3085d6',
+            cancelButtonColor:'#d33',
+            confirmButtonText:"yes delete it"
+        }).then((result)=>{
+            if(result.isConfirmed){
+                window.location.href = `/user/deleteAddress?id=${addressId}`
+            }
+        })
+    }
+</script>

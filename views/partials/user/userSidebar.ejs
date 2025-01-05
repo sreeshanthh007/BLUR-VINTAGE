@@ -16,3 +16,42 @@
             <button class="btn btn-dark w-100 mt-4" id="logOutBtn">LOG OUT</button>
         </div>
     </div>      
+
+ <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+ 
+    <script>
+    const logOutBtn = document.getElementById("logOutBtn");
+    logOutBtn.addEventListener("click",async function(e){
+        e.preventDefault();
+
+        try{
+            const response =  await fetch("/user/logout",{
+            method:"post",
+        });
+
+        const data = await response.json();
+       
+
+        if(data.success){
+            Swal.fire({
+                icon:"success",
+                title:"log out successfully",
+                timer:1000
+            }).then(()=>{
+                window.location.href = "/user/login";
+            })
+        }else{
+            Swal.fire({
+                icon:"error",
+                title:"server error"
+            });
+        }
+        }catch(err){
+            console.log('error while login out',err);
+            Swal.fire({
+                icon:"error",
+                title:"server error"
+            });
+        }
+    });
+    </script>

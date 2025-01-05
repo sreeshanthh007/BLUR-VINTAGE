@@ -30,6 +30,10 @@ const addressSchema = new mongoose.Schema({
     phone: {
         type: String,
         required: true
+    },
+    country:{
+        type:String,
+        required:true
     }
 });
 
