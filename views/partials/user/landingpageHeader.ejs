@@ -29,13 +29,14 @@
                 <div class="col-lg-3 col-md-4">
                     <div class="d-flex align-items-center justify-content-end">
                         <form class="d-flex me-3">
-                            <input class="form-control form-control-sm me-2" type="search" placeholder="Search" aria-label="Search">
+                            <input class="form-control form-control-sm me-2" type="search" placeholder="Search" aria-label="Search" id="searchInput">
                             <button class="btn btn-outline-dark btn-sm" type="submit">
                                 <i class="bi bi-search"></i>
+                                <div id="searchResults"></div>
                             </button>
                         </form>
                         <a class="bi bi-person me-3" style="font-size: 1.5rem; color: black;" href="/user/manage"></a>
-                        <a class="bi bi-cart me-3" style="font-size: 1.5rem; color: black;"></a>
+                        <a class="bi bi-cart me-3" href="/user/cart" style="font-size: 1.5rem; color: black;"></a>
                         <a class="bi bi-heart" style="font-size: 1.5rem; color: black;"></a>
                     </div>
                 </div>
@@ -54,3 +55,22 @@
         </div>
     </header>
     <!-- header ends -->
+
+
+    <script>
+
+
+       async function searchProducts(query) {
+        if(!query){
+
+        }
+       }
+
+
+
+
+      const searchInput = document.getElementById("searchInput");
+      searchInput.addEventListener("input",(e)=>{
+        searchProducts(e.target.value);
+      });
+    </script>

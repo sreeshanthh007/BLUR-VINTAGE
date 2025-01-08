@@ -330,11 +330,11 @@
                 aspectRatio: 1,
                 viewMode: 1,
                 minCropBoxWidth: 400,
-                minCropBoxHeight: 400,
-                // background: true,
+                minCropBoxHeight: 900,
+                background: true,
                 movable: true,
                 zoomable: true,
-                ready() {
+                  ready() {
                     // Set initial crop box size
                     const containerData = cropper.getContainerData();
                     const size = Math.min(containerData.width, containerData.height, 300);

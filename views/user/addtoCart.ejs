@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BLUR VINTAGE - Cart</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        /* Custom CSS */
+        .search-input {
+            background-color: #f8f9fa;
+            border-radius: 50px;
+            padding-left: 40px;
+        }
+        
+        .search-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6c757d;
+        }
+
+        .cart-item-image {
+            max-width: 200px;
+            width: 100%;
+            height: auto;
+        }
+
+        .quantity-select {
+            width: 100px;
+        }
+
+        .place-order-btn {
+            background-color: #212529;
+            border: none;
+            padding: 12px;
+        }
+
+        .place-order-btn:hover {
+            background-color: #343a40;
+        }
+
+        @media (max-width: 768px) {
+            .cart-item-image {
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <!-- Header -->
+    <%-include('../../views/partials/user/header.ejs')%>
+
+    <!-- Main Content -->
+    <main class="container py-5">
+        <h2 class="text-center mb-5 fs-4" style="font-family: joahn;"> MY CART</h2>
+
+        <div class="row g-4 mt-4">
+            <!-- Cart Items -->
+            <div class="col-lg-8">
+                <% if (cart.items.length === 0) { %>
+                    <div class="bg-white p-4 rounded shadow-sm text-center">
+                        <h3>Your cart is empty</h3>
+                        <a href="/" class="btn btn-dark mt-3">Continue Shopping</a>
+                    </div>
+                <% } else { %>
+                    <% cart.items.forEach(item => { %>
+                        <div class="bg-white p-4 rounded shadow-sm mb-3">
+                            <div class="row">
+                                <div class="col-md-4 mb-3 mb-md-0">
+                                    <img src="<%= item.productImage %>" alt="<%= item.product.productName %>" class="cart-item-image">
+                                </div>
+                                
+                                <div class="col-md-8">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <h3 class="h5"><%= item.product.productName %></h3>
+                                        <button class="btn btn-link text-secondary p-0 remove-item" 
+                                        onclick="removeProduct('<%= item.product._id %>')" 
+                                        data-item-id="<%= item._id %>">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                                    </div>
+                                    
+                                    <p class="h4 mb-3">
+                                        Rs. <%= item.discountedPrice || item.price %>
+                                        <% if (item.discountedPrice) { %>
+                                            <small class="text-muted text-decoration-line-through">Rs. <%= item.price %></small>
+                                        <% } %>
+                                    </p>
+                                    
+                                    <div class="row g-2 mb-3">
+                                        <div class="col-6">
+                                            <p class="mb-1"><strong>Size:</strong> <%= item.size %></p>
+                                        </div>
+                                        <div class="col-6">
+                                            <p class="mb-1"><strong>Color:</strong> <%= item.colorName %></p>
+                                        </div>
+                                        <div class="col-6">
+                                            <p class="mb-1"><strong>Total:</strong> Rs. <%= (item.discountedPrice || item.price) * item.quantity %></p>
+                                        </div>
+                                    </div>
+                                    
+                                    <select class="form-select quantity-select" data-item-id="<%= item._id %>">
+                                        <% for(let i = 1; i <= 5; i++) { %>
+                                            <option value="<%= i %>" <%= item.quantity === i ? 'selected' : '' %>><%= i %></option>
+                                        <% } %>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    <% }) %>
+                <% } %>
+            </div>
+            
+            <!-- Update the Order Summary section -->
+            <div class="col-lg-4">
+                <div class="bg-white p-4 rounded shadow-sm">
+                    <h4 class="mb-4">Order Summary</h4>
+                    
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Order value</span>
+                            <span>Rs. <%= cart.totalAmount.toFixed(2) %></span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Delivery charge</span>
+                            <span>Rs. <%= deliveryCharge %></span>
+                        </div>
+                        <div class="d-flex justify-content-between fw-bold">
+                            <span>TOTAL</span>
+                            <span>Rs. <%= (cart.totalAmount + deliveryCharge).toFixed(2) %></span>
+                        </div>
+                    </div>
+                    
+                    <% if (cart.items.length > 0) { %>
+                        <button class="btn btn-dark w-100 place-order-btn mb-3">
+                            PLACE ORDER
+                        </button>
+                    <% } %>
+                    
+                    <p class="text-center text-muted small mb-0">
+                        We accept Cash on Delivery
+                    </p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</body>
+</html>
+
+
+<script>
+    function removeProduct(productId){
+        console.log("product id is",productId);
+        
+        Swal.fire({
+            icon:"warning",
+            title:"are you sure",
+            text:"you want to remove this product from your cart ?",
+            showCancelButton:true,
+            confirmButtonColor:'#3085d6',
+            cancelButtonColor:'#d33',
+            confirmButtonText:"yes remove it"
+        }).then((result)=>{
+            if(result.isConfirmed){
+                fetch(`/user/cart/remove/${productId}`,{
+                    method:"DELETE",
+                    headers:{
+                        "Content-Type":"application/json"
+                    },
+
+                })
+                .then((response)=>response.json())
+                .then((data)=>{
+                    if(data.success){
+                        Swal.fire({
+                            icon:"success",
+                            title:"removed",
+                            text:data.message,
+                            timer:1500
+                        }).then(()=>{
+                            window.location.reload();
+                        });
+                    }else{
+                        Swal.fire({
+                            icon:"error",
+                            title:"error",
+                            text:data.message
+                        });
+                    }
+                }).catch(err =>{
+                    console.log("error in remove product",err.message);
+                    
+                });
+            }
+        });
+    }
+</script>

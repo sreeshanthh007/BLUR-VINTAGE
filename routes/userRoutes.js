@@ -4,8 +4,9 @@ const router = express.Router();
 const userController = require('../controllers/user/userController');
 const productController = require('../controllers/user/productdetails');
 const userDetailscController = require("../controllers/user/userDetails")
-
-const {userAuth,adminAuth} = require('../middlewares/auth')
+const cartDetailsController = require("../controllers/user/cartController")
+const {userAuth,adminAuth} = require('../middlewares/auth');
+const { route } = require('./adminRoutes');
 
 router.get('/register',userController.loadRegister);
 
@@ -38,6 +39,12 @@ router.get("/manage",userDetailscController.manage)
 
 router.post("/manage",userDetailscController.updateDetails)
 
+// cart page
+router.get("/cart",cartDetailsController.getCart);
+// add to cart
+router.post('/cart/add',cartDetailsController.addtoCart)
+
+router.delete("/cart/remove/:id",cartDetailsController.removeProducts)
 // manage address page
 router.get("/address",userDetailscController.getAddress);
 
@@ -54,7 +61,8 @@ router.get("/deleteAddress",userDetailscController.deleteAddress);
 // update address
 router.put("/editAddress/:id",userDetailscController.updateAddress)
 
-
+// searching
+// router.get("/search",userController.userSearch);
 
 
 

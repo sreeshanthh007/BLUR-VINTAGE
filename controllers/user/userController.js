@@ -7,6 +7,7 @@ const Users = require('../../models/userSchema');
 const env = require('dotenv').config();
 const Category = require('../../models/categorySchema');
 const Product = require('../../models/productSchema');
+const product = require('../../models/productSchema');
 
 
 // generating otp
@@ -301,106 +302,214 @@ const loadmen = async (req,res)=>{
     
     try {
         const user = req.session.user;
+        const sortOption = req.query.sort || "default";
 
-        // Find the "men" category
-        const menCategory = await Category.findOne({ isListed: true, name: "men" });
-        if (!menCategory) {
-            // If the "men" category is not found, render an empty list
-            return res.render("user/userlandingpage", { products: [] });
+        const menCategory = await Category.findOne({isListed:true,name:"men"});
+
+        if(!menCategory){
+            return res.render("user/women",{
+                products : [],
+                currentSort: sortOption
+            });
         }
 
-        // Fetch products for the "men" category
-        const productData = await Product.find({
-            isBlocked: false,
-            category: menCategory._id, // Filter by "men" category ID
-        })
+        const baseQuery = {
+            isBlocked:false,
+            category:menCategory._id
+        };
+        let sortConfig={};
+
+        switch(sortOption){
+            case 'price-high-low':
+             sortConfig={'variants.0.price':-1};
+             break;
+            case 'price-low-high':
+             sortConfig={"variants.0.price":1};
+            break;
+            case 'name-a-z':
+                sortConfig = { productName: 1 };
+                break;
+            case 'name-z-a': // Fixed typo
+                sortConfig = { productName: -1 };
+                break;
+            case 'new-arrivals':
+            sortConfig={createdOn:-1};
+            break;
+            default:
+            sortConfig={createdOn:-1};
+            break;
+        }
+
+        const productData = await product.find(baseQuery)
         .populate("category")
         .lean()
-        .select("productName variants category")
-        // productData = productData.slice(0,4);
+        .select("productName category variants")
+        .sort(sortConfig)
+
+        const renderOptions ={
+            products:productData,
+            currentSort:sortOption
+        };
+
         if(user){
-            const userData = await Users.findOne({_id:user._id});
-            console.log("loadmen",userData);
-            res.render('user/userlandingpage',{
-                data:userData,
-                products:productData,
-    
-            })
+            return res.render("user/userlandingpage",renderOptions)
         }else{
-            res.render('user/userlandingpage',{
-                products:productData
-            })
+            return res.render("user/userlandingpage",renderOptions)
         }
+
     } catch (error) {
     console.log("error in loadmen",error.message)
   }
 }
 // women page
-const loadWomen =  async (req,res)=>{       
-
+const loadWomen = async (req, res) => {
     try {
         const user = req.session.user;
+        const sortOption = req.query.sort || 'default';
 
         // Find the "women" category
         const womenCategory = await Category.findOne({ isListed: true, name: "women" });
         if (!womenCategory) {
-            // If the "women" category is not found, render an empty list
-            return res.render("user/women", { products: [] });
+            return res.render("user/women", { 
+                products: [],
+                currentSort: sortOption 
+            });
         }
 
-        // Fetch products for the "women" category
-        const productData = await Product.find({
+        // Base query
+        const baseQuery = {
             isBlocked: false,
-            category: womenCategory._id, // Filter by "women" category ID
-        })
-        .populate("category")
-        .select("productName variants category")
-        .lean();
-    if(user){
-        res.render("user/women",{
-            products:productData
-        })
-    }else{
-        res.render('user/women',{
-            products:productData
-        });
+            category: womenCategory._id,
+        };
+
+        // Determine sort configuration
+        let sortConfig = {};
+        switch (sortOption) {
+            case 'price-high-low':
+                sortConfig = { 'variants.0.price': -1 };
+                break;
+            case 'price-low-high':
+                sortConfig = { 'variants.0.price': 1 };
+                break;
+            case 'name-a-z':
+                sortConfig = { productName: 1 };
+                break;
+            case 'name-z-a':
+                sortConfig = { productName: -1 };
+                break;
+            case 'new-arrivals':
+                sortConfig = { createdOn: -1 };
+                break;
+            default:
+                sortConfig = { createdOn: -1 }; // Default sorting
+        }
+
+        // Fetch products with sorting
+        const productData = await Product.find(baseQuery)
+            .populate("category")
+            .select("productName variants category")
+            .sort(sortConfig)
+            .lean()
+
+        // Render the page with products and current sort option
+        const renderOptions = {
+            products: productData,
+            currentSort: sortOption
+        };
+
+        if (user) {
+            res.render("user/women", renderOptions);
+        } else {
+            res.render('user/women', renderOptions);
+        }
+
+    } catch (error) {
+        console.log("error in loadwomen", error.message, error.stack);
+        res.status(500).render('error', { message: 'Internal server error' });
     }
-   } catch (error) {
-    console.log("error in loadwomen",error.message,error.stack);
-    
-   }
-}
+};
 // kids page
 const loadKids =async (req,res)=>{
   try {
     const user = req.session.user;
+    const sortOption = req.query.sort || "default";
+
     const kidsCategory = await Category.findOne({isListed:true,name:"kids"});
 
     if(!kidsCategory){
-        return res.render('user/kids',{products:[]});
-    }
-    const productData = await Product.find({
-        isBlocked:false,
-        category:kidsCategory._id,
-        
-    })
-    .select("productName variants category")
-    .lean()
-    .populate("category")
-
-    if(user){
-        res.render('user/kids',{
-            products:productData
-        })
-    }else{
-        res.render("user/kids",{
-            products:productData
+        return res.render("user/kids",{
+            products:[],
+            currentSort:sortOption
         });
     }
+
+    const baseQuery={
+        isBlocked:false,
+        category:kidsCategory._id
+    };
+    let sortConfig={};
+    switch(sortOption){
+        case 'price-low-high':
+            sortConfig = {'variants.0.price':1};
+            break;
+        case 'price-high-low':
+            sortConfig={'variants.0.price': -1};
+            break;
+        case 'name-a-z':
+            sortConfig={productName: 1};
+            break;
+        case 'name-z-a':
+            sortConfig={productName: -1};
+            break;
+        case 'new arrivals':
+            sortConfig={createdOn: -1};
+            break;
+        default:
+            sortConfig={createdOn: -1};
+            break;
+    }
+
+     const productData = await product
+    .find(baseQuery)
+    .populate("category")
+    .lean()
+    .select("variants productName category")
+    .sort(sortConfig);
+    
+    const renderOptions={
+        products:productData,
+        currentSort:sortOption
+    };
+
+    if(user){
+        return res.render('user/kids',renderOptions)
+    }else{
+        return res.render("user/kids",renderOptions)
+    }
+
+
+     
   } catch (error) {
+    console.log("error in kids",error.message);
     
   }
 }  
+
+// user search
+    // const userSearch = async (req,res)=>{
+    //    try {
+    //     const searchedItem = req.query.search || ""
+
+    //     const products = await product.find({name:{$regex:searchedItem,$options:"i"}});
+
+    //     res.json(products);
+
+    //    } catch (error) {
+    //     console.log("error in user search",error.message);
+    //    }
+    // }
+
+
 
 otp_verification =  (req,res)=>{
     return res.render('user/otp-verification');
@@ -422,6 +531,7 @@ module.exports={
     logOut,
     loadWomen,
     loadKids,
+    // userSearch,
    
    
 }

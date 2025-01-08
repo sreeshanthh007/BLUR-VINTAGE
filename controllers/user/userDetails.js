@@ -27,6 +27,9 @@ const updateDetails = async(req,res)=>{
     console.log("body in update details",req.body);
     
     const {firstName,lastName,phoneNo,email} = req.body;
+    if(firstName==""|| phoneNo=="" || email==""){
+        return res.status(400).json({success:false,message:"all fields are required to be filled"});
+    }
 
      const updateUserDetails = await users.findOneAndUpdate(
       { email: email },  // Search by email
@@ -39,7 +42,7 @@ const updateDetails = async(req,res)=>{
     );
 
     if(updateUserDetails){
-        res.status(200).json({success:true,message:"details updated successfully"});
+        res.status(200).json({success:true,message:"details updated successfully",redirectUrl:"/user/manage"});
     }else{
         res.status(404).json({success:false,message:"user not found"})
     }

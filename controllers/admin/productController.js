@@ -13,7 +13,6 @@ const Category = require('../../models/categorySchema');
 
 
 // for options in the add category
-
 loadAddCategory = async(req,res)=>{
     try {
         const categories = await Category.find();

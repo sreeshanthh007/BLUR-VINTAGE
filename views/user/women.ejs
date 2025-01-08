@@ -1,140 +1,79 @@
 <%-include ("../../views/partials/user/landingpageHeader")%>
+
+<head>
+<style>
+    .form-select-sm {
+    padding-right: 2rem;
+    background-color: white;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    font-size: 0.875rem;
+}
+
+.form-select-sm:focus {
+    border-color: black;
+    box-shadow: none;
+}
+</style>
+</head>
 <body>
+
+    <select id="sortSelect" class="form-select form-select-sm" style="width: auto; margin-top: 10px;">
+        <option value="" disabled <%= currentSort === 'default' ? 'selected' : '' %>>sort By</option>
+        <option value="price-high-low" <%= currentSort === 'price-high-low' ? 'selected' : '' %>>Price: High to Low</option>
+        <option value="price-low-high" <%= currentSort === 'price-low-high' ? 'selected' : '' %>>Price: Low to High</option>
+        <option value="name-a-z" <%= currentSort === 'name-a-z' ? 'selected' : '' %>>Name: A to Z</option>
+        <option value="name-z-a" <%= currentSort === 'name-z-a' ? 'selected' : '' %>>Name: Z to A</option>
+        <option value="new-arrivals" <%= currentSort === 'new-arrivals' ? 'selected' : '' %>>New Arrivals</option>
+    </select>
     <!-- Header -->
     <main class="container-fluid px-2 px-sm-3 px-md-4 py-3 py-md-5">
-        <% for (let i = 0; i < products.length; i++) { %>
-            <div class="col-6 col-sm-4 col-lg-3">
-                <div class="product-card">
-                    <div class="product-image-container">
-                        <a href="/user/buy?id=<%= products[i]._id %>">
-                            <% if (products[i].variants && products[i].variants.length > 0 && 
-                                  products[i].variants[0].productImage && products[i].variants[0].productImage.length > 0) { %>
-                                <img src="<%= products[i].variants[0].productImage[0] %>" 
-                                     alt="<%= products[i].productName %>" 
-                                     class="img-fluid">
-                            <% } else { %>
-                                <img src="/images/default-product.jpg" 
-                                     alt="No image available" 
-                                     class="img-fluid">
-                            <% } %>
-                        </a>
+        <div class="row g-2 g-sm-3 g-md-4"> <!-- Added row wrapper -->
+            <% for (let i = 0; i < products.length; i++) { %>   
+                <div class="col-6 col-sm-4 col-lg-3"> <!-- Moved column div inside loop -->
+                    <div class="product-card">
+                        <div class="product-image-container">
+                            <a href="/user/buy?id=<%= products[i]._id %>">
+                                <% if (products[i].variants && products[i].variants.length > 0 && 
+                                      products[i].variants[0].productImage && products[i].variants[0].productImage.length > 0) { %>
+                                    <img src="<%= products[i].variants[0].productImage[0] %>" 
+                                         alt="<%= products[i].productName %>" 
+                                         class="img-fluid">
+                                <% } else { %>
+                                    <img src="/images/default-product.jpg" 
+                                         alt="No image available" 
+                                         class="img-fluid">
+                                <% } %>
+                            </a>
+                        </div>
+                        <h3 class="product-title fs-5 fw-bold"><%= products[i].productName %></h3>
+                        <% if (products[i].variants && products[i].variants.length > 0) { %>
+                            <p class="product-price" style="font-weight: bolder;">
+                                Rs/-<%= products[i].variants[0].price %>
+                            </p>
+                        <% } else { %>
+                            <p class="product-price" style="font-weight: bolder;">Price not available</p>
+                        <% } %>
                     </div>
-                    <h3 class="product-title fs-5 fw-bold"><%= products[i].productName %></h3>
-                    <% if (products[i].variants && products[i].variants.length > 0) { %>
-                        <p class="product-price " style="font-weight: bolder;">
-                            Rs/-<%= products[i].variants[0].price %>
-                        </p>
-                    <% } else { %>
-                        <p class="product-price" style="font-weight: bolder;">Price not available</p>
-                    <% } %>
                 </div>
-            </div>
-        <% } %>
-    </main>
-   
-            <!-- Repeat for other products -->
-            <!-- <div class="col-6 col-sm-4 col-lg-3">
-                <div class="product-card">
-                    <div class="product-image-container">
-                        <img src="/images/girls.jpeg"" alt="EMBOSSED WOOL SWEATER" class="img-fluid">
-                    </div>
-                    <h3 class="product-title">EMBOSSED WOOL SWEATER</h3>
-                    <p class="product-price">Rs.1799/-</p>
-                </div>
-            </div>
-            <div class="col-6 col-sm-4 col-lg-3">
-                <div class="product-card">
-                    <div class="product-image-container">
-                        <img src="/images/girls.jpeg"" alt="GC COTTON EMBROIDERED HAT" class="img-fluid">
-                    </div>
-                    <h3 class="product-title">GC COTTON EMBROIDERED HAT</h3>
-                    <p class="product-price">Rs.1799/-</p>
-                </div>
-            </div>
-            <div class="col-6 col-sm-4 col-lg-3">
-                <div class="product-card">
-                    <div class="product-image-container">
-                        <img src="/images/girls.jpeg"" alt="LOOSE FIT FLANNEL SHIRT" class="img-fluid">
-                    </div>
-                    <h3 class="product-title">LOOSE FIT FLANNEL SHIRT</h3>
-                    <p class="product-price">Rs.1799/-</p>
-                </div>
-            </div>
-            <div class="col-6 col-sm-4 col-lg-3">
-                <div class="product-card">
-                    <div class="product-image-container">
-                        <img src="/images/girls.jpeg"" alt="LOOSE FIT PRINTED HOODIE" class="img-fluid">
-                    </div>
-                    <h3 class="product-title">LOOSE FIT PRINTED HOODIE</h3>
-                    <p class="product-price">Rs.1799/-</p>
-                </div>
-            </div>
-            <div class="col-6 col-sm-4 col-lg-3">
-                <div class="product-card">
-                    <div class="product-image-container">
-                        <img src="/images/girls.jpeg"" alt="BAGGY JEANS" class="img-fluid">
-                    </div>
-                    <h3 class="product-title">BAGGY JEANS</h3>
-                    <p class="product-price">Rs.1799/-</p>
-                </div>
-            </div>
-            <div class="col-6 col-sm-4 col-lg-3">
-                <div class="product-card">
-                    <div class="product-image-container">
-                        <img src="/images/girls.jpeg"" alt="REGULAR FIT DENIM OVERSHIRT" class="img-fluid">
-                    </div>
-                    <h3 class="product-title">REGULAR FIT DENIM OVERSHIRT</h3>
-                    <p class="product-price">Rs.1799/-</p>
-                </div>
-            </div>
-            <div class="col-6 col-sm-4 col-lg-3">
-                <div class="product-card">
-                    <div class="product-image-container">
-                        <img src="/images/girls.jpeg"" alt="OVERSIZED FIT COTTON SWEATSHIRT" class="img-fluid">
-                    </div>
-                    <h3 class="product-title">OVERSIZED FIT COTTON SWEATSHIRT</h3>
-                    <p class="product-price">Rs.1799/-</p>
-                </div>
-            </div>
-            <div class="col-6 col-sm-4 col-lg-3">
-                <div class="product-card">
-                    <div class="product-image-container">
-                        <img src="/images/girls.jpeg"" alt="OVERSIZED FIT COTTON SWEATSHIRT" class="img-fluid">
-                    </div>
-                    <h3 class="product-title">OVERSIZED FIT COTTON SWEATSHIRT</h3>
-                    <p class="product-price">Rs.1799/-</p>
-                </div>
-            </div>
-            <div class="col-6 col-sm-4 col-lg-3">
-                <div class="product-card">
-                    <div class="product-image-container">
-                        <img src="/images/girls.jpeg"" alt="OVERSIZED FIT COTTON SWEATSHIRT" class="img-fluid">
-                    </div>
-                    <h3 class="product-title">OVERSIZED FIT COTTON SWEATSHIRT</h3>
-                    <p class="product-price">Rs.1799/-</p>
-                </div>
-            </div>
-            <div class="col-6 col-sm-4 col-lg-3">
-                <div class="product-card">
-                    <div class="product-image-container">
-                        <img src="/images/girls.jpeg"" alt="OVERSIZED FIT COTTON SWEATSHIRT" class="img-fluid">
-                    </div>
-                    <h3 class="product-title">OVERSIZED FIT COTTON SWEATSHIRT</h3>
-                    <p class="product-price">Rs.1799/-</p>
-                </div>
-            </div>
-            <div class="col-6 col-sm-4 col-lg-3">
-                <div class="product-card">
-                    <div class="product-image-container">
-                        <img src="/images/girls.jpeg"" alt="OVERSIZED FIT COTTON SWEATSHIRT" class="img-fluid">
-                    </div>
-                    <h3 class="product-title">OVERSIZED FIT COTTON SWEATSHIRT</h3>
-                    <p class="product-price">Rs.1799/-</p>
-                </div>
-            </div> -->
+            <% } %>
         </div>
+    </main>
+    </div>
     </main>
 
     <%-include ("../../views/partials/user/footer")%>
 </body>
 </html>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+    const sortSelect = document.getElementById('sortSelect');
+    
+    sortSelect.addEventListener('change', async function() {
+        const selectedValue = this.value;
+        const currentUrl = new URL(window.location.href);
+        currentUrl.searchParams.set('sort', selectedValue);
+        window.location.href = currentUrl.toString();
+    });
+});
+</script>

@@ -28,9 +28,12 @@
                     <%if(user){%>
                     <h3 class="mb-4" style="text-align: center; font-weight: bold;">Edit your Profile</h3>
                     <%}else{%>
-                        <h3 class="mb-4" style="text-align: center; font-weight: bold;">please login or register</h3>
+                        <a href="/user/login" style="text-decoration: none;">
+                            <h3 class="mb-4"  style="text-align: center; font-weight: bold;  color: #000; ">click here to login or register</h3>
+                        </a>
+                        
                         <%}%>
-                    <form action="/user/manage" method="post" id="updateForm">
+                    <form  id="updateForm">
                         <div class="mb-3 ">
                             <label for="firstName" class="form-label ">First name</label>
                             <input type="text" class="form-control" name="firstName" id="firstName" required" value="<%=user? user.firstName : ""%>">
@@ -69,173 +72,180 @@
 </html>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
+  document.addEventListener('DOMContentLoaded', function() {
     const logOutBtn = document.getElementById("logOutBtn");
-    logOutBtn.addEventListener("click",async function(e){
-        e.preventDefault();
-
-        try{
-            const response =  await fetch("/user/logout",{
-            method:"post",
-        });
-
-        const data = await response.json();
-       
-
-        if(data.success){
-            Swal.fire({
-                icon:"success",
-                title:"log out successfully",
-                timer:1000
-            }).then(()=>{
-                window.location.href = "/user/login";
-            })
-        }else{
-            Swal.fire({
-                icon:"error",
-                title:"server error"
-            });
-        }
-        }catch(err){
-            console.log('error while login out',err);
-            Swal.fire({
-                icon:"error",
-                title:"server error"
-            });
-        }
-    });
-
-
     const form = document.getElementById('updateForm');
-const firstName = document.getElementById('firstName');
-const lastName = document.getElementById('lastName');
-const email = document.getElementById('email');
-const phone = document.getElementById('phone');
+    const firstName = document.getElementById('firstName');
+    const lastName = document.getElementById('lastName');
+    const email = document.getElementById('email');
+    const phone = document.getElementById('phone');
 
-// Validation patterns
-const patterns = {
-    firstName: /^[A-Za-z]{2,30}$/,
-    lastName: /^[A-Za-z]{2,30}$/,
-    email: /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/,
-    phone: /^[0-9]{10}$/
-};
+    // Validation patterns
+    const patterns = {
+        firstName: /^[A-Za-z]{2,30}$/,
+        lastName: /^[A-Za-z]{2,30}$/,
+        email: /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/,
+        phone: /^[0-9]{10}$/
+    };
 
-// Error messages
-const errorMessages = {
-    firstName: 'First name should be 2-30 characters long and contain only letters',
-    lastName: 'Last name should be 2-30 characters long and contain only letters',
-    email: 'Please enter a valid email address',
-    phone: 'Please enter a valid 10-digit phone number'
-};
+    // Error messages
+    const errorMessages = {
+        firstName: 'First name should be 2-30 characters long and contain only letters',
+        lastName: 'Last name should be 2-30 characters long and contain only letters',
+        email: 'Please enter a valid email address',
+        phone: 'Please enter a valid 10-digit phone number'
+    };
 
-// Function to show error
-function showError(input, message) {
-    const errorDiv = input.nextElementSibling;
-    errorDiv.textContent = message;
-    input.classList.remove('is-valid');
-    input.classList.add('is-invalid');
-}
-
-// Function to show success
-function showSuccess(input) {
-    const errorDiv = input.nextElementSibling;
-    errorDiv.textContent = '';
-    input.classList.remove('is-invalid');
-    input.classList.add('is-valid');
-}
-
-// Function to validate a field
-function validateField(input, pattern) {
-    if (!pattern.test(input.value)) {
-        showError(input, errorMessages[input.id]);
-        return false;
-    } else {
-        showSuccess(input);
-        return true;
+    // Function to show error
+    function showError(input, message) {
+        const errorDiv = input.nextElementSibling;
+        errorDiv.textContent = message;
+        input.classList.remove('is-valid');
+        input.classList.add('is-invalid');
     }
-}
 
-// Add live validation to input fields
-[firstName, lastName, phone].forEach(input => {
-    input.addEventListener('input', () => {
-        validateField(input, patterns[input.id]);
-    });
+    // Function to show success
+    function showSuccess(input) {
+        const errorDiv = input.nextElementSibling;
+        errorDiv.textContent = '';
+        input.classList.remove('is-invalid');
+        input.classList.add('is-valid');
+    }
 
-    // Also validate on blur
-    input.addEventListener('blur', () => {
-        if (input.value.trim() === '') {
-            showError(input, 'This field is required');
+    // Function to validate a field
+    function validateField(input, pattern) {
+        if (!pattern.test(input.value)) {
+            showError(input, errorMessages[input.id]);
+            return false;
         } else {
-            validateField(input, patterns[input.id]);
+            showSuccess(input);
+            return true;
         }
-    });
-});
+    }
 
+    // Logout button event listener
+    if (logOutBtn) {
+        logOutBtn.addEventListener("click", async function(e) {
+            e.preventDefault();
+            try {
+                const response = await fetch("/user/logout", {
+                    method: "post",
+                });
+                const data = await response.json();
+                if (data.success) {
+                    Swal.fire({
+                        icon: "success",
+                        title: "log out successfully",
+                        timer: 1500
+                    }).then(() => {
+                        window.location.href = "/user/login";
+                    });
+                } else {
+                    Swal.fire({
+                        icon: "error",
+                        title: "server error"
+                    });
+                }
+            } catch (err) {
+                console.log('error while login out', err);
+                Swal.fire({
+                    icon: "error",
+                    title: "server error"
+                });
+            }
+        });
+    }
 
-
-
-updateForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
-    // Validate all fields
-    let isValid = true;
+    // Add live validation to input fields
     [firstName, lastName, phone].forEach(input => {
-        if (input.value.trim() === '') {
-            showError(input, 'This field is required');
-            isValid = false;
-        } else if (!validateField(input, patterns[input.id])) {
-            isValid = false;
+        if (input) {
+            input.addEventListener('input', () => {
+                validateField(input, patterns[input.id]);
+            });
+
+            // Also validate on blur
+            input.addEventListener('blur', () => {
+                if (input.value.trim() === '') {
+                    showError(input, 'This field is required');
+                } else {
+                    validateField(input, patterns[input.id]);
+                }
+            });
         }
     });
 
-    if (!isValid) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Validation Error',
-            text: 'Please check all fields and try again'
-        });
-        return;
-    }
-
-    // If validation passes, proceed with your existing form submission logic
-    const formData = new FormData(updateForm);
-    const formObject = Object.fromEntries(formData.entries());
-
-    try {
-        const response = await fetch("/user/manage", {
-            method: "post",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(formObject),
-        });
-
-        const result = await response.json();
-
-        if (response.ok) {
-            Swal.fire({
-                icon: "success",
-                title: "Updated!",
-                text: "Your details have been successfully updated",
-            }).then(() => {
-                window.location.reload();
+    // Form submit event listener
+    if (form) {
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // Validate all fields
+            let isValid = true;
+            [firstName, lastName, phone].forEach(input => {
+                if (input.value.trim() === '') {
+                    showError(input, 'This field is required');
+                    isValid = false;
+                } else if (!validateField(input, patterns[input.id])) {
+                    isValid = false;
+                }
             });
-        } else {
-            Swal.fire({
-                icon: "error",
-                title: "Error",
-                text: result.message
-            });
-        }
-    } catch (error) {
-        console.log("Error in sending data to backend in userdetails", error);
-        Swal.fire({
-            icon: "error",
-            title: "Error",
-            text: "An unexpected error occurred. Please try again later."
+
+            if (!isValid) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Validation Error',
+                    text: 'Please check all fields and try again'
+                });
+                return;
+            }
+
+            const formData = new FormData(form);
+            const formObject = Object.fromEntries(formData.entries());
+
+            try {
+                const response = await fetch("/user/manage", {
+                    method: "post",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(formObject),
+                });
+                
+                const result = await response.json();
+                console.log("result", result);
+                if(result.noChanges){
+                    Swal.fire({
+                        icon:"error",
+                        text:"no changes made"
+                    })
+                }
+                if (result.success) {
+                    Swal.fire({
+                        icon: "success",
+                        title: "Updated!",
+                        text: result.message,
+                        timer: 1500,
+                    }).then(() => {
+                        window.location.href = result.redirectUrl;
+                    });
+                } else {
+                    Swal.fire({
+                        icon: "error",
+                        title: "Error",
+                        text: result.message
+                    });
+                }
+            } catch (error) {
+                console.log("Error in sending data to backend in userdetails", error);
+                Swal.fire({
+                    icon: "error",
+                    title: "Error",
+                    text: "An unexpected error occurred. Please try again later."
+                });
+            }
         });
     }
 });
-
 
 
 </script>
