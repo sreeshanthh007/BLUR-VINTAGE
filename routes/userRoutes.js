@@ -43,10 +43,21 @@ router.post("/manage",userDetailscController.updateDetails)
 router.get("/cart",cartDetailsController.getCart);
 // add to cart
 router.post('/cart/add',cartDetailsController.addtoCart)
+// remove products from cart
+router.delete('/cart/remove/:id/:itemId',cartDetailsController.removeProducts);
+// update quantity 
+router.put("/cart/update-quantity",cartDetailsController.updateQuantity);
 
-router.delete("/cart/remove/:id",cartDetailsController.removeProducts)
+// checkout page
+router.get("/checkout",cartDetailsController.checkout)
 // manage address page
 router.get("/address",userDetailscController.getAddress);
+// show existing address in the checkout page
+router.get("/addresses",cartDetailsController.addresses);
+
+router.post("/addresses",cartDetailsController.addNewAddress);
+
+router.post("/update-address",cartDetailsController.updateAddress)
 
 // edit address page
 router.get("/editAddress/:id",userDetailscController.editAddress);
@@ -62,7 +73,7 @@ router.get("/deleteAddress",userDetailscController.deleteAddress);
 router.put("/editAddress/:id",userDetailscController.updateAddress)
 
 // searching
-// router.get("/search",userController.userSearch);
+router.get("/search",userController.userSearch);
 
 
 

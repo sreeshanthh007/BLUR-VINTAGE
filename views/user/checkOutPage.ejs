@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BLUR VINTAGE - Checkout</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        /* Custom CSS */
+        .search-input {
+            background-color: #f8f9fa;
+            border-radius: 50px;
+            padding-left: 40px;
+        }
+        
+        .search-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6c757d;
+        }
+
+        .product-image {
+            max-width: 150px;
+            width: 100%;
+            height: auto;
+        }
+
+        .rating {
+            color: #198754;
+        }
+
+        .payment-option {
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            cursor: pointer;
+        }
+
+        .payment-option.active {
+         
+            background-color: #f8f9fa;
+        }
+
+        .confirm-btn {
+            background-color: #212529;
+            border: none;
+            padding: 12px 24px;
+        }
+
+        .confirm-btn:hover {
+            background-color: #343a40;
+        }
+
+        .social-links {
+            gap: 20px;
+        }
+
+        .social-links a {
+            color: #212529;
+            text-decoration: none;
+        }
+
+        footer {
+            background-color: #f8f9fa;
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <!-- Header -->
+    <%-include('../../views/partials/user/header.ejs')%>
+
+    <!-- Main Content -->
+    <main class="container py-5">
+        <div class="row g-4">
+            <!-- Checkout Form -->
+            <div class="col-lg-8">
+                <!-- Product Summary -->
+                <% cart.items.forEach(item => { %>
+                    <div class="bg-white p-4 rounded shadow-sm mb-4">
+                        <div class="d-flex gap-4 align-items-center">
+                            <img src="<%= item.productImage %>" alt="<%= item.product.productName %>" class="product-image">
+                            <div>
+                                <h2 class="h5 mb-2"><%= item.product.productName %></h2>
+                                <p class="mb-2">Size: <%= item.size %> | Color: <%= item.colorName %></p>
+                                <p class="h5 mb-2">
+                                    PRICE: Rs. <%= item.discountedPrice || item.price %>
+                                    <% if (item.discountedPrice) { %>
+                                        <small class="text-muted text-decoration-line-through">Rs. <%= item.price %></small>
+                                    <% } %>
+                                </p>
+                                <p class="mb-2">Quantity: <%= item.quantity %></p>
+                                <p class="text-success mb-0">Free shipping</p>
+                            </div>
+                        </div>
+                    </div>
+                <% }); %>
+    
+                <!-- Delivery Address -->
+                <div class="bg-white p-4 rounded shadow-sm mb-4">
+                    <h3 class="h5 mb-4">Delivery Address</h3>
+                    <% if (address) { %>
+                        <div class="mb-3">
+                            <label class="form-label">Name</label>
+                            <input type="text" class="form-control" value="<%= address.name %>" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Phone</label>
+                            <input type="text" class="form-control" value="<%= address.phone %>" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Address</label>
+                            <textarea class="form-control" rows="3" readonly> landMark: <%= address.landMark %>, city :  <%= address.city %>, state:  <%= address.state %>, country:  <%= address.country %> pincode : <%= address.pincode %></textarea>
+                        </div>
+                    <% } else { %>
+                        <p class="text-danger">No delivery address found. Please add an address.</p>
+                    <% } %>
+                    <button type="button" class="btn btn-link p-0" onclick="window.location.href='/user/address/add'">
+                        <%= address ? 'Change delivery address' : 'Add a delivery address' %>
+                    </button>
+                </div>
+
+
+                <div class="modal fade" id="addressSelectionModal" tabindex="-1" aria-labelledby="addressSelectionModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                      <div class="modal-content">
+                        <div class="modal-header">
+                          <h5 class="modal-title" id="addressSelectionModalLabel">Select Delivery Address</h5>
+                          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                          <div id="addressList">
+                            <!-- Address cards will be dynamically populated here -->
+                          </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <button type="button" class="btn btn-primary" id="toggleAddAddress">Add New Address</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+    
+                <!-- Payment Options -->
+                <div class="bg-white p-4 rounded shadow-sm mb-4">
+                    <h3 class="h5 mb-4">Payment Options</h3>
+                    <div class="payment-option active">
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="payment" id="cod" checked>
+                            <label class="form-check-label" for="cod">Cash on delivery</label>
+                        </div>
+                    </div>
+                    <div class="payment-option">
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="payment" id="bank">
+                            <label class="form-check-label" for="bank">Bank</label>
+                        </div>
+                    </div>
+                    <div class="payment-option">
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="payment" id="wallet">
+                            <label class="form-check-label" for="wallet">Wallet</label>
+                        </div>
+                    </div>
+                </div>
+    
+                <!-- Coupon -->
+                <div class="bg-white p-4 rounded shadow-sm">
+                    <div class="row g-2">
+                        <div class="col">
+                            <input type="text" class="form-control" placeholder="Coupon code">
+                        </div>
+                        <div class="col-auto">
+                            <button class="btn btn-dark">Apply code</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+    
+            <!-- Order Summary -->
+            <div class="col-lg-4">
+                <div class="bg-white p-4 rounded shadow-sm">
+                    <h3 class="h5 mb-4">Order Summary</h3>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Order value</span>
+                        <span>Rs. <%= cart.totalAmount.toFixed(2) %></span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-3">
+                        <span>Delivery charge</span>
+                        <span><%= deliveryCharge === 0 ? 'Free shipping' : `Rs. ${deliveryCharge}` %></span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-4">
+                        <span class="fw-bold">Total</span>
+                        <span class="fw-bold">Rs. <%= (cart.totalAmount + deliveryCharge).toFixed(2) %></span>
+                    </div>
+                    <button class="btn btn-dark w-100 confirm-btn" <%= !address ? 'disabled' : '' %>>
+                        Confirm order
+                    </button>
+                    <% if (!address) { %>
+                        <p class="text-danger small mt-2 mb-0">Please add a delivery address to proceed</p>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <%-include('../../views/partials/user/footer.ejs')%>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
+
+<script>
+    // Frontend JavaScript for handling the modal and address selection
+document.addEventListener('DOMContentLoaded', function() {
+    // Update the onclick handler for the change address button
+    const changeAddressBtn = document.querySelector('button[onclick="window.location.href=\'/user/address/add\'"]');
+    if (changeAddressBtn) {
+        changeAddressBtn.onclick = showAddressModal;
+    }
+
+    async function showAddressModal(e) {
+        e.preventDefault();
+        
+        try {
+            const response = await fetch('/user/addresses');
+            const addresses = await response.json();
+            
+            const addressList = document.getElementById('addressList');
+            addressList.innerHTML = `
+                <!-- Existing Addresses -->
+                <div class="existing-addresses mb-4">
+                    ${addresses.map(address => `
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" 
+                                           name="addressSelection" 
+                                           value="${address._id}"
+                                           id="address_${address._id}">
+                                    <label class="form-check-label" for="address_${address._id}">
+                                        <strong>${address.name}</strong><br>
+                                        ${address.phone}<br>
+                                        ${address.landMark}, ${address.city},<br>
+                                        ${address.state}, ${address.country} - ${address.pincode}
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+
+                <!-- Add New Address Form -->
+                <div class="add-address-form" style="display: none;">
+                    <form id="newAddressForm">
+                        <div class="mb-3">
+                            <label class="form-label">Name</label>
+                            <input type="text" class="form-control" name="name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Phone</label>
+                            <input type="tel" class="form-control" name="phone" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Landmark</label>
+                            <input type="text" class="form-control" name="landMark" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">City</label>
+                            <input type="text" class="form-control" name="city" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">State</label>
+                            <input type="text" class="form-control" name="state" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Country</label>
+                            <input type="text" class="form-control" name="country" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Pincode</label>
+                            <input type="text" class="form-control" name="pincode" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Save Address</button>
+                    </form>
+                </div>`;
+
+            // Update modal footer
+            const modalFooter = document.querySelector('.modal-footer');
+            modalFooter.innerHTML = `
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="toggleAddAddress">Add New Address</button>
+            `;
+
+            // Add event listeners
+            document.querySelectorAll('input[name="addressSelection"]').forEach(radio => {
+                radio.addEventListener('change', handleAddressSelection);
+            });
+
+            document.getElementById('toggleAddAddress').addEventListener('click', toggleAddressForm);
+            document.getElementById('newAddressForm').addEventListener('submit', handleNewAddress);
+
+            // Show the modal
+            const modal = new bootstrap.Modal(document.getElementById('addressSelectionModal'));
+            modal.show();
+        } catch (error) {
+            console.error('Error fetching addresses:', error);
+        }
+    }
+
+    function toggleAddressForm() {
+        const existingAddresses = document.querySelector('.existing-addresses');
+        const addAddressForm = document.querySelector('.add-address-form');
+        const toggleBtn = document.getElementById('toggleAddAddress');
+
+        if (addAddressForm.style.display === 'none') {
+            existingAddresses.style.display = 'none';
+            addAddressForm.style.display = 'block';
+            toggleBtn.textContent = 'Show Existing Addresses';
+        } else {
+            existingAddresses.style.display = 'block';
+            addAddressForm.style.display = 'none';
+            toggleBtn.textContent = 'Add New Address';
+        }
+    }
+
+    async function handleAddressSelection(e) {
+    const selectedAddressId = e.target.value;
+    
+    
+    try {
+        const response = await fetch('/user/update-address', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ addressId: selectedAddressId })
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            console.log("data",data)
+          window.location.reload();
+        } else {
+            throw new Error('Failed to update address');
+        }
+    } catch (error) {
+        console.error('Error updating address:', error);
+        alert('Failed to update delivery address. Please try again.');
+    }
+}
+    async function handleNewAddress(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(e.target);
+        const addressData = Object.fromEntries(formData.entries());
+
+        try {
+            const response = await fetch('/user/addresses', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(addressData)
+            });
+
+            if (response.ok) {
+                window.location.reload();
+            } else {
+                throw new Error('Failed to add address');
+            }
+        } catch (error) {
+            console.error('Error adding address:', error);
+            alert('Failed to add address. Please try again.');
+        }
+    }
+});
+</script>

@@ -8,69 +8,177 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css">
     <link rel="stylesheet" href="/styles/landingpage.css">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-</head>
 
-<!-- header starts -->
-<body>
-    <header class="py-3 bg-light">
-        <div class="container">
-            <div class="row align-items-center">
-                <!-- Left Section -->
-                <div class="col-4 d-flex align-items-center justify-content-start">
-                    <a href="#" class="text-dark me-3 text-decoration-none">Contact Us</a>
+    <style>
+            .search-result-item {
+        padding: 10px 15px;
+        border-bottom: 1px solid #eee;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .search-result-item:hover {
+        background-color: #f8f9fa;
+    }
+
+    .search-result-item img {
+        width: 40px;
+        height: 40px;
+        object-fit: cover;
+    }
+
+    .search-result-info {
+        flex: 1;
+    }
+
+    .search-result-name {
+        font-weight: 500;
+        margin-bottom: 2px;
+    }
+
+    .search-result-price {
+        color: #666;
+        font-size: 0.9em;
+    }       
+        </style>
+    </head>
+
+    <!-- header starts -->
+    <body>
+        <header class="py-3 bg-light">
+            <div class="container">
+                <div class="row align-items-center">
+                    <!-- Left Section -->
+                    <div class="col-4 d-flex align-items-center justify-content-start">
+                        <a href="#" class="text-dark me-3 text-decoration-none">Contact Us</a>
+                    </div>
+        
+                    <!-- Center Section -->
+                    <div class="col-4 text-center">
+                        <a class="m-0" style="font-family: 'Joan';font-size: 25px; text-decoration: none; color: black;" href="/user/home">BLUR VINTAGE ★</a>
+                    </div>
+        
+                    <!-- Right Section -->
+                    <div class="col-lg-3 col-md-4">
+                        <div class="d-flex align-items-center justify-content-end">
+                            <form class="d-flex me-3 position-relative">
+                                <input 
+                                    class="form-control form-control-sm me-2" 
+                                    type="search" 
+                                    placeholder="Search products..." 
+                                    aria-label="Search" 
+                                    id="searchInput"
+                                    autocomplete="off"
+                                >
+                                <button class="btn btn-outline-dark btn-sm" type="submit">
+                                    <i class="bi bi-search"></i>
+                                </button>
+                                <!-- Add this div for search results -->
+                                <div id="searchResults" class="position-absolute w-100 bg-white shadow-sm rounded-bottom" 
+                                    style="top: 100%; left: 0; z-index: 1000; display: none; max-height: 400px; overflow-y: auto;">
+                                </div>
+                            </form> 
+                            <a class="bi bi-person me-3" style="font-size: 1.5rem; color: black;" href="/user/manage"></a>
+                            <a class="bi bi-cart me-3" href="/user/cart" style="font-size: 1.5rem; color: black;"></a>
+                            <a class="bi bi-heart" style="font-size: 1.5rem; color: black;"></a>
+                        </div>
+                    </div>
                 </div>
-    
-                <!-- Center Section -->
-                <div class="col-4 text-center">
-                    <a class="m-0" style="font-family: 'Joan';font-size: 25px; text-decoration: none; color: black;" href="/user/home">BLUR VINTAGE ★</a>
-                </div>
-    
-                <!-- Right Section -->
-                <div class="col-lg-3 col-md-4">
-                    <div class="d-flex align-items-center justify-content-end">
-                        <form class="d-flex me-3">
-                            <input class="form-control form-control-sm me-2" type="search" placeholder="Search" aria-label="Search" id="searchInput">
-                            <button class="btn btn-outline-dark btn-sm" type="submit">
-                                <i class="bi bi-search"></i>
-                                <div id="searchResults"></div>
-                            </button>
-                        </form>
-                        <a class="bi bi-person me-3" style="font-size: 1.5rem; color: black;" href="/user/manage"></a>
-                        <a class="bi bi-cart me-3" href="/user/cart" style="font-size: 1.5rem; color: black;"></a>
-                        <a class="bi bi-heart" style="font-size: 1.5rem; color: black;"></a>
+        
+                <!-- Men, Women, Kids Navigation -->
+                <div class="row mt-3">
+                    <div class="col-12 text-center">
+                        <nav class="nav justify-content-center">
+                            <a class="nav-link mx-4 text-dark" href="/user/men" style="font-size: 1.2rem;">Men</a>
+                            <a class="nav-link mx-4 text-dark" href="/user/women" style="font-size: 1.2rem;">Women</a>
+                            <a class="nav-link mx-4 text-dark" href="/user/kids" style="font-size: 1.2rem;">Kids</a>
+                        </nav>
                     </div>
                 </div>
             </div>
-    
-            <!-- Men, Women, Kids Navigation -->
-            <div class="row mt-3">
-                <div class="col-12 text-center">
-                    <nav class="nav justify-content-center">
-                        <a class="nav-link mx-4 text-dark" href="/user/men" style="font-size: 1.2rem;">Men</a>
-                        <a class="nav-link mx-4 text-dark" href="/user/women" style="font-size: 1.2rem;">Women</a>
-                        <a class="nav-link mx-4 text-dark" href="/user/kids" style="font-size: 1.2rem;">Kids</a>
-                    </nav>
-                </div>
-            </div>
-        </div>
-    </header>
-    <!-- header ends -->
+        </header>
+        <!-- header ends -->
 
 
-    <script>
+        <script>
 
 
-       async function searchProducts(query) {
-        if(!query){
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('searchInput');
+        const searchResults = document.getElementById('searchResults');
+        let debounceTimer;
 
+        // Function to escape special characters in search query
+        function escapeRegExp(string) {
+            return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         }
-       }
 
+        // Function to highlight matching text
+        function highlightMatch(text, query) {
+            if (!query) return text;
+            const regex = new RegExp(`(${escapeRegExp(query)})`, 'gi');
+            return text.replace(regex, '<strong>$1</strong>');
+        }
 
+        async function searchProducts(query) {
+            if (!query.trim()) {
+                searchResults.style.display = 'none';
+                return;
+            }
 
+            try {
+                const response = await fetch(`/user/search?search=${encodeURIComponent(query)}`);
+                const data = await response.json();
 
-      const searchInput = document.getElementById("searchInput");
-      searchInput.addEventListener("input",(e)=>{
-        searchProducts(e.target.value);
-      });
+                if (data.products && data.products.length > 0) {
+                    const resultsHtml = data.products.map(product => `
+                        <div class="search-result-item" onclick="window.location.href='/user/buy?id=${product._id}'">
+                            <img src="${product.variants[0]?.productImage[0] || '/images/default-product.jpg'}" 
+                                alt="${product.productName}">
+                            <div class="search-result-info">
+                                <div class="search-result-name">
+                                    ${highlightMatch(product.productName, query)}
+                                </div>
+                                <div class="search-result-price">
+                                    Rs/-${product.variants[0]?.price || 'Price not available'}
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
+
+                    searchResults.innerHTML = resultsHtml;
+                    searchResults.style.display = 'block';
+                } else {
+                    searchResults.innerHTML = '<div class="p-3 text-center text-muted">No products found</div>';
+                    searchResults.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Search error:', error);
+                searchResults.innerHTML = '<div class="p-3 text-center text-danger">Error searching products</div>';
+                searchResults.style.display = 'block';
+            }
+        }
+
+        // Add input event listener with debounce
+        searchInput.addEventListener('input', (e) => {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                searchProducts(e.target.value);
+            }, 300);
+        });
+
+        // Close search results when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+                searchResults.style.display = 'none';
+            }
+        });
+
+        // Prevent form submission
+        searchInput.closest('form').addEventListener('submit', (e) => {
+            e.preventDefault();
+        });
+    });
     </script>

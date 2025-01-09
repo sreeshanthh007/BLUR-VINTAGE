@@ -152,21 +152,30 @@
     // setting the timer
     let time=30;
     const timeElement = document.getElementById('timer');
-
-    let interval = setInterval(()=>{
-        if(time>0){
-            time--;
-            timeElement.textContent = time;
-           
-        }else {
-             timeElement.textContent = "OTP Expired"
-             clearInterval(interval)
-        }
-    },1000);
+    let otpIsvalid=true;
+    let interval = setInterval(() => {
+    if(time > 0) {
+        time--;
+        timeElement.textContent = `OTP Expires in 00:${time < 10 ? '0' : ''}${time}`;
+    } else {
+        timeElement.textContent = "OTP Expired";
+        otpIsvalid = false; // Set OTP as invalid when timer expires
+        clearInterval(interval);
+    }
+}, 1000);
 
     document.getElementById('otp-form').addEventListener('submit', function (e) {
     e.preventDefault(); 
 
+
+    if(!otpIsvalid){
+        Swal.fire({
+            icon:"error",
+            text:"resent to get new otp",
+            title:"otp expired"
+        });
+        return;
+    }
     let result = "";
     const otpInputs = document.querySelectorAll('.otp-input');
     
@@ -221,11 +230,11 @@
 
 // resent otp
 
-document.getElementById('resent-otp').addEventListener('click',(e)=>{
-    e.preventDefault();
+document.getElementById('resent-otp').addEventListener('click',()=>{
 
     resent_otp();
 
+    
 
 })
 function resent_otp() {
@@ -236,13 +245,14 @@ function resent_otp() {
 
     // Reset the timer to 60 seconds
     time = 30;
-
+    // for expiring
+    otpIsvalid=true
     // Clear any previously entered OTP values
     let resentInputs = document.getElementById('otp-form').querySelectorAll('.otp-input');
     resentInputs.forEach((elm)=>{
         elm.value="";
     }); 
-
+    
     document.getElementById('timer').textContent="";
 
   let   resentInterval = setInterval(()=>{
@@ -250,8 +260,10 @@ function resent_otp() {
             time--;
             document.getElementById('timer').textContent = `time left:00:${time<10? 0 : " " }${time}`
         }else{
-            clearInterval(resentInterval)
             document.getElementById('timer').textContent="OTP expired";
+            // expired
+            isOTPValid-false;
+            clearInterval(resentInterval)
 
         }
     },1000)
@@ -263,7 +275,8 @@ function resent_otp() {
     },
     
 })
-.then((response)=>{
+
+  .then((response)=>{
     if(!response.ok){
         throw new Error("error occured in server");
     }

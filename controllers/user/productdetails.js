@@ -12,6 +12,8 @@ const productDetails=async (req,res)=>{
         const productId=req.query.id;
         
         
+        const stock = await Product.findById(productId);
+        
         
         const productData=await Product.findById(productId).populate({
             path:"category",
@@ -20,7 +22,6 @@ const productDetails=async (req,res)=>{
             user:userData,
             product:productData,
             images:productData.productImage,
-
         })
     }
     catch(error){

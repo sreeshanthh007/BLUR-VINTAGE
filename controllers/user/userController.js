@@ -141,9 +141,13 @@ const verifyOTP = async (req, res) => {
        console.log("saved",saveUser)
         await saveUser.save();
 
+       
+
           // Set the user ID in the session
           req.session.SavedUser = saveUser._id;
           console.log('session user',req.session.user) 
+          
+          delete req.session.userOTP;
 
         res.json({success:true,redirectUrl:"/user/login"})
       
@@ -496,18 +500,36 @@ const loadKids =async (req,res)=>{
 }  
 
 // user search
-    // const userSearch = async (req,res)=>{
-    //    try {
-    //     const searchedItem = req.query.search || ""
-
-    //     const products = await product.find({name:{$regex:searchedItem,$options:"i"}});
-
-    //     res.json(products);
-
-    //    } catch (error) {
-    //     console.log("error in user search",error.message);
-    //    }
-    // }
+    const userSearch = async (req,res)=>{
+        try {
+            const query = req.query.search;
+            
+            if (!query) {
+                return res.json({ products: [] });
+            }
+    
+            // Create search criteria
+            const searchCriteria = {
+                isBlocked: false,
+                $or: [
+                    { productName: { $regex: query, $options: 'i' } },
+                    { 'variants.sku': { $regex: query, $options: 'i' } }
+                ]
+            };
+    
+            // Fetch products
+            const products = await product.find(searchCriteria)
+                .populate('category')
+                .select('productName variants category')
+                .limit(10)
+                .lean();
+    
+            res.json({ products });
+        } catch (error) {
+            console.error('Search API error:', error);
+            res.status(500).json({ error: 'Internal server error' });
+        }
+    }
 
 
 
@@ -531,7 +553,7 @@ module.exports={
     logOut,
     loadWomen,
     loadKids,
-    // userSearch,
+    userSearch,
    
    
 }

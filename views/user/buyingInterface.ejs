@@ -136,7 +136,21 @@
                             <span class="ms-2">(90 Reviews)</span>
                         </div>
                     </div>
-
+                    <div class="stock-info mb-4">
+                        <div class="stock-info mb-4">
+                            <h6 class="mb-2">Stock Available:</h6>
+                            <div id="stockDisplay" class="d-flex gap-2 flex-wrap">
+                                <% if (product.variants && product.variants.length > 0) { %>
+                                    <% const selectedVariant = product.variants[0] %>
+                                    <p class="mb-0">
+                                        <span class="<%= selectedVariant.stock > 0 ? 'text-success' : 'text-danger' %>">
+                                            <%= selectedVariant.stock %> items
+                                        </span> 
+                                        available in <%= selectedVariant.colorName %> / <%= selectedVariant.size %>
+                                    </p>
+                                <% } %>
+                            </div>
+                        </div>
                     <!-- Accordion -->
                     <div class="accordion" id="productAccordion">
                         <div class="accordion-item">
@@ -444,49 +458,90 @@
         };
 
         try {
-    const response = await fetch('/user/cart/add', {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-    });
+        const response = await fetch('/user/cart/add', {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(data),
+        });
 
-    if (!response.ok) {
+        if (!response.ok) {
             if (response.redirected) {
-                // If redirected to login page
                 window.location.href = response.url;
                 return;
             }
-            throw new Error(`HTTP error! status: ${response.status}`);
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Failed to add product');
         }
 
-    const result = await response.json();
+        const result = await response.json();
 
-    if(result.success) {
-        Swal.fire({
-            icon: "success",
-            title: "Success",
-            text: result.message
-        });
-    } else {
+        if(result.success) {
+            // Update stock display
+            const stockDisplay = document.getElementById('stockDisplay');
+            if (stockDisplay) {
+                stockDisplay.innerHTML = `
+                    <p class="mb-0">
+                        <span class="${result.newStock > 0 ? 'text-success' : 'text-danger'}">
+                            ${result.newStock} items
+                        </span> 
+                        available in ${data.colorName} / ${data.size}
+                    </p>
+                `;
+            }
+
+            // Update product data in DOM
+            const variant = productData.variants.find(v => 
+                v.color === data.color && 
+                v.colorName === data.colorName && 
+                v.size === data.size
+            );
+            if (variant) {
+                variant.stock = result.newStock;
+                document.getElementById('productData').textContent = JSON.stringify(productData);
+            }
+
+            Swal.fire({
+                icon: "success",
+                title: "Success",
+                text: result.message
+            });
+        } else {
+            throw new Error(result.message || 'Failed to add product');
+        }
+    } catch (error) {
+        console.error("Error in buying interface:", error);
         Swal.fire({
             icon: "error",
             title: "Error",
-            text: result.message || "Failed to add product"
+            text: error.message || "Failed to add product to cart. Please try again."
         });
-    }
-} catch (error) {
-    console.error("Error in buying interface:", error);
-    Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: "Failed to add product to cart. Please try again."
-    });
-}
+    } 
     })
 });
+document.querySelectorAll('.color-circle').forEach(circle => {
+    circle.addEventListener('click', function() {
+        const color = this.dataset.color;
+        const colorName = this.dataset.colorName;
+        
+        // Find variant with matching color
+        const variant = <%- JSON.stringify(product.variants) %>.find(v => 
+            v.color === color && v.colorName === colorName
+        );
 
+        // Update stock display
+        const stockDisplay = document.getElementById('stockDisplay');
+        stockDisplay.innerHTML = `
+            <p class="mb-0">
+                <span class="${variant.stock > 0 ? 'text-success' : 'text-danger'}">
+                    ${variant.stock} items
+                </span> 
+                available in ${variant.colorName} / ${variant.size}
+            </p>
+        `;
+    });
+});
 
     
     </script>
