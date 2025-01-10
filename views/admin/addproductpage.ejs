@@ -84,6 +84,39 @@
             align-items: center;
             padding: 20px;
  }
+ .size-checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 5px;
+        }
+        
+        .size-checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 10px;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .size-checkbox-label:hover {
+            background-color: #f8f9fa;
+        }
+
+        .size-checkbox-label input:checked + span {
+            font-weight: bold;
+        }
+
+        .size-stock-inputs {
+            margin-top: 10px;
+            display: none;
+        }
+
+        .size-stock-inputs.active {
+            display: block;
+        }
 
  /* #cropperContainer .cropper-container {
             max-width: 90vw;

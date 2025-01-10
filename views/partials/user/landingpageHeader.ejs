@@ -41,7 +41,52 @@
     .search-result-price {
         color: #666;
         font-size: 0.9em;
-    }       
+    }   
+       .search-result-item {
+        padding: 10px 15px;
+        border-bottom: 1px solid #eee;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .search-result-item:hover {
+        background-color: #f8f9fa;
+    }
+
+    .search-result-item img {
+        width: 40px;
+        height: 40px;
+        object-fit: cover;
+    }
+
+    .search-result-info {
+        flex: 1;
+    }
+
+    .search-result-name {
+        font-weight: 500;
+        margin-bottom: 2px;
+    }
+
+    .search-result-price {
+        color: #666;
+        font-size: 0.9em;
+    }
+
+    .form-select-sm {
+        padding-right: 2rem;
+        background-color: white;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        font-size: 0.875rem;
+    }
+
+    .form-select-sm:focus {
+        border-color: black;
+        box-shadow: none;
+    }    
         </style>
     </head>
 
@@ -97,6 +142,19 @@
                         </nav>
                     </div>
                 </div>
+
+                <div class="row mt-3">
+                    <div class="col-12 d-flex justify-content-end pe-4">
+                        <select id="sortSelect" class="form-select form-select-sm" style="width: auto;">
+                            <option value="default" disabled selected>Sort By</option>
+                            <option value="price-high-low">Price: High to Low</option>
+                            <option value="price-low-high">Price: Low to High</option>
+                            <option value="name-a-z">Name: A to Z</option>
+                            <option value="name-z-a">Name: Z to A</option>
+                            <option value="new-arrivals">New Arrivals</option>
+                        </select>
+                    </div>
+                </div>
             </div>
         </header>
         <!-- header ends -->
@@ -105,80 +163,113 @@
         <script>
 
 
-    document.addEventListener('DOMContentLoaded', function() {
-        const searchInput = document.getElementById('searchInput');
-        const searchResults = document.getElementById('searchResults');
-        let debounceTimer;
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('searchInput');
+    const searchResults = document.getElementById('searchResults');
+    const sortSelect = document.getElementById('sortSelect');
+    let debounceTimer;
 
-        // Function to escape special characters in search query
-        function escapeRegExp(string) {
-            return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        }
+    // Function to escape special characters in search query
+    function escapeRegExp(string) {
+        return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
 
-        // Function to highlight matching text
-        function highlightMatch(text, query) {
-            if (!query) return text;
-            const regex = new RegExp(`(${escapeRegExp(query)})`, 'gi');
-            return text.replace(regex, '<strong>$1</strong>');
-        }
+    // Function to highlight matching text
+    function highlightMatch(text, query) {
+        if (!query) return text;
+        const regex = new RegExp(`(${escapeRegExp(query)})`, 'gi');
+        return text.replace(regex, '<strong>$1</strong>');
+    }
 
-        async function searchProducts(query) {
-            if (!query.trim()) {
-                searchResults.style.display = 'none';
-                return;
+    async function searchProducts(query) {
+        try {
+            // Get current sort value
+            const sortValue = sortSelect ? sortSelect.value : 'default';
+            const searchUrl = `/user/search?search=${encodeURIComponent(query)}${sortValue !== 'default' ? `&sort=${sortValue}` : ''}`;
+            
+            if (query.trim()) {
+                const response = await fetch(searchUrl);
+                if (!response.ok) throw new Error('Search failed');
+                
+                // Instead of handling JSON response, redirect to the URL
+                window.location.href = searchUrl;
+            } else {
+                // If search is empty, remove search parameter but keep sort
+                const currentUrl = new URL(window.location.href);
+                currentUrl.searchParams.delete('search');
+                window.location.href = currentUrl.toString();
             }
+        } catch (error) {
+            console.error('Search error:', error);
+        }
+    }
 
-            try {
-                const response = await fetch(`/user/search?search=${encodeURIComponent(query)}`);
-                const data = await response.json();
+    // Add input event listener with debounce for dropdown suggestions
+    searchInput.addEventListener('input', (e) => {
+        const query = e.target.value.trim();
+        
+        // Show dropdown suggestions
+        if (query.length >= 2) {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(async () => {
+                try {
+                    const response = await fetch(`/user/search?search=${encodeURIComponent(query)}&suggest=true`);
+                    const data = await response.json();
 
-                if (data.products && data.products.length > 0) {
-                    const resultsHtml = data.products.map(product => `
-                        <div class="search-result-item" onclick="window.location.href='/user/buy?id=${product._id}'">
-                            <img src="${product.variants[0]?.productImage[0] || '/images/default-product.jpg'}" 
-                                alt="${product.productName}">
-                            <div class="search-result-info">
-                                <div class="search-result-name">
-                                    ${highlightMatch(product.productName, query)}
-                                </div>
-                                <div class="search-result-price">
-                                    Rs/-${product.variants[0]?.price || 'Price not available'}
+                    if (data.products && data.products.length > 0) {
+                        const resultsHtml = data.products.map(product => `
+                            <div class="search-result-item" onclick="window.location.href='/user/buy?id=${product._id}'">
+                                <img src="${product.variants[0]?.productImage[0] || '/images/default-product.jpg'}" 
+                                    alt="${product.productName}">
+                                <div class="search-result-info">
+                                    <div class="search-result-name">
+                                        ${highlightMatch(product.productName, query)}
+                                    </div>
+                                    <div class="search-result-price">
+                                        Rs/-${product.variants[0]?.price || 'Price not available'}
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    `).join('');
+                        `).join('');
 
-                    searchResults.innerHTML = resultsHtml;
-                    searchResults.style.display = 'block';
-                } else {
-                    searchResults.innerHTML = '<div class="p-3 text-center text-muted">No products found</div>';
-                    searchResults.style.display = 'block';
+                        searchResults.innerHTML = resultsHtml;
+                        searchResults.style.display = 'block';
+                    } else {
+                        searchResults.innerHTML = '<div class="p-3 text-center text-muted">No products found</div>';
+                        searchResults.style.display = 'block';
+                    }
+                } catch (error) {
+                    console.error('Suggestion error:', error);
                 }
-            } catch (error) {
-                console.error('Search error:', error);
-                searchResults.innerHTML = '<div class="p-3 text-center text-danger">Error searching products</div>';
-                searchResults.style.display = 'block';
-            }
-        }
-
-        // Add input event listener with debounce
-        searchInput.addEventListener('input', (e) => {
-            clearTimeout(debounceTimer);
-            debounceTimer = setTimeout(() => {
-                searchProducts(e.target.value);
             }, 300);
-        });
-
-        // Close search results when clicking outside
-        document.addEventListener('click', (e) => {
-            if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
-                searchResults.style.display = 'none';
-            }
-        });
-
-        // Prevent form submission
-        searchInput.closest('form').addEventListener('submit', (e) => {
-            e.preventDefault();
-        });
+        } else {
+            searchResults.style.display = 'none';
+        }
     });
+
+    // Handle form submission
+    searchInput.closest('form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const query = searchInput.value.trim();
+        if (query) {
+            searchProducts(query);
+        }
+    });
+
+    // Close search results when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+            searchResults.style.display = 'none';
+        }
+    });
+
+    // Handle sorting
+    if (sortSelect) {
+        sortSelect.addEventListener('change', function() {
+            const currentUrl = new URL(window.location.href);
+            currentUrl.searchParams.set('sort', this.value);
+            window.location.href = currentUrl.toString();
+        });
+    }
+});
     </script>

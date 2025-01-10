@@ -500,46 +500,217 @@ const loadKids =async (req,res)=>{
 }  
 
 // user search
-    const userSearch = async (req,res)=>{
-        try {
-            const query = req.query.search;
-            
-            if (!query) {
-                return res.json({ products: [] });
-            }
-    
-            // Create search criteria
-            const searchCriteria = {
-                isBlocked: false,
-                $or: [
-                    { productName: { $regex: query, $options: 'i' } },
-                    { 'variants.sku': { $regex: query, $options: 'i' } }
-                ]
-            };
-    
-            // Fetch products
-            const products = await product.find(searchCriteria)
-                .populate('category')
-                .select('productName variants category')
-                .limit(10)
-                .lean();
-    
-            res.json({ products });
-        } catch (error) {
-            console.error('Search API error:', error);
+const userSearch = async (req, res) => {
+    try {
+        const query = req.query.search;
+        const sort = req.query.sort || 'default';
+        const isSuggestion = req.query.suggest === 'true';
+
+        if (!query && !isSuggestion) {
+            return res.redirect('/user/home');
+        }
+
+        // Create search criteria
+        const searchCriteria = {
+            isBlocked: false,
+            $or: [
+                { productName: { $regex: query, $options: 'i' } },
+                { 'variants.sku': { $regex: query, $options: 'i' } }
+            ]
+        };
+
+        // Create sort options
+        let sortOptions = {};
+        switch (sort) {
+            case 'price-high-low':
+                sortOptions = { 'variants.0.price': -1 };
+                break;
+            case 'price-low-high':
+                sortOptions = { 'variants.0.price': 1 };
+                break;
+            case 'name-a-z':
+                sortOptions = { productName: 1 };
+                break;
+            case 'name-z-a':
+                sortOptions = { productName: -1 };
+                break;
+            case 'new-arrivals':
+                sortOptions = { createdAt: -1 };
+                break;
+        }
+
+        // Fetch products
+        const products = await product.find(searchCriteria)
+            .sort(sortOptions)
+            .populate('category')
+            .lean();
+
+        // If it's a suggestion request, return JSON
+        if (isSuggestion) {
+            return res.json({ products: products.slice(0, 5) }); // Limit suggestions to 5
+        }
+
+        // Otherwise render the full page
+        res.render('user/userlandingpage', {
+            products,
+            currentSort: sort,
+            searchQuery: query
+        });
+
+    } catch (error) {
+        console.error('Search API error:', error);
+        if (req.query.suggest) {
             res.status(500).json({ error: 'Internal server error' });
+        } else {
+            res.status(500).render('error', { error: 'Internal server error' });
         }
     }
-
-
+};
 
 otp_verification =  (req,res)=>{
     return res.render('user/otp-verification');
 
 }
 
+const thankYou = async(req,res)=>{
+    return res.render("user/orderConfirmpage")
+}
+
+const orderDetails = async(req,res)=>{
+    return res.render("user/orderDetails")
+}
+
+const managePassword = async(req,res)=>{
+    return res.render('user/managePassword')
+}
+
+//  const updatePassword = async (req, res) => {
+//     try {
+//         const { oldPassword, newPassword } = req.body;
+//         const userId = req.session.user;
+
+//         const user = await Users.findById(userId);
+//         if (!user) {
+//             return res.status(404).json({ message: "User not found" });
+//         }
+
+//         // Compare with user's current hashed password
+//         const isValidPassword = await bcrypt.compare(oldPassword, user.password);
+        
+//         if (!isValidPassword) {
+//             return res.status(400).json({ message: "Current password is incorrect" });
+//         }
+
+//         const salt = await bcrypt.genSalt(10);
+//         const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+//         user.password = hashedPassword;
+//         await user.save();
+
+//         return res.status(200).json({ message: "Password updated successfully" });
+
+//     } catch (error) {
+//         console.log("Error in update password:", error.message);
+//         return res.status(500).json({ message: "Internal server error" });
+//     }
+// }
+
+const otpStore = {};
+const otpForPassword = async (req, res) => {
+    const { email } = req.body;
+    if (!email) {
+        return res.status(400).json({ message: "Email is required" });
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000);
+    otpStore[email] = { otp, expiresAt: Date.now() + 5 * 60 * 1000 };
+    console.log("otp store",otpStore);
+    
+    try {
+        const isMailSent = await sendVerificationEmail(email, otp);
+        if (!isMailSent) {
+            return res.status(500).json({ message: "Failed to send OTP" });
+        }
+        return res.status(200).json({ message: "OTP sent successfully" });
+    } catch (err) {
+        console.error("Error sending OTP:", err);
+        return res.status(500).json({ message: "Internal server error" });
+    }
+};
+
+const checkYourGmail = (req,res)=>{
+    return res.render("user/checkYourGmail")
+}
+
+const verifyResetPasswordOtp = async (req, res) => {
+    console.log("hello",req.body);
+    
+    const { email, otp } = req.body; 
+
+    if (!email || !otp) {
+        return res.status(400).json({ message: "Email and OTP are required" });
+    }
+
+    const storedOtpDetails = otpStore[email]; // Retrieve OTP for the email
+
+    if (!storedOtpDetails) {
+        return res.status(400).json({ message: "Expired or invalid OTP" });
+    }
+
+    const { otp: storedOtp, expiresAt } = storedOtpDetails;
+
+   
+    if (storedOtp !== parseInt(otp)) {
+        return res.status(400).json({ message: "OTP does not match" });
+    }
+
+   
+    if (expiresAt < Date.now()) {
+        delete otpStore[email]; // Cleanup expired OTP
+        return res.status(400).json({ message: "OTP has expired" });
+    }
+
+    // Successful verification
+    delete otpStore[email]; // Cleanup after successful verification
+    return res.status(200).json({ok:true, message: "OTP verified successfully" });
+};
+
+const resetPassword = async (req,res) => {
+    console.log(req.body);
+        
+    const {newPassword,email} = req.body;
+
+    if(!newPassword || !email){
+        return res.status(400).json({message:"password or email is required"})
+    }
+    
+    const hashedPassword = await bcrypt.hash(newPassword,10);
 
 
+    try {
+        const user = await Users.findOne({email:email});
+        console.log("usesr",user)
+        
+        if(!user){
+            return res.status(400).json({message:"user not found"})
+        }
+        user.password = hashedPassword;
+        await user.save();
+        return res.status(200).json({ok:true,message:"password reset successfully"})
+    } catch (error) {   
+        console.log("error in reset password",error.message);
+        
+    }
+}
+
+   const emailverification = (req,res)=>{
+    return res.render('user/resetPassword')
+   }
+
+
+   const setNewPassword = (req,res)=>{
+    return res.render("user/resetForgotPassword")
+   }
 module.exports={
     loadRegister,
     loadLogin,
@@ -554,6 +725,16 @@ module.exports={
     loadWomen,
     loadKids,
     userSearch,
-   
+    thankYou,
+   orderDetails,
+    managePassword,
+    // updatePassword,
+    otpForPassword,
+    emailverification,
+    checkYourGmail,
+    verifyResetPasswordOtp,
+    setNewPassword,
+    resetPassword
+
    
 }

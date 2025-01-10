@@ -4,7 +4,8 @@ const router = express.Router();
 const userController = require('../controllers/user/userController');
 const productController = require('../controllers/user/productdetails');
 const userDetailscController = require("../controllers/user/userDetails")
-const cartDetailsController = require("../controllers/user/cartController")
+const cartDetailsController = require("../controllers/user/cartController");
+const orderDetailsController = require("../controllers/user/placeOrderController")
 const {userAuth,adminAuth} = require('../middlewares/auth');
 const { route } = require('./adminRoutes');
 
@@ -75,10 +76,25 @@ router.put("/editAddress/:id",userDetailscController.updateAddress)
 // searching
 router.get("/search",userController.userSearch);
 
+// thankYou page
+router.get("/thankYou",userController.thankYou)
+
+router.post('/order/place',orderDetailsController.placeOrder);
 
 
 
 
+router.get("/managepassword",userController.managePassword)
+router.get("/email-verification",userController.emailverification)
+// router.post("/update-password",userController.updatePassword)
+router.post("/email-verification",userController.otpForPassword);
 
+router.get("/check-email",userController.checkYourGmail);
+router.post("/check-email",userController.verifyResetPasswordOtp);
+router.get("/reset-password",userController.setNewPassword)
+router.post("/reset-password",userController.resetPassword)
 
+router.get("/order-details",orderDetailsController.orderDetails);
+
+router.post("/cancel-order/:orderId",orderDetailsController.cancelOrder)
 module.exports = router;

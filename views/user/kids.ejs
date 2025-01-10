@@ -20,14 +20,14 @@
     <!-- Header -->
 
 
-    <select id="sortSelect" class="form-select form-select-sm" style="width: auto;">
+    <!-- <select id="sortSelect" class="form-select form-select-sm" style="width: auto;">
         <option value="default" disabled <%= currentSort === 'default' ? 'selected' : '' %>>Sort By</option>
         <option value="price-high-low" <%= currentSort === 'price-high-low' ? 'selected' : '' %>>Price: High to Low</option>
         <option value="price-low-high" <%= currentSort === 'price-low-high' ? 'selected' : '' %>>Price: Low to High</option>
         <option value="name-a-z" <%= currentSort === 'name-a-z' ? 'selected' : '' %>>Name: A to Z</option>
         <option value="name-z-a" <%= currentSort === 'name-z-a' ? 'selected' : '' %>>Name: Z to A</option>
         <option value="new-arrivals" <%= currentSort === 'new-arrivals' ? 'selected' : '' %>>New Arrivals</option>
-    </select>
+    </select> -->
     <main class="container-fluid px-2 px-sm-3 px-md-4 py-3 py-md-5">
         <div class="row g-2 g-sm-3 g-md-4">
             <% for (let i = 0; i < products.length; i++) { %>
@@ -64,14 +64,14 @@
 </body>
 </html>
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-    const sortSelect = document.getElementById('sortSelect');
+//     document.addEventListener('DOMContentLoaded', function() {
+//     const sortSelect = document.getElementById('sortSelect');
     
-    sortSelect.addEventListener('change', async function() {
-        const selectedValue = this.value;
-        const currentUrl = new URL(window.location.href);
-        currentUrl.searchParams.set('sort', selectedValue);
-        window.location.href = currentUrl.toString();
-    });
-});
+//     sortSelect.addEventListener('change', async function() {
+//         const selectedValue = this.value;
+//         const currentUrl = new URL(window.location.href);
+//         currentUrl.searchParams.set('sort', selectedValue);
+//         window.location.href = currentUrl.toString();
+//     });
+// });
 </script>

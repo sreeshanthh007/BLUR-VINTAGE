@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Confirmed - BLUR VINTAGE</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+
+        .search-input {
+            background-color: #f0f0f0;
+            border-radius: 50px;
+            padding-left: 40px;
+        }
+        
+        .search-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6c757d;
+        }
+
+        .success-icon {
+            width: 120px;
+            height: 120px;
+            background-color: #28a745;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 2rem auto;
+        }
+
+        .success-icon i {
+            color: white;
+            font-size: 60px;
+        }
+
+        .continue-shopping {
+            background-color: #000;
+            color: white;
+            padding: 15px 40px;
+            border-radius: 30px;
+            text-decoration: none;
+            transition: opacity 0.3s;
+        }
+
+        .continue-shopping:hover {
+            opacity: 0.8;
+            color: white;
+        }
+
+        .footer-links a {
+            color: #212529;
+            text-decoration: none;
+        }
+
+        .footer-links a:hover {
+            text-decoration: underline;
+        }
+
+        .social-icons a {
+            color: #212529;
+            margin: 0 10px;
+            font-size: 1.2rem;
+        }
+        .orderPlaced{
+            animation: dropDown 1s ease-out;
+        }
+        @keyframes dropDown {
+        0% {
+        transform: translateY(-100%);
+        opacity: 0;
+      }
+         100% {
+        transform: translateY(0);
+        opacity: 1;
+      }
+}
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <%-include('../../views/partials/user/header.ejs')%>
+
+    <!-- Main Content -->
+    <main class="container py-5">
+        <!-- Order Status -->
+        <div class=" p-4 mb-5 rounded orderPlaced" style="background-color:#f0f0f0; ">
+            <div class="d-flex justify-content-between align-items-center orderPlaced">
+                <h2 class="h4 mb-0">Order placed</h2>
+                <a href="/user/order-details" class="text-decoration-none text-dark">View order</a>
+            </div>
+        </div>
+
+        <!-- Order Confirmation -->
+        <div class="text-center">
+            <div class="success-icon">
+                <i class="bi bi-check-lg"></i>
+            </div>
+            <h2 class="h3 mb-3">Your Order is confirmed!</h2>
+            <p class="text-muted mb-4">
+                Thank You for choosing Blur Village, we are processing your order<br>
+                we will update you with your order in email
+            </p>
+            <a href="/user/home" class="continue-shopping">Continue to shopping</a>
+        </div>
+    </main>
+
+    <!-- Footer -->
+   <!-- <%-include('../../views/partials/user/footer.ejs')%> -->
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

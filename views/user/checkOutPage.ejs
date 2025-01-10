@@ -113,7 +113,7 @@
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Address</label>
-                            <textarea class="form-control" rows="3" readonly> landMark: <%= address.landMark %>, city :  <%= address.city %>, state:  <%= address.state %>, country:  <%= address.country %> pincode : <%= address.pincode %></textarea>
+                            <textarea class="form-control" rows="3" id="address" readonly> landMark: <%= address.landMark %>, city :  <%= address.city %>, state:  <%= address.state %>, country:  <%= address.country %> pincode : <%= address.pincode %></textarea>
                         </div>
                     <% } else { %>
                         <p class="text-danger">No delivery address found. Please add an address.</p>
@@ -211,6 +211,8 @@
     <%-include('../../views/partials/user/footer.ejs')%>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 </body>
 </html>
 
@@ -378,5 +380,66 @@ document.addEventListener('DOMContentLoaded', function() {
             alert('Failed to add address. Please try again.');
         }
     }
+
+
+    const confirmBtn = document.querySelector(".confirm-btn");
+
+    confirmBtn.addEventListener('click',async()=>{
+        // get the selected payment method
+        const selectedPayment = document.querySelector('input[name="payment"]:checked');
+
+        if(!selectedPayment){
+            Swal.fire({
+                icon:"error",
+                title:"please select a payment method"
+            });
+            return;
+        }
+
+        const addressElement = document.getElementById("address");
+
+        if(!addressElement || !addressElement.value.trim()){
+            Swal.fire({
+                icon:"error",
+                title:"please select a delivery address"
+            });
+            return;
+        }
+
+        try {
+            const response = await fetch("/user/order/place",{
+                method:"post",
+                headers:{
+                    "Content-Type":"application/json"
+                },
+                body:JSON.stringify({
+                    cart:{
+                        items: <%- JSON.stringify(cart.items) %>,
+                        totalAmount: <%= cart.totalAmount %>
+                    },
+                    address: <%- JSON.stringify(address) %>,
+                    paymentMethod: selectedPayment.id.toUpperCase()
+                })
+            });
+
+            const result = await response.json();
+
+            if(result.success){
+                Swal.fire({
+                    icon:"success",
+                    title:"order placed successfully",
+                    text:`order number : ${result.orderNumber}`,
+                    confirmButtonText:"Thanks"
+                }).then(()=>{
+                    window.location.href="/user/thankYou"
+                });
+            }else{
+                throw new Error(result.message);
+            }
+        } catch (error) {
+            console.log("failed to place order",error.message);
+            
+        }
+    })
 });
 </script>

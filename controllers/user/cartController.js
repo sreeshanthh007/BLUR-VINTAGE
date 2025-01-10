@@ -26,6 +26,14 @@ const addtoCart = async(req,res) => {
 
         if(!variant) {
             return res.status(400).json({success: false, message: "variant not found"});
+        }  
+
+        // Check if enough stock is available
+        if(variant.stock < quantity) {
+            return res.status(400).json({
+                success: false, 
+                message: `Only ${variant.stock} items available in stock`
+            });
         }
 
         let cart = await Cart.findOne({user: userId});
@@ -54,13 +62,8 @@ const addtoCart = async(req,res) => {
             });
         }
 
-        // Check if enough stock is available
-        if(variant.stock < quantity) {
-            return res.status(400).json({
-                success: false, 
-                message: `Only ${variant.stock} items available in stock`
-            });
-        }
+        
+    
 
         if (existingItemIndex > -1) {
             cart.items[existingItemIndex].quantity = totalQuantity;
@@ -77,18 +80,14 @@ const addtoCart = async(req,res) => {
             });
         }
 
-        // Update stock in the variant
-        variant.stock -= quantity;
+       
         
         // Calculate total amount
         cart.totalAmount = cart.items.reduce((total, item) => 
             total + (item.discountedPrice || item.price) * item.quantity, 0
         );
 
-        await Promise.all([
-            cart.save(),
-            product.save()
-        ]);
+        await cart.save();
 
         return res.status(200).json({
             success: true,
@@ -239,6 +238,12 @@ const updateQuantity = async (req, res) => {
             });
         }
 
+        if(variant.stock < quantity) {
+            return res.status(400).json({
+                success: false,
+                message: `Only ${variant.stock} items available in stock`
+            });
+        }
         // Update quantity and prices
         cartItem.quantity = quantity;
         cartItem.price = variant.price;
@@ -402,6 +407,10 @@ const checkout = async (req,res)=>{
         console.log("error in checkout page",error.message);
     }
 }
+
+
+
+
 module.exports = {
     getCart,
     addtoCart,
