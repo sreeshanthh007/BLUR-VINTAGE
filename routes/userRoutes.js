@@ -86,7 +86,7 @@ router.post('/order/place',orderDetailsController.placeOrder);
 
 router.get("/managepassword",userController.managePassword)
 router.get("/email-verification",userController.emailverification)
-// router.post("/update-password",userController.updatePassword)
+router.post("/update-password",userController.updatePassword)
 router.post("/email-verification",userController.otpForPassword);
 
 router.get("/check-email",userController.checkYourGmail);

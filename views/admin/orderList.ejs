@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BLUR VINTAGE - Order List</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <style>
+        /* Custom CSS */
+        .sidebar {
+            width: 250px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            background-color: #f8f9fa;
+            padding: 20px;
+            z-index: 1000;
+        }
+
+        .main-content {
+            margin-left: 250px;
+            padding: 20px;
+        }
+
+        .nav-link {
+            color: #333;
+            padding: 10px 15px;
+            border-radius: 5px;
+            margin-bottom: 5px;
+        }
+
+        .nav-link.active {
+            background-color: #212529;
+            color: white;
+        }
+
+        .status-badge {
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.875rem;
+        }
+
+        .status-delivered {
+            background-color: #e0f7f2;
+            color: #0d9488;
+        }
+
+        .status-processing {
+            background-color: #f3e8ff;
+            color: #9333ea;
+        }
+
+        .status-cancelled {
+            background-color: #fee2e2;
+            color: #dc2626;
+        }
+
+        .filter-section {
+            background-color: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .table-responsive {
+            background-color: white;
+            border-radius: 8px;
+            padding: 15px;
+        }
+
+        .profile-circle {
+            width: 80px;
+            height: 80px;
+            background-color: #e9ecef;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+                margin-bottom: 20px;
+            }
+            .main-content {
+                margin-left: 0;
+            }
+            .filter-section .row > div {
+                margin-bottom: 10px;
+            }
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <!-- Sidebar -->
+   <%-include('../../views/partials/admin/sidebar.ejs')%>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <h1 class="mb-4">BLUR VINTAGE ★</h1>
+
+        <!-- Filters -->
+        <!-- <div class="filter-section shadow-sm">
+            <div class="row align-items-center">
+                <div class="col-md-3">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-funnel"></i></span>
+                        <select class="form-select">
+                            <option>Filter By</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select">
+                        <option>14 Feb 2019</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select">
+                        <option>Order Type</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select">
+                        <option>Order Status</option>
+                    </select>
+                </div>
+            </div>
+        </div> -->
+
+        <!-- Order List -->
+        <h2 class="mb-4">Ordered list</h2>
+        <div class="table-responsive shadow-sm">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>NAME</th>
+                        <th>ADDRESS</th>
+                        <th>DATE</th>
+                        <th>ITEM</th>
+                        <th>STATUS</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% orders.forEach(order => { %>
+                        <tr>
+                            <td><%= order.id %></td>
+                            <td><%= order.name %></td>
+                            <td><%= order.address %></td>
+                            <td><%= order.date %></td>
+                            <td><%= order.item %></td>
+                            <td>₹<%= order.amount %></td>
+                            <td>
+                                <span class="status-badge status-<%= order.status.toLowerCase() %>">
+                                    <%= order.status %>
+                                </span>
+                            </td>
+                            <td>
+                                <% if (order.status.toLowerCase() !== 'cancelled') { %>
+                                    <div class="dropdown">
+                                        <a href="#" class="text-decoration-none text-dark" id="dropdownMenu<%= order.id %>" data-bs-toggle="dropdown" aria-expanded="false">
+                                            <i class="bi bi-three-dots-vertical"></i>
+                                        </a>
+                                        <ul class="dropdown-menu" aria-labelledby="dropdownMenu<%= order.id %>">
+                                            <li><a class="dropdown-item" href="/admin/order-details?id=<%= order.id%>">See Details</a></li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li><a class="dropdown-item status-update" data-order-id="<%= order.id %>" data-status="Processing" href="#">Processing</a></li>
+                                            <li><a class="dropdown-item status-update" data-order-id="<%= order.id %>" data-status="Delivered" href="#">Delivered</a></li>
+                                            <li><a class="dropdown-item status-update" data-order-id="<%= order.id %>" data-status="Cancelled" href="#">Cancelled</a></li>
+                                        </ul>
+                                    </div>
+                                <% } %>
+                            </td>    
+                        </tr>
+                    <% }); %>   
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <nav class="mt-4">
+            <ul class="pagination justify-content-center">
+                <li class="page-item <%= !pagination.hasPrevPage ? 'disabled' : '' %>">
+                    <a class="page-link" href="?page=<%= pagination.prevPage %>">
+                        <i class="bi bi-chevron-left"></i>
+                    </a>
+                </li>
+                
+                <% if (pagination.currentPage > 2) { %>
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1">1</a>
+                    </li>
+                    <% if (pagination.currentPage > 3) { %>
+                        <li class="page-item disabled">
+                            <a class="page-link">...</a>
+                        </li>
+                    <% } %>
+                <% } %>
+                
+                <% for (let i = Math.max(1, pagination.currentPage - 1); i <= Math.min(pagination.totalPages, pagination.currentPage + 1); i++) { %>
+                    <li class="page-item <%= pagination.currentPage === i ? 'active' : '' %>">
+                        <a class="page-link" href="?page=<%= i %>"><%= i %></a>
+                    </li>
+                <% } %>
+                
+                <% if (pagination.currentPage < pagination.totalPages - 1) { %>
+                    <% if (pagination.currentPage < pagination.totalPages - 2) { %>
+                        <li class="page-item disabled">
+                            <a class="page-link">...</a>
+                        </li>
+                    <% } %>
+                    <li class="page-item">
+                        <a class="page-link" href="?page=<%= pagination.totalPages %>">
+                            <%= pagination.totalPages %>
+                        </a>
+                    </li>
+                <% } %>
+                
+                <li class="page-item <%= !pagination.hasNextPage ? 'disabled' : '' %>">
+                    <a class="page-link" href="?page=<%= pagination.nextPage %>">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
+
+
+<script>
+    document.querySelectorAll(".status-update").forEach(link =>{
+        link.addEventListener('click', async(e)=>{
+            e.preventDefault();
+
+            const orderId = e.target.dataset.orderId;
+            const status = e.target.dataset.status;
+
+
+            try {
+                const response = await fetch(`/admin/update-order-status?id=${orderId}&status=${status}`);
+
+                if(response.ok){
+                    window.location.reload();
+                }else{
+                    alert("failed to update status")
+                }
+            } catch (error) {
+                console.log("error in stats ",error.message);
+                
+            }
+        })
+    })
+</script>

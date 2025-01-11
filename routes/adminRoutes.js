@@ -86,6 +86,12 @@ router.get('/editproduct',productController.loadEditProduct);
 
 router.post('/editproduct/:id',newUploads,productController.editProduct);
 
+router.get("/order-list",adminAuth,admincontroller.orderList);
+
+router.get("/order-details",adminAuth,admincontroller.orderDetails);
+
+router.get("/update-order-status",adminAuth,admincontroller.updateOrderStatus)
+
 
 
 

@@ -584,36 +584,36 @@ const managePassword = async(req,res)=>{
     return res.render('user/managePassword')
 }
 
-//  const updatePassword = async (req, res) => {
-//     try {
-//         const { oldPassword, newPassword } = req.body;
-//         const userId = req.session.user;
+ const updatePassword = async (req, res) => {
+    try {
+        const { oldPassword, newPassword } = req.body;
+        const userId = req.session.user;
 
-//         const user = await Users.findById(userId);
-//         if (!user) {
-//             return res.status(404).json({ message: "User not found" });
-//         }
+        const user = await Users.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
 
-//         // Compare with user's current hashed password
-//         const isValidPassword = await bcrypt.compare(oldPassword, user.password);
+        // Compare with user's current hashed password
+        const isValidPassword = await bcrypt.compare(oldPassword, user.password);
         
-//         if (!isValidPassword) {
-//             return res.status(400).json({ message: "Current password is incorrect" });
-//         }
+        if (!isValidPassword) {
+            return res.status(400).json({ message: "Current password is incorrect" });
+        }
 
-//         const salt = await bcrypt.genSalt(10);
-//         const hashedPassword = await bcrypt.hash(newPassword, salt);
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(newPassword, salt);
 
-//         user.password = hashedPassword;
-//         await user.save();
+        user.password = hashedPassword;
+        await user.save();
 
-//         return res.status(200).json({ message: "Password updated successfully" });
+        return res.status(200).json({ message: "Password updated successfully" });
 
-//     } catch (error) {
-//         console.log("Error in update password:", error.message);
-//         return res.status(500).json({ message: "Internal server error" });
-//     }
-// }
+    } catch (error) {
+        console.log("Error in update password:", error.message);
+        return res.status(500).json({ message: "Internal server error" });
+    }
+}
 
 const otpStore = {};
 const otpForPassword = async (req, res) => {
@@ -728,7 +728,7 @@ module.exports={
     thankYou,
    orderDetails,
     managePassword,
-    // updatePassword,
+    updatePassword,
     otpForPassword,
     emailverification,
     checkYourGmail,
