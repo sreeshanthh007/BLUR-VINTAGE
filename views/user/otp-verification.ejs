@@ -59,6 +59,14 @@
             padding: 0.75rem 0;
             font-size: 1.1rem;
         }
+        .resend-link {
+            color: #0d6efd;
+            text-decoration: none;
+            display: none; /* Hide by default */
+        }
+        .resend-link.visible {
+            display: inline; /* Show when class 'visible' is added */
+        }
         .btn-verify:hover {
             background-color: #0b5ed7;
             border-color: #0a58ca;
@@ -151,14 +159,17 @@
 
     // setting the timer
     let time=30;
+    const resent_link = document.getElementById("resent-otp")
     const timeElement = document.getElementById('timer');
     let otpIsvalid=true;
     let interval = setInterval(() => {
     if(time > 0) {
         time--;
         timeElement.textContent = `OTP Expires in 00:${time < 10 ? '0' : ''}${time}`;
+        resent_link.classList.remove('visible')
     } else {
         timeElement.textContent = "OTP Expired";
+        resent_link.classList.add('visible') 
         otpIsvalid = false; // Set OTP as invalid when timer expires
         clearInterval(interval);
     }
@@ -238,16 +249,17 @@ document.getElementById('resent-otp').addEventListener('click',()=>{
 
 })
 function resent_otp() {
-    // Stop the existing timer
+    
     if(interval){
         clearInterval(interval)
     }
 
-    // Reset the timer to 60 seconds
+  
     time = 30;
+    resent_link.classList.remove('visible');
     // for expiring
     otpIsvalid=true
-    // Clear any previously entered OTP values
+    
     let resentInputs = document.getElementById('otp-form').querySelectorAll('.otp-input');
     resentInputs.forEach((elm)=>{
         elm.value="";
@@ -255,18 +267,18 @@ function resent_otp() {
     
     document.getElementById('timer').textContent="";
 
-  let   resentInterval = setInterval(()=>{
-        if(time>0){
+    interval = setInterval(() => {
+        if(time > 0) {
             time--;
-            document.getElementById('timer').textContent = `time left:00:${time<10? 0 : " " }${time}`
-        }else{
-            document.getElementById('timer').textContent="OTP expired";
-            // expired
-            isOTPValid-false;
-            clearInterval(resentInterval)
-
+            document.getElementById('timer').textContent = `time left:00:${time < 10 ? '0' : ''}${time}`;
+        } else {
+            document.getElementById('timer').textContent = "OTP expired";
+            // Set OTP as invalid when timer expires
+            otpIsvalid = false;
+            resent_link.classList.add('visible');
+            clearInterval(interval);
         }
-    },1000)
+    }, 1000);
 
     fetch('/user/resend-otp',{
     method:"POST",

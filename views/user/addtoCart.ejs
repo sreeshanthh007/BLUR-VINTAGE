@@ -27,11 +27,28 @@
             width: 100%;
             height: auto;
         }
-
-        .quantity-select {
-            width: 100px;
-        }
-
+        .quantity-controls {
+        max-width: 150px;
+    }
+    .quantity-input {
+        border-radius: 4px;
+        height: 38px;
+        -moz-appearance: textfield;
+    }
+    .quantity-input::-webkit-outer-spin-button,
+    .quantity-input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+    .quantity-btn {
+        width: 38px;
+        height: 38px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        padding: 0;
+    }
         .place-order-btn {
             background-color: #212529;
             border: none;
@@ -99,15 +116,21 @@
                                             <p class="mb-1"><strong>Color:</strong> <%= item.colorName %></p>
                                         </div>
                                         <div class="col-6">
-                                            <p class="mb-1"><strong>Total:</strong> Rs. <%= (item.discountedPrice || item.price) * item.quantity %></p>
+                                            <p class="mb-1"><strong>Total:</strong> Rs. <span class="total-amount"><%= (item.discountedPrice || item.price) * item.quantity %></span></p>
                                         </div>
                                     </div>
                                     
-                                    <select class="form-select quantity-select" data-item-id="<%= item._id %>">
-                                        <% for(let i = 1; i <= 5; i++) { %>
-                                            <option value="<%= i %>" <%= item.quantity === i ? 'selected' : '' %>><%= i %></option>
-                                        <% } %>
-                                    </select>
+                                    <div class="quantity-controls d-flex align-items-center">
+                                        <button class="btn btn-outline-secondary btn-sm quantity-btn minus" type="button">-</button>
+                                        <input type="number" class="form-control mx-2 quantity-input text-center" 
+                                               value="<%= item.quantity %>" 
+                                               min="1" 
+                                               max="6" 
+                                               readonly 
+                                               data-item-id="<%= item._id %>"
+                                               style="width: 60px;">
+                                        <button class="btn btn-outline-secondary btn-sm quantity-btn plus" type="button">+</button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -210,7 +233,7 @@
                     // Find the order summary container
                     const orderSummaryContainer = document.querySelector('.col-lg-4 .bg-white');
                     
-                    // Safely update the cart total
+                    
                     let cartTotal = 0;
                     if (data.cart && typeof data.cart.totalAmount === 'number') {
                         cartTotal = data.cart.totalAmount;
@@ -224,7 +247,7 @@
                         orderValueSpan.textContent = `Rs. ${Number(cartTotal).toFixed(2)}`;
                     }
                     
-                    // Get delivery charge safely
+                    
                     const deliveryChargeSpan = orderSummaryContainer.querySelector('.d-flex:nth-child(2) span:last-child');
                     let deliveryCharge = 0;
                     if (deliveryChargeSpan) {
@@ -261,7 +284,7 @@
                                     <div class="d-flex justify-content-between mb-2">
                                         <span>Order value</span>
                                         <span></span>
-                                    </div>
+                                     </div>
                                     <div class="d-flex justify-content-between mb-2">
                                         <span>Delivery charge</span>
                                         <span></span>
@@ -316,12 +339,38 @@
 
 
 
-   document.querySelectorAll('.quantity-select').forEach(select => {
-    select.addEventListener('change', async function() {
-        const itemId = this.getAttribute('data-item-id');
-        const newQuantity = parseInt(this.value);
-        const itemContainer = this.closest('.bg-white');
+document.querySelectorAll('.quantity-controls').forEach(control => {
+    const minusBtn = control.querySelector('.minus');
+    const plusBtn = control.querySelector('.plus');
+    const input = control.querySelector('.quantity-input');
+    const itemId = input.getAttribute('data-item-id');
+    let isUpdating = false;
+
+    async function updateQuantity(newQuantity) {
+        if (isUpdating) return;
+        
+        // Check quantity limit
+        if (newQuantity > 5) {
+            const Toast = Swal.mixin({
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 2000,
+                timerProgressBar: true
+            });
             
+            Toast.fire({
+                icon: 'warning',
+                title: 'Maximum 5 items allowed per product'
+            });
+            return;
+        }
+
+        if (newQuantity < 1) return;
+        
+        isUpdating = true;
+        const itemContainer = control.closest('.bg-white');
+
         try {
             const response = await fetch('/user/cart/update-quantity', {
                 method: 'PUT',
@@ -337,18 +386,17 @@
             const data = await response.json();
 
             if (data.success) {
+                input.value = newQuantity;
+
                 // Update individual item total
-                const itemTotalElement = itemContainer?.querySelector('p strong')?.closest('p');
-                if (itemTotalElement) {
-                    itemTotalElement.innerHTML = `<strong>Total:</strong> Rs. ${data.newTotal.toFixed(2)}`;
+                const totalAmountElement = itemContainer.querySelector('.total-amount');
+                    if (totalAmountElement) {
+                    totalAmountElement.textContent = data.newTotal.toFixed(2);
                 }
-
-                // Find the order summary container (the last .bg-white element)
-                const allBgWhiteContainers = document.querySelectorAll('.bg-white');
-                const orderSummaryContainer = allBgWhiteContainers[allBgWhiteContainers.length - 1];
-
+                // Update order summary
+                const orderSummaryContainer = document.querySelector('.col-lg-4 .bg-white');
                 if (orderSummaryContainer) {
-                    // Update order value (first flex div in summary)
+                    // Update order value
                     const orderValueSpan = orderSummaryContainer.querySelector('.d-flex:first-child span:last-child');
                     if (orderValueSpan) {
                         orderValueSpan.textContent = `Rs. ${data.cartTotal.toFixed(2)}`;
@@ -359,26 +407,29 @@
                     const deliveryCharge = deliveryChargeSpan ? 
                         parseFloat(deliveryChargeSpan.textContent.replace('Rs. ', '')) : 0;
 
-                    // Update final total (in the fw-bold div)
+                    // Update final total
                     const finalTotalSpan = orderSummaryContainer.querySelector('.fw-bold span:last-child');
                     if (finalTotalSpan) {
                         finalTotalSpan.textContent = `Rs. ${(data.cartTotal + deliveryCharge).toFixed(2)}`;
                     }
                 }
 
-                // Show success message
-                Swal.fire({
+                // Show success toast
+                const Toast = Swal.mixin({
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 1000
+                });
+                
+                Toast.fire({
                     icon: 'success',
-                    title: 'Updated',
-                    text: 'Cart updated successfully',
-                    timer: 1000,
-                    showConfirmButton: false
+                    title: 'Quantity updated'
                 });
 
             } else {
                 throw new Error(data.message);
             }
-
         } catch (error) {
             console.error('Error updating quantity:', error);
             Swal.fire({
@@ -387,12 +438,28 @@
                 text: error.message || 'Failed to update quantity'
             });
             // Reset to previous value on error
-            this.value = this.getAttribute('data-previous-value');
+            input.value = input.getAttribute('data-previous-value');
+        } finally {
+            isUpdating = false;
+        }
+    }
+
+    minusBtn.addEventListener('click', () => {
+        const newQuantity = parseInt(input.value) - 1;
+        if (newQuantity >= 1) {
+            updateQuantity(newQuantity);
         }
     });
 
-    // Store initial values
-    select.setAttribute('data-previous-value', select.value);
+    plusBtn.addEventListener('click', () => {
+        const newQuantity = parseInt(input.value) + 1;
+        if (newQuantity <= 10) {
+            updateQuantity(newQuantity);
+        }
+    });
+
+    // Store initial value
+    input.setAttribute('data-previous-value', input.value);
 });
 
 

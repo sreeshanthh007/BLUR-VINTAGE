@@ -87,6 +87,21 @@
         border-color: black;
         box-shadow: none;
     }    
+    @media (max-width: 768px) {
+            .search-container {
+                max-width: 100%;
+            }
+
+            .nav-menu a {
+                padding: 0.5rem 1rem;
+                font-size: 1rem;
+            }
+
+            .icon-link {
+                margin-left: 1rem;
+                font-size: 1.25rem;
+            }
+        }
         </style>
     </head>
 
@@ -126,7 +141,13 @@
                                 </div>
                             </form> 
                             <a class="bi bi-person me-3" style="font-size: 1.5rem; color: black;" href="/user/manage"></a>
-                            <a class="bi bi-cart me-3" href="/user/cart" style="font-size: 1.5rem; color: black;"></a>
+                            <div class="position-relative me-3">
+                                <a class="bi bi-cart" href="/user/cart" style="font-size: 1.5rem; color: black;"></a>
+                                <span id="cartCounter" class="position-absolute top-0  start-100 translate-middle badge rounded-pill bg-danger" 
+                                      style="font-size: 0.75rem; margin-top: 5px;">
+                                    0
+                                </span>
+                            </div>
                             <a class="bi bi-heart" style="font-size: 1.5rem; color: black;"></a>
                         </div>
                     </div>
@@ -136,6 +157,7 @@
                 <div class="row mt-3">
                     <div class="col-12 text-center">
                         <nav class="nav justify-content-center">
+                            <a class="nav-link mx-4 text-dark" href="/user/shop" style="font-size: 1.2rem;">Shop</a>
                             <a class="nav-link mx-4 text-dark" href="/user/men" style="font-size: 1.2rem;">Men</a>
                             <a class="nav-link mx-4 text-dark" href="/user/women" style="font-size: 1.2rem;">Women</a>
                             <a class="nav-link mx-4 text-dark" href="/user/kids" style="font-size: 1.2rem;">Kids</a>
@@ -167,14 +189,24 @@ document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('searchInput');
     const searchResults = document.getElementById('searchResults');
     const sortSelect = document.getElementById('sortSelect');
+    const searchButton = document.querySelector('.btn-outline-dark');
     let debounceTimer;
+
+    // Function to get current category from URL
+    function getCurrentCategory() {
+        const path = window.location.pathname;
+        if (path.includes('/men')) return 'men';
+        if (path.includes('/women')) return 'women';
+        if (path.includes('/kids')) return 'kids';
+        return '';
+    }
 
     // Function to escape special characters in search query
     function escapeRegExp(string) {
         return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     }
 
-    // Function to highlight matching text
+   
     function highlightMatch(text, query) {
         if (!query) return text;
         const regex = new RegExp(`(${escapeRegExp(query)})`, 'gi');
@@ -183,21 +215,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
     async function searchProducts(query) {
         try {
-            // Get current sort value
+            const currentCategory = getCurrentCategory();
             const sortValue = sortSelect ? sortSelect.value : 'default';
-            const searchUrl = `/user/search?search=${encodeURIComponent(query)}${sortValue !== 'default' ? `&sort=${sortValue}` : ''}`;
             
             if (query.trim()) {
-                const response = await fetch(searchUrl);
-                if (!response.ok) throw new Error('Search failed');
-                
-                // Instead of handling JSON response, redirect to the URL
-                window.location.href = searchUrl;
+               
+                window.location.href = `/user/search?search=${encodeURIComponent(query)}${sortValue !== 'default' ? `&sort=${sortValue}` : ''}${currentCategory ? `&category=${currentCategory}` : ''}`;
             } else {
-                // If search is empty, remove search parameter but keep sort
-                const currentUrl = new URL(window.location.href);
-                currentUrl.searchParams.delete('search');
-                window.location.href = currentUrl.toString();
+                
+                window.location.href = `/user/men${sortValue !== 'default' ? `?sort=${sortValue}` : ''}${currentCategory ? `&category=${currentCategory}` : ''}`;
             }
         } catch (error) {
             console.error('Search error:', error);
@@ -207,13 +233,13 @@ document.addEventListener('DOMContentLoaded', function() {
     // Add input event listener with debounce for dropdown suggestions
     searchInput.addEventListener('input', (e) => {
         const query = e.target.value.trim();
+        const currentCategory = getCurrentCategory();
         
-        // Show dropdown suggestions
         if (query.length >= 2) {
             clearTimeout(debounceTimer);
             debounceTimer = setTimeout(async () => {
                 try {
-                    const response = await fetch(`/user/search?search=${encodeURIComponent(query)}&suggest=true`);
+                    const response = await fetch(`/user/search?search=${encodeURIComponent(query)}&suggest=true${currentCategory ? `&category=${currentCategory}` : ''}`);
                     const data = await response.json();
 
                     if (data.products && data.products.length > 0) {
@@ -244,18 +270,21 @@ document.addEventListener('DOMContentLoaded', function() {
             }, 300);
         } else {
             searchResults.style.display = 'none';
-        }
+        }   
     });
 
     // Handle form submission
     searchInput.closest('form').addEventListener('submit', (e) => {
         e.preventDefault();
         const query = searchInput.value.trim();
-        if (query) {
-            searchProducts(query);
-        }
+        searchProducts(query);
     });
 
+    searchButton.addEventListener('click', (e) => {
+        e.preventDefault();
+        const query = searchInput.value.trim();
+        searchProducts(query);
+    })
     // Close search results when clicking outside
     document.addEventListener('click', (e) => {
         if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
@@ -272,4 +301,43 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
+   async function updateCartCounter(){
+    try {
+        const response  = await fetch('/user/cart/count');
+        if (!response.ok) {
+            throw new Error('Failed to fetch cart count');
+        }
+
+        const data = await response.json();
+
+        const counter = document.getElementById('cartCounter');
+
+        if(counter){
+            counter.textContent = data.count || '0';
+
+            counter.style.display = data.count >0 ? "block" : "none";
+        }
+
+
+    } catch (error) {
+        console.log("error in cart counter",error.message);
+        
+    }
+   }
+
+   document.addEventListener('DOMContentLoaded', updateCartCounter);
+
+// Modify your existing addToCart event listener
+const addToCartButton = document.getElementById("addToCart");
+if (addToCartButton) {
+    const existingClickHandler = addToCartButton.onclick;
+    addToCartButton.onclick = async function(e) {
+        if (existingClickHandler) {
+            await existingClickHandler.call(this, e);
+        }
+        // Update cart counter after adding item
+        updateCartCounter();
+    };
+}
     </script>

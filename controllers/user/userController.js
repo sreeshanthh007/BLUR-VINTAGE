@@ -248,7 +248,8 @@ const logOut = async (req,res)=>{
 
 const loadLogin = async (req,res)=>{
    try{
-         res.render('user/login');
+        const message=req.query.message;
+         res.render('user/login',{message});
     
    }catch(err){
     console.log(err);
@@ -266,36 +267,56 @@ loadRegister = async (req,res)=>{
     }
 }
 
- 
+const loadShop = async (req, res) => {
+    try {
+        const page = parseInt(req.query.page) || 1; 
+        const productsPerPage = 8; // 4 products per row * 2 rows
+        
+        
+        const totalProducts = await Product.countDocuments({});
+        const totalPages = Math.ceil(totalProducts / productsPerPage);
+        
+       
+        const products = await Product.find({})
+            .skip((page - 1) * productsPerPage)
+            .limit(productsPerPage);
+            
+        return res.render('user/shop', {
+            products,
+            currentPage: page,
+            totalPages,
+            hasNextPage: page < totalPages,
+            hasPrevPage: page > 1
+        });
+    } catch (error) {
+        console.error('Error loading shop:', error);
+        return res.status(500).render('error', { message: 'Failed to load shop' });
+    }
+};
 //  user homepage
 
-const loadHome = async (req,res)=>{
-    try{
+const loadHome = async (req, res) => {
+    try {
         const userId = req.session.user || req.session?.passport?.user;
         let userData = null;
-       
 
-        if(userId){
-            userData = await Users.findOne({_id:userId});
-            console.log("loadhome user",userData);
+        if (userId) {
+            userData = await Users.findOne({ _id: userId });
+            console.log("loadhome user", userData);
 
-            if(userData && userData.isBlocked){
+            if (userData && userData.isBlocked) {
                 console.log("user is blocked");
                 return res.redirect("/user/register");
             }
         }
-        if(!userData){
-            return res.render("user/userhome");
-        }else{
-            return res.render("user/userhome",)
-        }
 
-      
-    }catch(err){
-        console.log("page not found",err.message);
+        return res.render("user/userhome", {
+            isNewUser: !userId, // This will be true for new users (no session)
+        });
 
+    } catch (err) {
+        console.log("page not found", err.message);
         res.status(500).send("server error")
-
     }
 }
 
@@ -500,17 +521,18 @@ const loadKids =async (req,res)=>{
 }  
 
 // user search
-const userSearch = async (req, res) => {
+const userSearch = async (req, res) => {    
     try {
         const query = req.query.search;
         const sort = req.query.sort || 'default';
         const isSuggestion = req.query.suggest === 'true';
+        const category = req.query.category; 
 
         if (!query && !isSuggestion) {
             return res.redirect('/user/home');
         }
 
-        // Create search criteria
+        // Create base search criteria
         const searchCriteria = {
             isBlocked: false,
             $or: [
@@ -518,6 +540,17 @@ const userSearch = async (req, res) => {
                 { 'variants.sku': { $regex: query, $options: 'i' } }
             ]
         };
+
+        // Add category filter if specified
+        if (category) {
+            const categoryDoc = await Category.findOne({ 
+                isListed: true, 
+                name: category.toLowerCase() 
+            });
+            if (categoryDoc) {
+                searchCriteria.category = categoryDoc._id;
+            }
+        }
 
         // Create sort options
         let sortOptions = {};
@@ -539,22 +572,43 @@ const userSearch = async (req, res) => {
                 break;
         }
 
-        // Fetch products
-        const products = await product.find(searchCriteria)
-            .sort(sortOptions)
-            .populate('category')
-            .lean();
 
-        // If it's a suggestion request, return JSON
+        const products = await Product.find(searchCriteria)
+        .sort(sortOptions)
+        .collation({ locale: 'en', strength: 2 }) // Case-insensitive sorting
+        .populate('category')
+        .lean();
+
+      
         if (isSuggestion) {
-            return res.json({ products: products.slice(0, 5) }); // Limit suggestions to 5
+            return res.json({ 
+                products: products.slice(0, 5),
+                category: category 
+            });
         }
 
-        // Otherwise render the full page
-        res.render('user/userlandingpage', {
+        // Determine which template to render based on category
+        let template = 'user/userlandingpage';
+        if (category) {
+            switch (category.toLowerCase()) {
+                case 'men':
+                    template = 'user/userlandingpage';
+                    break;
+                case 'women':
+                    template = 'user/women';
+                    break;
+                case 'kids':
+                    template = 'user/kids';
+                    break;
+                case 'shop':
+                    template = 'user/shop'
+            }
+        }
+        res.render(template, {
             products,
             currentSort: sort,
-            searchQuery: query
+            searchQuery: query,
+            currentCategory: category
         });
 
     } catch (error) {
@@ -566,6 +620,7 @@ const userSearch = async (req, res) => {
         }
     }
 };
+
 
 otp_verification =  (req,res)=>{
     return res.render('user/otp-verification');
@@ -587,13 +642,14 @@ const managePassword = async(req,res)=>{
  const updatePassword = async (req, res) => {
     try {
         const { oldPassword, newPassword } = req.body;
-        const userId = req.session.user;
+        const userId = req.session.user
 
         const user = await Users.findById(userId);
         if (!user) {
             return res.status(404).json({ message: "User not found" });
         }
 
+        console.log("usr in update password via google",user)
         // Compare with user's current hashed password
         const isValidPassword = await bcrypt.compare(oldPassword, user.password);
         
@@ -607,7 +663,15 @@ const managePassword = async(req,res)=>{
         user.password = hashedPassword;
         await user.save();
 
-        return res.status(200).json({ message: "Password updated successfully" });
+        req.session.destroy(err => {
+            if (err) {
+                console.error("Error destroying session:", err);
+                return res.status(500).json({ message: "Internal server error" });
+            }
+
+            
+            return res.status(200).json({ message: "Password updated successfully", redirectUrl: "/user/login" });
+        });
 
     } catch (error) {
         console.log("Error in update password:", error.message);
@@ -616,6 +680,7 @@ const managePassword = async(req,res)=>{
 }
 
 const otpStore = {};
+
 const otpForPassword = async (req, res) => {
     const { email } = req.body;
     if (!email) {
@@ -623,7 +688,9 @@ const otpForPassword = async (req, res) => {
     }
 
     const otp = Math.floor(100000 + Math.random() * 900000);
+
     otpStore[email] = { otp, expiresAt: Date.now() + 5 * 60 * 1000 };
+
     console.log("otp store",otpStore);
     
     try {
@@ -734,7 +801,10 @@ module.exports={
     checkYourGmail,
     verifyResetPasswordOtp,
     setNewPassword,
-    resetPassword
+    resetPassword,
+    loadShop,
+   
+
 
    
 }

@@ -1,6 +1,6 @@
 
 const express = require('express');
-const router = express.Router();
+const  router = express.Router();
 const userController = require('../controllers/user/userController');
 const productController = require('../controllers/user/productdetails');
 const userDetailscController = require("../controllers/user/userDetails")
@@ -25,6 +25,8 @@ router.post('/login',userController.login);
 
 router.post('/logout',userController.logOut);
 
+router.get('/shop',userController.loadShop)
+
 router.get('/home',userController.loadHome);
 
 
@@ -34,14 +36,16 @@ router.get('/women',userController.loadWomen);
 
 router.get('/kids',userController.loadKids)
 
-router.get("/buy",productController.productDetails);
+router.get("/buy",userAuth,productController.productDetails);
 
-router.get("/manage",userDetailscController.manage)
+router.get("/manage",userAuth,userDetailscController.manage)
 
 router.post("/manage",userDetailscController.updateDetails)
 
 // cart page
-router.get("/cart",cartDetailsController.getCart);
+router.get("/cart",userAuth,cartDetailsController.getCart);
+
+router.get("/cart/count",cartDetailsController.updateCartCounter)
 // add to cart
 router.post('/cart/add',cartDetailsController.addtoCart)
 // remove products from cart
@@ -50,11 +54,11 @@ router.delete('/cart/remove/:id/:itemId',cartDetailsController.removeProducts);
 router.put("/cart/update-quantity",cartDetailsController.updateQuantity);
 
 // checkout page
-router.get("/checkout",cartDetailsController.checkout)
+router.get("/checkout",userAuth,cartDetailsController.checkout)
 // manage address page
-router.get("/address",userDetailscController.getAddress);
+router.get("/address",userAuth,userDetailscController.getAddress);
 // show existing address in the checkout page
-router.get("/addresses",cartDetailsController.addresses);
+router.get("/addresses",userAuth,cartDetailsController.addresses);
 
 router.post("/addresses",cartDetailsController.addNewAddress);
 

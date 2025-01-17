@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css">
     <link rel="stylesheet" href="/styles/userhome.css">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
 </head>
 
 <!-- header starts -->
@@ -19,32 +20,41 @@
                 <div class="col-lg-3 col-md-4 d-flex align-items-center justify-content-start">
                     <a href="#" class="text-dark me-3">Contact Us</a>
                 </div>
-
+    
                 <!-- Center Section -->
                 <div class="col-lg-6 col-md-4 text-center">
                     <a class="m-0" style="font-family: 'Joan';font-size: 25px; text-decoration: none; color: black;" href="/user/home">BLUR VINTAGE ★</a>
                 </div>
-
+    
                 <!-- Right Section -->
-                <div class="col-lg-3 col-md-4">
-                    <div class="d-flex align-items-center justify-content-end">
-                        <!-- <form class="d-flex me-3">
-                            <input class="form-control form-control-sm me-2" type="search" placeholder="Search" aria-label="Search">
-                            <button class="btn btn-outline-dark btn-sm" type="submit">
-                                <i class="bi bi-search"></i>
-                            </button>
-                        </form> -->
-                        <a class="bi bi-person me-3" style="font-size: 1.5rem; color: black;" href="/user/manage"></a>
-                        <a class="bi bi-cart me-3" href="/user/cart" style="font-size: 1.5rem; color: black;"></a>
-                        <a class="bi bi-heart" style="font-size: 1.5rem; color: black;"></a>
-                    </div>
-                </div>
-            </div>
-
+                <div class="col-lg-3 col-md-4">                     
+                    <div class="d-flex align-items-center justify-content-end gap-3">
+                        <% if (typeof isNewUser !== 'undefined' && isNewUser) { %>
+                            <!-- Show Login/Register for non-logged in users -->
+                            <a href="/user/login" class="text-dark text-decoration-none">Login</a>
+                            <span class="text-dark">|</span>
+                            <a href="/user/register" class="text-dark text-decoration-none">Sign Up</a>
+                        <% } else { %>
+                            <!-- Show regular icons for logged in users -->
+                            <a class="bi bi-person me-3" style="font-size: 1.5rem; color: black;" href="/user/manage"></a>                         
+                            <div class="position-relative me-3">
+                                <a class="bi bi-cart" href="/user/cart" style="font-size: 1.5rem; color: black;"></a>
+                                <span id="cartCounter" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" 
+                                      style="font-size: 0.75rem; margin-top: 5px;">
+                                    0
+                                </span>
+                            </div>                         
+                            <a class="bi bi-heart" style="font-size: 1.5rem; color: black;"></a>
+                        <% } %>                     
+                    </div>                 
+                </div>             
+            </div> 
+    
             <!-- Men, Women, Kids Navigation -->
             <div class="row mt-3">
                 <div class="col-12 text-center">
                     <nav class="nav justify-content-center">
+                        <a class="nav-link mx-4" href="/user/shop" style="font-size: 1.2rem;">Shop</a>
                         <a class="nav-link mx-4" href="/user/men" style="font-size: 1.2rem;">Men</a>
                         <a class="nav-link mx-4" href="/user/women" style="font-size: 1.2rem;">Women</a>
                         <a class="nav-link mx-4" href="/user/kids" style="font-size: 1.2rem;">Kids</a>

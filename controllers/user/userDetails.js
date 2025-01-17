@@ -56,7 +56,7 @@ const updateDetails = async(req,res)=>{
 // manage address
 const getAddress = async (req,res)=>{
     try {
-        const addresses = await address.find({userId:req.session.user});
+        const addresses = await address.find({userId:req.session.user || req.session?.passport?.user});
 
         return res.render('user/addressManage',{addresses})
     } catch (error) {
@@ -70,7 +70,9 @@ const getAddress = async (req,res)=>{
 const addAddress = async(req,res)=>{
     
     try {
-        console.log("user id in add address",req.session.user);
+        console.log("user id in add address",req.session.user || req.session.passport.user);
+
+        const userID = req.session?.user || req.session?.passport?.user
         
         console.log("addrsss",req.body);
         
@@ -82,7 +84,7 @@ const addAddress = async(req,res)=>{
             return res.status(400).json({success:false,message:"all fields are required"})
         }
 
-        if (!req.session.user) {
+        if (!userID) {
             return res.status(401).json({
               success: false,
               message: "User not authenticated"
@@ -90,7 +92,7 @@ const addAddress = async(req,res)=>{
           }
 
         const addressSAVE = new address({
-            userId:req.session.user,
+            userId: userID,
             name,
             phone,
             landMark,

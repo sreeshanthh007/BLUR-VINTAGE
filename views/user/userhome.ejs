@@ -1,6 +1,19 @@
   <!-- header starts  -->
+  <head>
+    <link rel="stylesheet" href="/styles/spinner.css" />
+</head>
 
+<div id="preloader-active">
+    <div class="preloader">
+      <div class="preloader-inner">
+        <div class="preloader-img pere-text">
+          <strong>Loading</strong>
+        </div>
+      </div>
+    </div>
+  </div> 
   <%-include ("../../views/partials/user/header")%>
+
     <main class="container mt-4">
         <section class="mb-5">
             <h2 class="text-center mt-3 fw-bold  home-image">DRESS LIKE NEVER BEFORE</h2
@@ -38,7 +51,39 @@
         <div class="text-center my-5">
             <h1 class="brand-logo">BLUR VINTAGE ★</h1>
         </div>
+        <script src="/js/spinner.js"></script>  
     </main>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <!-- footer starts -->
     <%-include ("../../views/partials/user/footer")%>
+
+    <script>
+       document.addEventListener('DOMContentLoaded',function(){
+            const newUser =  <%= isNewUser %>;
+
+            console.log("hy",newUser)
+
+            if (newUser) {
+        Swal.fire({
+            title: 'Welcome to \nBLUR VINTAGE ★',
+            text: 'Please login or register to start shopping!',
+            icon: 'info',
+            showCancelButton: true,
+            confirmButtonText: 'already our member? login',
+            cancelButtonText: 'new member ? register',
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#28a745',
+            allowOutsideClick: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Redirect to login page
+                window.location.href = '/user/login';
+            } else if (result.dismiss === Swal.DismissReason.cancel) {
+                // Redirect to register page
+                window.location.href = '/user/register';
+            }
+        });
+    }
+        })
+    </script>

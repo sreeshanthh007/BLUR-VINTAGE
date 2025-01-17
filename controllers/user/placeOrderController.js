@@ -5,7 +5,7 @@ const Cart = require("../../models/cartSchema");
 const placeOrder = async (req, res) => {
     try {
         
-        const userId = req.session.user
+        const userId = req.session.user || req.session?.passport?.user
         const { cart, address, paymentMethod } = req.body;
         const orderNumber = "ORD" + Date.now() + Math.floor(Math.random() * 1000);
         const orderItems = [];
@@ -62,7 +62,7 @@ const placeOrder = async (req, res) => {
         }
 
         const order = new Order({
-            userId: userId,
+           userId: userId,
             orderItems,
             shippingAddress: address,
             payment: {
@@ -113,7 +113,7 @@ const placeOrder = async (req, res) => {
 };
 const orderDetails = async(req,res)=>{
     try {
-        const userId = req.session.user;
+        const userId = req.session.user || req.session?.passport?.user;
         console.log("user id",userId);
 
         const orders = await Order.find({userId:userId})

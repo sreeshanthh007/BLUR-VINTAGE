@@ -7,6 +7,7 @@ const path = require('path');
 const bodyparser = require('body-parser')
 const passport = require('./config/passport.js')
 const env = require('dotenv').config();
+
 const mongodb = require('./config/mongodb');
 const userRouter = require('./routes/userRoutes')
 const adminRouter = require("./routes/adminRoutes.js")
@@ -17,17 +18,20 @@ mongodb();
 
 
 app.use(session({
-    secret: 'yourSecretKey',
+    secret: process.env.session_secret,
     resave: false,
-    saveUninitialized: true,
+    saveUninitialized: false,
     cookie: {
         secure: false, // Set to true if you're using https
         httpOnly: true,
         maxAge: 3600000 // 1 hour in milliseconds
-    }
+    },
+    rolling: true,
+
 }));
 
 
+app.use(nocache());
 app.use(passport.initialize())
 app.use(passport.session());
 app.use(flash());
@@ -38,12 +42,12 @@ app.use((req, res, next) => {
 });
 app.use(bodyparser.urlencoded({extended:true}))
 app.use(express.json());
-app.use(nocache());
+
 
 
 app.set("view engine","ejs");
 
-// app.set('views', [path.join(__dirname, 'views', 'user'), path.join(__dirname, 'views', 'admin')]);
+
 
 app.set('views',[path.join(__dirname,"views")]);
 
@@ -56,6 +60,7 @@ app.use("/admin",adminRouter)
 // prevent users  accessing admin
 
 app.use("/admin",adminAccess.adminAuth)
+app.use("/user",adminAccess.userAuth)
 
 // for google authenication
 app.use('/',authRoutes)

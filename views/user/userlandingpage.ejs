@@ -1,5 +1,5 @@
 <%-include ("../../views/partials/user/landingpageHeader")%>
-
+<link rel="stylesheet" href="/styles/spinner.css">
 <head>
     <style>
     .form-select-sm {
@@ -17,6 +17,16 @@
 </style>
 </head>
 <body>
+
+    <div id="preloader-active">
+        <div class="preloader">
+          <div class="preloader-inner">
+            <div class="preloader-img pere-text">
+              <strong>Loading</strong>
+            </div>
+          </div>
+        </div>
+      </div>
     <!-- sorting
     <select id="sortSelect" class="form-select form-select-sm" style="width: auto;">
         <option value="default" disabled <%= currentSort === 'default' ? 'selected' : '' %>>Sort By</option>
@@ -60,6 +70,7 @@
         </div>
     </main>
     <%-include ("../../views/partials/user/footer")%>
+    <script src="/js/spinner.js"></script>
 </body>
 </html>
 

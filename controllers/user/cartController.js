@@ -55,7 +55,7 @@ const addtoCart = async(req,res) => {
         }
 
         // Check if total quantity exceeds limits
-        if (totalQuantity > 5) {
+        if (totalQuantity > 6) {
             return res.status(400).json({ 
                 success: false, 
                 message: 'Cannot add more than 5 items of the same product' 
@@ -130,6 +130,21 @@ const getCart = async (req, res) => {
     }
 };
 
+const updateCartCounter = async(req,res)=>{
+    try {
+        if(!req.session.user){
+            return res.json({count:0})
+        }
+        const cart = await  Cart.findOne({user:req.session.user});
+
+        const count = cart ? cart.items.reduce((total, item) => total + item.quantity, 0) : 0;
+
+        res.json({success:true,count});
+    } catch (error) {
+        console.log("error in updateCartCounter",error.message);
+    }
+}
+
 const removeProducts = async (req, res) => {
     try {
         const userId = req.session.user || req.session?.passport?.user;
@@ -169,7 +184,6 @@ const removeProducts = async (req, res) => {
         // Update cart with new total
         cart.totalAmount = totalAmount;
         await cart.save();
-
         return res.status(200).json({
             success: true,
             message: "Product removed successfully",
@@ -191,7 +205,7 @@ const updateQuantity = async (req, res) => {
         const userId = req.session.user || req.session?.passport?.user;
         const { itemId, quantity } = req.body;
 
-        if (quantity > 5) {
+        if (quantity > 6) {
             return res.status(400).json({
                 success: false,
                 message: "Cannot add more than 5 items"
@@ -420,6 +434,7 @@ module.exports = {
     addresses,
     addNewAddress,
     updateAddress,
+    updateCartCounter,
 
 
 
