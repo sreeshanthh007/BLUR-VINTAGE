@@ -206,12 +206,13 @@ const login = async (req,res)=>{
         const findUser = await Users.findOne({isAdmin:0,email:email});
 
         if(!findUser){
-            return res.render('user/login',{message:"user not found"})
+            return res.render('user/login',{message:"Email  not found ! new user ? Register"})
         }
         if(findUser.isBlocked){
             return res.render('user/login',{message:"user is blocked by admin"});
         }
 
+        console.log(password,"hey ")
         const passwordMatch =   await bcrypt.compare(password,findUser.password);
 
         if(!passwordMatch){
@@ -224,7 +225,7 @@ const login = async (req,res)=>{
 
     }catch(error) {
         console.log("error while login",error);
-        res.render('user/login',{message:"login failed please try again"});
+        res.render('user/login',{message:"email already in use ! "});
         
     }
 
@@ -271,20 +272,52 @@ const loadShop = async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1; 
         const productsPerPage = 8; // 4 products per row * 2 rows
+        const sortOption = req.query.sort || "default"
+        const query = req.query.search
+        const baseQuery={
+            isBlocked:false,
+        }
+
+        let sortConfig={};
+
+        switch(sortOption) {
+            case 'price-high-low':
+                sortConfig = {'variants.0.price': -1};
+                break;
+            case 'price-low-high':
+                sortConfig = {'variants.0.price': 1};
+                break;
+            case 'name-a-z':
+                sortConfig = { productName: 1 };
+                break;
+            case 'name-z-a':
+                sortConfig = { productName: -1 };
+                break;
+            case 'new-arrivals':
+                sortConfig = {createdOn: -1};
+                break;
+            default:
+                sortConfig = {createdOn: -1};
+                break;
+        }
         
         
         const totalProducts = await Product.countDocuments({});
         const totalPages = Math.ceil(totalProducts / productsPerPage);
         
        
-        const products = await Product.find({})
+        const products = await Product.find(baseQuery)
+        .lean()
+        .select("productName variants")
+        .sort(sortConfig)
             .skip((page - 1) * productsPerPage)
-            .limit(productsPerPage);
-            
+            .limit(productsPerPage)
         return res.render('user/shop', {
             products,
             currentPage: page,
+            currentSort:sortOption,
             totalPages,
+            search:query,
             hasNextPage: page < totalPages,
             hasPrevPage: page > 1
         });
@@ -323,74 +356,90 @@ const loadHome = async (req, res) => {
 // user men page
 
 const loadmen = async (req,res)=>{
- 
-    
     try {
         const user = req.session.user;
         const sortOption = req.query.sort || "default";
+        const page = parseInt(req.query.page) || 1;
+        const productsPerPage = 8; 
+        const query = req.query.search;
 
-        const menCategory = await Category.findOne({isListed:true,name:"men"});
+        const menCategory = await Category.findOne({isListed:true, name:"men"});
 
         if(!menCategory){
-            return res.render("user/women",{
-                products : [],
+            return res.render("user/men",{
+                products: [],
                 currentSort: sortOption
             });
         }
 
         const baseQuery = {
-            isBlocked:false,
-            category:menCategory._id
+            isBlocked: false,
+            category: menCategory._id
         };
-        let sortConfig={};
 
+        let sortConfig = {};
         switch(sortOption){
             case 'price-high-low':
-             sortConfig={'variants.0.price':-1};
-             break;
+                sortConfig = {'variants.0.price': -1};
+                break;
             case 'price-low-high':
-             sortConfig={"variants.0.price":1};
-            break;
+                sortConfig = {"variants.0.price": 1};
+                break;
             case 'name-a-z':
                 sortConfig = { productName: 1 };
                 break;
-            case 'name-z-a': // Fixed typo
+            case 'name-z-a':
                 sortConfig = { productName: -1 };
                 break;
             case 'new-arrivals':
-            sortConfig={createdOn:-1};
-            break;
+                sortConfig = {createdOn: -1};
+                break;
             default:
-            sortConfig={createdOn:-1};
-            break;
+                sortConfig = {createdOn: -1};
+                break;
         }
 
-        const productData = await product.find(baseQuery)
-        .populate("category")
-        .lean()
-        .select("productName category variants")
-        .sort(sortConfig)
+       
+        const totalProducts = await Product.countDocuments(baseQuery);
+        const totalPages = Math.ceil(totalProducts / productsPerPage);
 
-        const renderOptions ={
-            products:productData,
-            currentSort:sortOption
+        // Get paginated products
+        const productData = await Product.find(baseQuery)
+            .populate("category")
+            .lean()
+            .select("productName category variants")
+            .sort(sortConfig)
+            .skip((page - 1) * productsPerPage)
+            .limit(productsPerPage);
+
+        const renderOptions = {
+            products: productData,
+            currentSort: sortOption,
+            currentPage: page,
+            totalPages,
+            search:query,
+            hasNextPage: page < totalPages,
+            hasPrevPage: page > 1,
+            nextPage: page + 1,
+            prevPage: page - 1
         };
 
-        if(user){
-            return res.render("user/userlandingpage",renderOptions)
-        }else{
-            return res.render("user/userlandingpage",renderOptions)
-        }
+        return res.render("user/userlandingpage", renderOptions);
 
     } catch (error) {
-    console.log("error in loadmen",error.message)
-  }
+        console.log("error in loadmen", error.message);
+        return res.status(500).render('error', { message: 'An error occurred while loading products' });
+    }
 }
 // women page
 const loadWomen = async (req, res) => {
     try {
         const user = req.session.user;
         const sortOption = req.query.sort || 'default';
+        const page = (req.query.page) || 1;
+        const productsPerPage = 8;
+        const query = req.query.search
+
 
         // Find the "women" category
         const womenCategory = await Category.findOne({ isListed: true, name: "women" });
@@ -429,17 +478,30 @@ const loadWomen = async (req, res) => {
                 sortConfig = { createdOn: -1 }; // Default sorting
         }
 
-        // Fetch products with sorting
+        const totalProducts = await Product.countDocuments(baseQuery);
+        const totalPages = Math.ceil(totalProducts/productsPerPage);
+
         const productData = await Product.find(baseQuery)
             .populate("category")
             .select("productName variants category")
             .sort(sortConfig)
             .lean()
+            .skip((page - 1)*productsPerPage)
+            .limit(productsPerPage)
+            
 
         // Render the page with products and current sort option
         const renderOptions = {
             products: productData,
-            currentSort: sortOption
+            currentSort: sortOption,
+            currentPage : page,
+            totalPages,
+            search:query,
+            hasNextPage: page < totalPages,
+            hasPrevPage: page > 1,
+            nextPage: page + 1,
+            prevPage: page - 1
+
         };
 
         if (user) {
@@ -458,6 +520,9 @@ const loadKids =async (req,res)=>{
   try {
     const user = req.session.user;
     const sortOption = req.query.sort || "default";
+    const productsPerPage = 8;
+    const page = (req.query.page) || 1;
+    const query = req.query.search
 
     const kidsCategory = await Category.findOne({isListed:true,name:"kids"});
 
@@ -494,16 +559,27 @@ const loadKids =async (req,res)=>{
             break;
     }
 
+    const totalProducts = await Product.countDocuments(baseQuery);
+    const totalPages = Math.ceil(totalProducts/productsPerPage)
      const productData = await product
     .find(baseQuery)
     .populate("category")
     .lean()
     .select("variants productName category")
-    .sort(sortConfig);
+    .sort(sortConfig)
+    .skip((page-1)*productsPerPage)
+    .limit(productsPerPage)
     
     const renderOptions={
-        products:productData,
-        currentSort:sortOption
+        products: productData,
+        currentSort: sortOption,
+        currentPage : page,
+        totalPages,
+        search:query,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1,
+        nextPage: page + 1,
+        prevPage: page - 1
     };
 
     if(user){
@@ -526,20 +602,23 @@ const userSearch = async (req, res) => {
         const query = req.query.search;
         const sort = req.query.sort || 'default';
         const isSuggestion = req.query.suggest === 'true';
-        const category = req.query.category; 
-
-        if (!query && !isSuggestion) {
-            return res.redirect('/user/home');
-        }
+        const category = req.query.category;
+        const page_context = req.query.page_context;
+        const page = parseInt(req.query.page) || 1;
+        const productsPerPage = 8;
 
         // Create base search criteria
         const searchCriteria = {
             isBlocked: false,
-            $or: [
+        };
+
+        // Only add search criteria if there's a search query
+        if (query) {
+            searchCriteria.$or = [
                 { productName: { $regex: query, $options: 'i' } },
                 { 'variants.sku': { $regex: query, $options: 'i' } }
-            ]
-        };
+            ];
+        }
 
         // Add category filter if specified
         if (category) {
@@ -570,26 +649,36 @@ const userSearch = async (req, res) => {
             case 'new-arrivals':
                 sortOptions = { createdAt: -1 };
                 break;
+            default:
+                sortOptions = { createdAt: -1 };
         }
 
+        // For suggestions
+        if (isSuggestion) {
+            const products = await Product.find(searchCriteria)
+                .sort(sortOptions)
+                .limit(5)
+                .populate('category')
+                .lean();
+            return res.json({ products, category });
+        }
+
+        // For full search with pagination
+        const totalProducts = await Product.countDocuments(searchCriteria);
+        const totalPages = Math.ceil(totalProducts / productsPerPage);
 
         const products = await Product.find(searchCriteria)
-        .sort(sortOptions)
-        .collation({ locale: 'en', strength: 2 }) // Case-insensitive sorting
-        .populate('category')
-        .lean();
+            .sort(sortOptions)
+            .skip((page - 1) * productsPerPage)
+            .limit(productsPerPage)
+            .populate('category')
+            .lean();
 
-      
-        if (isSuggestion) {
-            return res.json({ 
-                products: products.slice(0, 5),
-                category: category 
-            });
-        }
-
-        // Determine which template to render based on category
-        let template = 'user/userlandingpage';
-        if (category) {
+        // Determine template based on context
+        let template;
+        if (page_context === 'shop') {
+            template = 'user/shop';
+        } else if (category) {
             switch (category.toLowerCase()) {
                 case 'men':
                     template = 'user/userlandingpage';
@@ -600,24 +689,32 @@ const userSearch = async (req, res) => {
                 case 'kids':
                     template = 'user/kids';
                     break;
-                case 'shop':
-                    template = 'user/shop'
+                default:
+                    template = 'user/userlandingpage';
             }
+        } else {
+            template = 'user/userlandingpage';
         }
+
         res.render(template, {
             products,
+            currentPage: page,
+            totalPages,
+            hasNextPage: page < totalPages,
+            hasPrevPage: page > 1,
             currentSort: sort,
             searchQuery: query,
-            currentCategory: category
+            currentCategory: category,
+            nextPage: page + 1,
+            prevPage: page - 1,
+            search:query,
         });
 
     } catch (error) {
         console.error('Search API error:', error);
-        if (req.query.suggest) {
-            res.status(500).json({ error: 'Internal server error' });
-        } else {
-            res.status(500).render('error', { error: 'Internal server error' });
-        }
+        res.status(500).render('error', { 
+            message: 'An error occurred while searching products' 
+        });
     }
 };
 
@@ -803,6 +900,7 @@ module.exports={
     setNewPassword,
     resetPassword,
     loadShop,
+
    
 
 

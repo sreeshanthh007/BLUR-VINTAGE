@@ -12,16 +12,26 @@ const productDetails=async (req,res)=>{
         const productId=req.query.id;
         
         
-        const stock = await Product.findById(productId);
-        
         
         const productData=await Product.findById(productId).populate({
             path:"category",
         });
+        const relatedProducts = await Product.find({
+            'category':productData.category._id,
+            'id': {$ne:productId},
+            'isBlocked':false,
+            'variants.stock':{$gt:0}
+        })
+        .limit(5) // Limit to 4 related products
+        .populate("category")
+        .lean();
+
         res.render('user/buyingInterface',{
             user:userData,
             product:productData,
             images:productData.productImage,
+            relatedProducts,
+          
         })
     }
     catch(error){

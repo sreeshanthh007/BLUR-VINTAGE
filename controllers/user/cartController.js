@@ -155,7 +155,7 @@ const removeProducts = async (req, res) => {
             { 
                 $pull: { 
                     items: { 
-                        _id: itemId  // Use the itemId to match the specific variant
+                        _id: itemId
                     } 
                 } 
             },

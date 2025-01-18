@@ -255,14 +255,14 @@
                         deliveryCharge = !isNaN(parseFloat(charge)) ? parseFloat(charge) : 0;
                     }
                     
-                    // Update final total
+                   
                     const finalTotalSpan = orderSummaryContainer.querySelector('.fw-bold span:last-child');
                     if (finalTotalSpan) {
                         const finalTotal = Number(cartTotal) + Number(deliveryCharge);
                         finalTotalSpan.textContent = `Rs. ${finalTotal.toFixed(2)}`;
                     }
                     
-                    // Check if cart is empty
+                 
                     const remainingItems = document.querySelectorAll('.cart-item-image');
                     if (remainingItems.length === 0) {
                         // Show empty cart message

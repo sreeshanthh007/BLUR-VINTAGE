@@ -1,89 +1,150 @@
-<%-include ("../../views/partials/user/landingpageHeader")%>
+<%- include("../../views/partials/user/landingpageHeader") %>
 <link rel="stylesheet" href="/styles/spinner.css">
 <head>
     <style>
-    .form-select-sm {
-    padding-right: 2rem;
-    background-color: white;
-    border: 1px solid #dee2e6;
-    border-radius: 4px;
-    font-size: 0.875rem;
-}
+        .form-select-sm {
+            padding-right: 2rem;
+            background-color: white;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            font-size: 0.875rem;
+        }
 
-.form-select-sm:focus {
-    border-color: black;
-    box-shadow: none;
-}
-</style>
+        .form-select-sm:focus {
+            border-color: black;
+            box-shadow: none;
+        }
+
+        /* Pagination Styles */
+        .pagination-container {
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .pagination {
+            gap: 0.25rem;
+        }
+
+        .page-link {
+            color: #000;
+            background-color: #fff;
+            border: 1px solid #dee2e6;
+            padding: 0.375rem 0.75rem;
+        }
+
+        .page-link:hover {
+            color: #000;
+            background-color: #e9ecef;
+            border-color: #dee2e6;
+        }
+
+        .page-item.active .page-link {
+            background-color: #000;
+            border-color: #000;
+            color: #fff;
+        }
+
+        .page-item.disabled .page-link {
+            color: #6c757d;
+            pointer-events: none;
+            background-color: #fff;
+            border-color: #dee2e6;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 576px) {
+            .pagination {
+                font-size: 0.875rem;
+            }
+            
+            .page-link {
+                padding: 0.25rem 0.5rem;
+            }
+        }
+    </style>
 </head>
 <body>
-
     <div id="preloader-active">
         <div class="preloader">
-          <div class="preloader-inner">
-            <div class="preloader-img pere-text">
-              <strong>Loading</strong>
+            <div class="preloader-inner">
+                <div class="preloader-img pere-text">
+                    <strong>Loading</strong>
+                </div>
             </div>
-          </div>
         </div>
-      </div>
-    <!-- sorting
-    <select id="sortSelect" class="form-select form-select-sm" style="width: auto;">
-        <option value="default" disabled <%= currentSort === 'default' ? 'selected' : '' %>>Sort By</option>
-        <option value="price-high-low" <%= currentSort === 'price-high-low' ? 'selected' : '' %>>Price: High to Low</option>
-        <option value="price-low-high" <%= currentSort === 'price-low-high' ? 'selected' : '' %>>Price: Low to High</option>
-        <option value="name-a-z" <%= currentSort === 'name-a-z' ? 'selected' : '' %>>Name: A to Z</option>
-        <option value="name-z-a" <%= currentSort === 'name-z-a' ? 'selected' : '' %>>Name: Z to A</option>
-        <option value="new-arrivals" <%= currentSort === 'new-arrivals' ? 'selected' : '' %>>New Arrivals</option>
-    </select> -->
-    <!-- Header -->
+    </div>
+
+    
     <main class="container-fluid px-2 px-sm-3 px-md-4 py-3 py-md-5">
         <div class="row g-2 g-sm-3 g-md-4">
             <% for (let i = 0; i < products.length; i++) { %>
-                <div class="col-6 col-sm-4 col-lg-3">
-                    <div class="product-card">
-                        <div class="product-image-container">
-                            <a href="/user/buy?id=<%= products[i]._id %>">
-                                <% if (products[i].variants && products[i].variants.length > 0 && 
-                                      products[i].variants[0].productImage && products[i].variants[0].productImage.length > 0) { %>
-                                    <img src="<%= products[i].variants[0].productImage[0] %>" 
-                                         alt="<%= products[i].productName %>" 
-                                         class="img-fluid">
-                                <% } else { %>
-                                    <img src="/images/default-product.jpg" 
-                                         alt="No image available" 
-                                         class="img-fluid">
-                                <% } %>
-                            </a>
-                        </div>
-                        <h3 class="product-title"><%= products[i].productName %></h3>
-                        <% if (products[i].variants && products[i].variants.length > 0) { %>
+                <% 
+                // Find variants with stock > 0
+                const inStockVariants = products[i].variants?.filter(v => v.stock > 0) || [];
+                if (inStockVariants.length > 0) { 
+                %>
+                    <div class="col-6 col-sm-4 col-lg-3">
+                        <div class="product-card">
+                            <div class="product-image-container">
+                                <a href="/user/buy?id=<%= products[i]._id %>">
+                                    <% if (inStockVariants[0].productImage && inStockVariants[0].productImage.length > 0) { %>
+                                        <img src="<%= inStockVariants[0].productImage[0] %>" 
+                                             alt="<%= products[i].productName %>" 
+                                             class="img-fluid">
+                                             
+                                    <% } else { %>
+                                        <img src="/images/default-product.jpg" 
+                                             alt="No image available" 
+                                             class="img-fluid">
+                                    <% } %>
+                                </a>
+                            </div>
+                            <h3 class="product-title"><%= products[i].productName %></h3>
                             <p class="product-price" style="font-weight: bolder;">
-                                Rs/-<%= products[i].variants[0].price %>
+                                Rs/-<%= inStockVariants[0].price %>
                             </p>
-                        <% } else { %>
-                            <p class="product-price" style="font-weight: bolder;">Price not available</p>
-                        <% } %>
+                        </div>
                     </div>
-                </div>
+                <% } %>
             <% } %>
         </div>
+
+        <!-- Pagination Section -->
+        <div class="pagination-container">
+            <nav aria-label="Product navigation">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item <%= !hasPrevPage ? 'disabled' : '' %>">
+                        <a class="page-link" href="?page=1<%= currentSort !== 'default' ? '&sort=' + currentSort : '' %>" <%= !hasPrevPage ? 'tabindex="-1"' : '' %>>First</a>
+                    </li>
+                    <li class="page-item <%= !hasPrevPage ? 'disabled' : '' %>">
+                        <a class="page-link" href="?page=<%= currentPage - 1 %><%= currentSort !== 'default' ? '&sort=' + currentSort : '' %>" <%= !hasPrevPage ? 'tabindex="-1"' : '' %>>Previous</a>
+                    </li>
+                    
+                    <% for(let i = Math.max(1, currentPage - 2); i <= Math.min(totalPages, currentPage + 2); i++) { %>
+                        <li class="page-item <%= currentPage === i ? 'active' : '' %>">
+                            <a class="page-link" href="?page=<%= i %><%= currentSort !== 'default' ? '&sort=' + currentSort : '' %>"><%= i %></a>
+                        </li>
+                    <% } %>
+
+                    <li class="page-item <%= !hasNextPage ? 'disabled' : '' %>">
+                        <a class="page-link" href="?page=<%= currentPage + 1 %><%= currentSort !== 'default' ? '&sort=' + currentSort : '' %>" <%= !hasNextPage ? 'tabindex="-1"' : '' %>>Next</a>
+                    </li>
+                    <li class="page-item <%= !hasNextPage ? 'disabled' : '' %>">
+                        <a class="page-link" href="?page=<%= totalPages %><%= currentSort !== 'default' ? '&sort=' + currentSort : '' %>" <%= !hasNextPage ? 'tabindex="-1"' : '' %>>Last</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+
+        <!-- Page indicator -->
+        <div class="text-center mt-3">
+            <small class="text-muted">
+                Page <%= currentPage %> of <%= totalPages %>
+            </small>
+        </div>
     </main>
-    <%-include ("../../views/partials/user/footer")%>
+
+    <%- include("../../views/partials/user/footer") %>
     <script src="/js/spinner.js"></script>
 </body>
 </html>
-
-<script>
-//     document.addEventListener('DOMContentLoaded', function() {
-//     const sortSelect = document.getElementById('sortSelect');
-    
-//     sortSelect.addEventListener('change', async function() {
-//         const selectedValue = this.value;
-//         const currentUrl = new URL(window.location.href);
-//         currentUrl.searchParams.set('sort', selectedValue);
-//         window.location.href = currentUrl.toString();
-//     });
-// });
-</script>
-

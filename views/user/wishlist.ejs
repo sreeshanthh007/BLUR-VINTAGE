@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BLUR VINTAGE ★</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+
+        .search-input {
+            background-color: rgb(233, 226, 226);
+            border: none;
+            padding: 8px 15px;
+            width: 100%;
+        }
+
+        .product-card {
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+            background: white;
+            padding: 20px;
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .add-to-cart-btn {
+            background-color: #333;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            width: 100%;
+            text-transform: uppercase;
+            font-size: 14px;
+        }
+
+        .footer-links {
+            list-style: none;
+            padding: 0;
+        }
+
+        .footer-links li a {
+            color: #333;
+            text-decoration: none;
+            font-size: 14px;
+            line-height: 2;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+   <%-include('../../views/partials/user/landingpageHeader.ejs')%>
+
+    <!-- Main Content -->
+    <main class="py-5">
+        <div class="container">
+            <h2 class="text-center mb-5">FAVOURITES</h2>
+            <div class="row">
+                <div class="col-12 text-end mb-3">
+                    <span>1 item</span>
+                </div>
+                <div class="col-md-4">
+                    <div class="product-card">
+                        <img src="" alt="Loose fit Flannel shirt" class="img-fluid mb-3">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <h3 class="h6">Loose fit Flannel shirt</h3>
+                            <button class="btn p-0"><i class="bi bi-trash"></i></button>
+                        </div>
+                        <p class="mb-1">Rs. 1,499.00</p>
+                        <p class="text-muted small mb-3">color grey/checked</p>
+                        <button class="add-to-cart-btn">Add to cart</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <%-include('../../views/partials/user/footer.ejs')%>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
+

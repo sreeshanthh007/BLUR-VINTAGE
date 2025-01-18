@@ -5,7 +5,8 @@ const userController = require('../controllers/user/userController');
 const productController = require('../controllers/user/productdetails');
 const userDetailscController = require("../controllers/user/userDetails")
 const cartDetailsController = require("../controllers/user/cartController");
-const orderDetailsController = require("../controllers/user/placeOrderController")
+const orderDetailsController = require("../controllers/user/placeOrderController");
+const wishlistController = require('../controllers/user/wishlilstController')
 const {userAuth,adminAuth} = require('../middlewares/auth');
 const { route } = require('./adminRoutes');
 
@@ -53,6 +54,8 @@ router.delete('/cart/remove/:id/:itemId',cartDetailsController.removeProducts);
 // update quantity 
 router.put("/cart/update-quantity",cartDetailsController.updateQuantity);
 
+router.get('/wishlist',wishlistController.getWishlist);
+router.post('/wishlist/add',userAuth,wishlistController.addToWishlist)
 // checkout page
 router.get("/checkout",userAuth,cartDetailsController.checkout)
 // manage address page

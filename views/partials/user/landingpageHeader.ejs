@@ -131,8 +131,9 @@
                                     aria-label="Search" 
                                     id="searchInput"
                                     autocomplete="off"
+                                    value="<%=search || ''%>"
                                 >
-                                <button class="btn btn-outline-dark btn-sm" type="submit">
+                                <button class="btn btn-outline-dark btn-md" type="submit">
                                     <i class="bi bi-search"></i>
                                 </button>
                                 <!-- Add this div for search results -->
@@ -148,7 +149,9 @@
                                     0
                                 </span>
                             </div>
-                            <a class="bi bi-heart" style="font-size: 1.5rem; color: black;"></a>
+                           
+                            <a class="bi bi-heart" style="font-size: 1.5rem; color: black;"  href="/user/wishlist"></a>
+                          </a>
                         </div>
                     </div>
                 </div>
@@ -201,7 +204,6 @@ document.addEventListener('DOMContentLoaded', function() {
         return '';
     }
 
-    // Function to escape special characters in search query
     function escapeRegExp(string) {
         return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     }
@@ -214,64 +216,99 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     async function searchProducts(query) {
-        try {
-            const currentCategory = getCurrentCategory();
-            const sortValue = sortSelect ? sortSelect.value : 'default';
-            
-            if (query.trim()) {
-               
-                window.location.href = `/user/search?search=${encodeURIComponent(query)}${sortValue !== 'default' ? `&sort=${sortValue}` : ''}${currentCategory ? `&category=${currentCategory}` : ''}`;
-            } else {
-                
-                window.location.href = `/user/men${sortValue !== 'default' ? `?sort=${sortValue}` : ''}${currentCategory ? `&category=${currentCategory}` : ''}`;
-            }
-        } catch (error) {
-            console.error('Search error:', error);
-        }
-    }
-
-    // Add input event listener with debounce for dropdown suggestions
-    searchInput.addEventListener('input', (e) => {
-        const query = e.target.value.trim();
-        const currentCategory = getCurrentCategory();
+    try {
+        const currentPath = window.location.pathname;
+        const sortValue = sortSelect ? sortSelect.value : 'default';
         
-        if (query.length >= 2) {
-            clearTimeout(debounceTimer);
-            debounceTimer = setTimeout(async () => {
-                try {
-                    const response = await fetch(`/user/search?search=${encodeURIComponent(query)}&suggest=true${currentCategory ? `&category=${currentCategory}` : ''}`);
-                    const data = await response.json();
+        // Create URLSearchParams object for cleaner URL construction
+        const searchParams = new URLSearchParams();
+        
+        // Add search query if it exists
+        if (query.trim()) {
+            searchParams.set('search', query);
+        }
+        
+      
+        if (sortValue !== 'default') {
+            searchParams.set('sort', sortValue);
+        }
+        
+        // Set category and page context based on current path
+        if (currentPath.includes('/shop')) {
+            searchParams.set('page_context', 'shop');
+        } else if (currentPath.includes('/men')) {
+            searchParams.set('category', 'men');
+        } else if (currentPath.includes('/women')) {
+            searchParams.set('category', 'women');
+        } else if (currentPath.includes('/kids')) {
+            searchParams.set('category', 'kids');
+        }
+        
+        // Navigate to the search URL with all parameters
+        window.location.href = `/user/search?${searchParams.toString()}`;
+    } catch (error) {
+        console.error('Search error:', error);
+    }
+}
 
-                    if (data.products && data.products.length > 0) {
-                        const resultsHtml = data.products.map(product => `
-                            <div class="search-result-item" onclick="window.location.href='/user/buy?id=${product._id}'">
-                                <img src="${product.variants[0]?.productImage[0] || '/images/default-product.jpg'}" 
-                                    alt="${product.productName}">
-                                <div class="search-result-info">
-                                    <div class="search-result-name">
-                                        ${highlightMatch(product.productName, query)}
-                                    </div>
-                                    <div class="search-result-price">
-                                        Rs/-${product.variants[0]?.price || 'Price not available'}
-                                    </div>
+// Update the suggestion fetch as well
+searchInput.addEventListener('input', (e) => {
+    const query = e.target.value.trim();
+    const currentPath = window.location.pathname;
+    
+    if (query.length >= 2) {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(async () => {
+            try {
+                // Build search params for suggestions
+                const searchParams = new URLSearchParams({
+                    search: query,
+                    suggest: 'true'
+                });
+                
+                // Add appropriate context
+                if (currentPath.includes('/shop')) {
+                    searchParams.set('page_context', 'shop');
+                } else {
+                    const currentCategory = getCurrentCategory();
+                    if (currentCategory) {
+                        searchParams.set('category', currentCategory);
+                    }
+                }
+
+                const response = await fetch(`/user/search?${searchParams.toString()}`);
+                const data = await response.json();
+
+                if (data.products && data.products.length > 0) {
+                    const resultsHtml = data.products.map(product => `
+                        <div class="search-result-item" onclick="window.location.href='/user/buy?id=${product._id}'">
+                            <img src="${product.variants[0]?.productImage[0] || '/images/default-product.jpg'}" 
+                                alt="${product.productName}">
+                            <div class="search-result-info">
+                                <div class="search-result-name">
+                                    ${highlightMatch(product.productName, query)}
+                                </div>
+                                <div class="search-result-price">
+                                    Rs/-${product.variants[0]?.price || 'Price not available'}
                                 </div>
                             </div>
-                        `).join('');
+                        </div>
+                    `).join('');
 
-                        searchResults.innerHTML = resultsHtml;
-                        searchResults.style.display = 'block';
-                    } else {
-                        searchResults.innerHTML = '<div class="p-3 text-center text-muted">No products found</div>';
-                        searchResults.style.display = 'block';
-                    }
-                } catch (error) {
-                    console.error('Suggestion error:', error);
+                    searchResults.innerHTML = resultsHtml;
+                    searchResults.style.display = 'block';
+                } else {
+                    searchResults.innerHTML = '<div class="p-3 text-center text-muted">No products found</div>';
+                    searchResults.style.display = 'block';
                 }
-            }, 300);
-        } else {
-            searchResults.style.display = 'none';
-        }   
-    });
+            } catch (error) {
+                console.error('Suggestion error:', error);
+            }
+        }, 300);
+    } else {
+        searchResults.style.display = 'none';
+    }   
+});
 
     // Handle form submission
     searchInput.closest('form').addEventListener('submit', (e) => {
@@ -285,21 +322,37 @@ document.addEventListener('DOMContentLoaded', function() {
         const query = searchInput.value.trim();
         searchProducts(query);
     })
-    // Close search results when clicking outside
+   
     document.addEventListener('click', (e) => {
         if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
             searchResults.style.display = 'none';
         }
     });
 
-    // Handle sorting
-    if (sortSelect) {
-        sortSelect.addEventListener('change', function() {
-            const currentUrl = new URL(window.location.href);
-            currentUrl.searchParams.set('sort', this.value);
-            window.location.href = currentUrl.toString();
-        });
-    }
+    
+if (sortSelect) {
+    sortSelect.addEventListener('change', function() {
+        const currentUrl = new URL(window.location.href);
+        const searchParams = new URLSearchParams(currentUrl.search);
+        
+        
+        searchParams.set('sort', this.value);
+        
+       
+        if (window.location.pathname.includes('/shop')) {
+            searchParams.set('page_context', 'shop');
+        }
+        
+  
+        const searchQuery = document.getElementById('searchInput').value.trim();
+        if (searchQuery) {
+            searchParams.set('search', searchQuery);
+        }
+        
+        // Navigate to new URL with all parameters
+        window.location.href = `${currentUrl.pathname}?${searchParams.toString()}`;
+    });
+}
 });
 
    async function updateCartCounter(){
