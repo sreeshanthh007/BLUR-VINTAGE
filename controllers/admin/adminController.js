@@ -3,6 +3,7 @@ const user = require("../../models/userSchema");
 const mongoose = require('mongoose');
 const bcrypt = require("bcrypt");
 const Order = require("../../models/orderSchema");
+const Product = require("../../models/productSchema");
 
 
 
@@ -11,7 +12,7 @@ const login = async (req,res)=>{
     const {email,password} = req.body;
 
     const admin = await user.findOne({email,isAdmin:true});
-    console.log(admin)
+    console.log("adminnnnnn",admin)
 
     if(!admin){
         return res.status(500).json({success:false,message:"admin not found"});
@@ -209,13 +210,35 @@ const updateOrderStatus = async(req,res)=>{
         if (!id || !status) {
             return res.status(400).json({ message: "Order ID and status are required" });
         }
+        const order = await Order.findOne({orderNumber:id})
 
-        const order = await Order.findOneAndUpdate(
-            {orderNumber:id},
-            
-            {orderStatus:status},
-            {new:true}
-        );
+        if (status === 'Cancelled') {
+            for (const orderItem of order.orderItems) {
+                await Product.findOneAndUpdate(
+                    { 
+                        _id: orderItem.product,
+                        'variants.color': orderItem.variant.color,
+                        'variants.size': orderItem.variant.size
+                    },
+                    {
+                        $inc: {
+                            'variants.$.stock': orderItem.quantity
+                        },
+                        $set: {
+                            'variants.$.status': 'Available'
+                        }
+                    }
+                );
+            }
+        }
+
+        order.orderStatus = status;
+
+        if(status==="Delivered" && order.payment.method==="COD"){
+            order.payment.status = "Completed"
+        }
+        
+        await order.save()
 
         if (!order) {
             return res.status(404).json({ message: "Order not found" });

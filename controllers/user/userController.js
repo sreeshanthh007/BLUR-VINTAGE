@@ -9,7 +9,6 @@ const Category = require('../../models/categorySchema');
 const Product = require('../../models/productSchema');
 const product = require('../../models/productSchema');
 
-
 // generating otp
 function generateOTP(){
     return Math.floor(100000 + Math.random()*900000).toString();
@@ -17,40 +16,50 @@ function generateOTP(){
 
 
 // sending verification email
-async function sendVerificationEmail(email,otp){
-
-    try{
-        const transport = node_mailer.createTransport({
-            service:"Gmail",
-            requireTLS:true,
-            auth:{
-                user:process.env.NODE_MAILER_EMAIL,
-                pass:process.env.NODE_MAILER_PASSWORD
-                
-            },
-            logger:true,
-            debug:true
-           
-            
-        })
-        const info = await transport.sendMail({
-            from:"BLUR VINTAGE ★",
-            to:email,
-            subject:"verify your account",
-            text:`YOUR OTP IS ${otp}`,
-            html:`<b> your OTP is : ${otp} </b>` 
-            
-            
-        })
-
-        console.log("Email send response:", info);
-        return info.accepted && info.accepted.length > 0;
-
-    }catch(err){
-        console.log('error occured while sending otp',err.message,err.stack);
-        return false;
+async function sendVerificationEmail(email, otp) {
+    try {
+      const transport = node_mailer.createTransport({
+        service: "Gmail",
+        requireTLS: true,
+        auth: {
+          user: process.env.NODE_MAILER_EMAIL,
+          pass: process.env.NODE_MAILER_PASSWORD, 
+        },
+        logger: true,
+        debug: true, 
+      });
+  
+      const htmlContent = `
+        <div style="font-family: Joan, sans-serif; padding: 20px; border: 1px solid #ddd; border-radius: 10px; max-width: 600px; margin: auto;">
+          <h2 style="text-align: center; color:rgb(76, 91, 175);">Welcome to BLUR VINTAGE ⭐</h2>
+          <p>Hello,</p>
+          <p>Thank you for joining BLUR VINTAGE ⭐. Use the OTP below to verify your account:</p>
+          <div style="text-align: center; margin: 20px 0;">
+            <span style="font-size: 24px; font-weight: bold; background-color: #f4f4f4; padding: 10px 20px; border-radius: 5px; color: #333;">${otp}</span>
+          </div>
+          <p>If you did not request this, please ignore this email.</p>
+          <footer style="margin-top: 20px; text-align: center; color: #aaa; font-size: 12px;">
+            © 2025 BLUR VINTAGE ⭐. All rights reserved.
+          </footer>
+        </div>
+      `;
+  
+      const info = await transport.sendMail({
+        from: `"BLUR VINTAGE ⭐" <${process.env.NODE_MAILER_EMAIL}>`,
+        to: email,
+        subject: "Verify Your Account",
+        text: `Your OTP is ${otp}`, // Fallback for plain text email
+        html: htmlContent, // HTML version of the email
+      });
+  
+      console.log("Email sent successfully:", info);
+      return info.accepted && info.accepted.length > 0;
+    } catch (err) {
+      console.error("Error occurred while sending OTP:", err.message);
+      console.error("Stack trace:", err.stack);
+      return false;
     }
-}
+  }
 
 
 
@@ -199,37 +208,37 @@ const verifyOTP = async (req, res) => {
 
 
 
-const login = async (req,res)=>{
-    try {
-        const {email,password} = req.body;
+    const login = async (req,res)=>{
+        try {
+            const {email,password} = req.body;
 
-        const findUser = await Users.findOne({isAdmin:0,email:email});
+            const findUser = await Users.findOne({isAdmin:0,email:email});
 
-        if(!findUser){
-            return res.render('user/login',{message:"Email  not found ! new user ? Register"})
+            if(!findUser){
+                return res.render('user/login',{message:"Email  not found ! new user ? Register"})
+            }
+            if(findUser.isBlocked){
+                return res.render('user/login',{message:"user is blocked by admin"});
+            }
+
+    
+            const passwordMatch =   await bcrypt.compare(password,findUser.password);
+
+            if(!passwordMatch){
+                return res.render('user/login',{message:"password didnt match"});
+            }
+            req.session.user = findUser._id
+            console.log('login user',req.session.user)
+
+            res.redirect("/user/home");
+
+        }catch(error) {
+            console.log("error while login",error);
+            res.render('user/login',{message:"email already in use ! "});
+            
         }
-        if(findUser.isBlocked){
-            return res.render('user/login',{message:"user is blocked by admin"});
-        }
 
-        console.log(password,"hey ")
-        const passwordMatch =   await bcrypt.compare(password,findUser.password);
-
-        if(!passwordMatch){
-            return res.render('user/login',{message:"password didnt match"});
-        }
-        req.session.user = findUser._id
-        console.log('login user',req.session.user)
-
-        res.redirect("/user/home");
-
-    }catch(error) {
-        console.log("error while login",error);
-        res.render('user/login',{message:"email already in use ! "});
-        
     }
-
-}
 const logOut = async (req,res)=>{
     try {
         req.session.destroy((err)=>{
@@ -271,6 +280,7 @@ loadRegister = async (req,res)=>{
 const loadShop = async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1; 
+        const user = req.session?.user || req.session?.passport?.user
         const productsPerPage = 8; // 4 products per row * 2 rows
         const sortOption = req.query.sort || "default"
         const query = req.query.search
@@ -312,9 +322,12 @@ const loadShop = async (req, res) => {
         .sort(sortConfig)
             .skip((page - 1) * productsPerPage)
             .limit(productsPerPage)
+            console.log("proddd",products);
+            
         return res.render('user/shop', {
             products,
             currentPage: page,
+            user,
             currentSort:sortOption,
             totalPages,
             search:query,
@@ -357,7 +370,7 @@ const loadHome = async (req, res) => {
 
 const loadmen = async (req,res)=>{
     try {
-        const user = req.session.user;
+        const user = req.session.user || req.session?.passport?.user;
         const sortOption = req.query.sort || "default";
         const page = parseInt(req.query.page) || 1;
         const productsPerPage = 8; 
@@ -415,6 +428,7 @@ const loadmen = async (req,res)=>{
         const renderOptions = {
             products: productData,
             currentSort: sortOption,
+            user,
             currentPage: page,
             totalPages,
             search:query,
@@ -424,7 +438,11 @@ const loadmen = async (req,res)=>{
             prevPage: page - 1
         };
 
-        return res.render("user/userlandingpage", renderOptions);
+        if(!user){
+            return res.render('user/userlandingpage',renderOptions)
+        }else{
+            return res.render('user/userlandingpage',renderOptions)
+        }
 
     } catch (error) {
         console.log("error in loadmen", error.message);
@@ -434,7 +452,7 @@ const loadmen = async (req,res)=>{
 // women page
 const loadWomen = async (req, res) => {
     try {
-        const user = req.session.user;
+        const user = req.session.user || req.session?.passport?.user;
         const sortOption = req.query.sort || 'default';
         const page = (req.query.page) || 1;
         const productsPerPage = 8;
@@ -494,6 +512,7 @@ const loadWomen = async (req, res) => {
         const renderOptions = {
             products: productData,
             currentSort: sortOption,
+            user,
             currentPage : page,
             totalPages,
             search:query,
@@ -518,7 +537,7 @@ const loadWomen = async (req, res) => {
 // kids page
 const loadKids =async (req,res)=>{
   try {
-    const user = req.session.user;
+    const user = req.session.user || req.session?.passport?.user;
     const sortOption = req.query.sort || "default";
     const productsPerPage = 8;
     const page = (req.query.page) || 1;
@@ -574,6 +593,7 @@ const loadKids =async (req,res)=>{
         products: productData,
         currentSort: sortOption,
         currentPage : page,
+        user,
         totalPages,
         search:query,
         hasNextPage: page < totalPages,
@@ -815,7 +835,7 @@ const verifyResetPasswordOtp = async (req, res) => {
         return res.status(400).json({ message: "Email and OTP are required" });
     }
 
-    const storedOtpDetails = otpStore[email]; // Retrieve OTP for the email
+    const storedOtpDetails = otpStore[email]; 
 
     if (!storedOtpDetails) {
         return res.status(400).json({ message: "Expired or invalid OTP" });

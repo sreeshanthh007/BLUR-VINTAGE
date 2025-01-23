@@ -507,6 +507,31 @@ function updateAddToCartButton(variant) {
     }
 }
 
+    async function updateCartCounter(){
+    try {
+        const response  = await fetch('/user/cart/count');
+
+        if (!response.ok) {
+            throw new Error('Failed to fetch cart count');
+        }
+
+        const data = await response.json();
+        console.log("cart counter",data )
+        const counter = document.getElementById('cartCounter');
+
+        if(counter){
+            counter.textContent = data.count || '0';
+
+            counter.style.display = data.count >0 ? "block" : "none";
+        }
+
+
+    } catch (error) {
+        console.log("error in cart counter",error.message);
+        
+    }
+   }
+
 async function addToCartHandler() {
     const selectedColorElement = document.querySelector(".color-circle.active");
     if (!selectedColorElement) {
@@ -573,6 +598,7 @@ async function addToCartHandler() {
         const result = await response.json();
 
         if (result.success) {
+            await updateCartCounter()
             updateStockDisplay({
                 ...selectedVariant,
                 stock: result.newStock,

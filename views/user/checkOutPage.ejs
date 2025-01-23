@@ -155,8 +155,8 @@
                     </div>
                     <div class="payment-option">
                         <div class="form-check">
-                            <input class="form-check-input" type="radio" name="payment" id="bank">
-                            <label class="form-check-label" for="bank">Bank</label>
+                            <input class="form-check-input" type="radio" name="payment" id="razorpay">
+                            <label class="form-check-label" for="razorpay">Pay Online (Razorpay)</label>
                         </div>
                     </div>
                     <div class="payment-option">
@@ -212,7 +212,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 </body>
 </html>
 
@@ -381,6 +381,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    //======= PAYMENT METHODS FETCH FUNCTIONS //=================
 
     const confirmBtn = document.querySelector(".confirm-btn");
 
@@ -405,6 +406,14 @@ document.addEventListener('DOMContentLoaded', function() {
             });
             return;
         }
+        const orderData = {
+        cart: {
+            items: <%- JSON.stringify(cart.items) %>,
+            totalAmount: <%= cart.totalAmount %>
+        },
+        address: <%- JSON.stringify(address) %>,
+        paymentMethod: selectedPayment.id.toUpperCase()
+        };
 
         try {
             const response = await fetch("/user/order/place",{
@@ -412,34 +421,103 @@ document.addEventListener('DOMContentLoaded', function() {
                 headers:{
                     "Content-Type":"application/json"
                 },
-                body:JSON.stringify({
-                    cart:{
-                        items: <%- JSON.stringify(cart.items) %>,
-                        totalAmount: <%= cart.totalAmount %>
-                    },
-                    address: <%- JSON.stringify(address) %>,
-                    paymentMethod: selectedPayment.id.toUpperCase()
-                })
+                body:JSON.stringify(orderData)
             });
 
             const result = await response.json();
 
-            if(result.success){
-                Swal.fire({
-                    icon:"success",
-                    title:"order placed successfully",
-                    text:`order number : ${result.orderNumber}`,
-                    confirmButtonText:"Thanks"
-                }).then(()=>{
-                    window.location.href="/user/thankYou"
+           
+        if (result.success) {
+            if (selectedPayment.id === 'razorpay') {
+                // Handle Razorpay payment
+                const options = {
+                    key: result.razorpayKeyId,
+                    amount: result.amount,
+                    currency: "INR",
+                    name: "BLUR VINTAGE ⭐",
+                    description: "Purchase Payment",
+                    order_id: result.razorpayOrderId,
+                    handler: async function (response) {
+                        // Handle the success payment
+                        try {
+                            const verifyResponse = await fetch('/user/order/verify-payment', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({
+                                    razorpay_order_id: response.razorpay_order_id,
+                                    razorpay_payment_id: response.razorpay_payment_id,
+                                    razorpay_signature: response.razorpay_signature,
+                                    cart: orderData.cart,
+                                    address: orderData.address
+                                })
+                            });
+
+                            const verifyResult = await verifyResponse.json();
+                            if (verifyResult.success) {
+                                Swal.fire({
+                                    icon: "success",
+                                    title: "Payment successful",
+                                    text: `Order number: ${verifyResult.orderNumber}`,
+                                    confirmButtonText: "OK"
+                                }).then(() => {
+                                    window.location.href = "/user/thankYou";
+                                });
+                            } else {
+                                throw new Error(verifyResult.message);
+                            }
+                        } catch (error) {
+                            Swal.fire({
+                                icon: "error",
+                                title: "Payment verification failed",
+                                text: error.message
+                            });
+                         
+                        }
+                    },
+                    prefill: {
+                        name: address.name,
+                        contact: address.phone
+                    },
+                    theme: {
+                        color: "#212529"
+                    }
+                };
+
+                const rzp = new Razorpay(options);
+                rzp.open();
+                
+                // Handle payment failure
+                rzp.on('payment.failed', function (response) {
+                    Swal.fire({
+                        icon: "error",
+                        title: "Payment failed",
+                        text: response.error.description
+                    });
                 });
-            }else{
-                throw new Error(result.message);
+            } else {
+                // Handle COD or wallet payment success 
+                Swal.fire({
+                    icon: "success",
+                    title: "Order placed successfully",
+                    text: `Order number: ${result.orderNumber}`,
+                    confirmButtonText: "Thanks"
+                }).then(() => {
+                    window.location.href = "/user/thankYou";
+                });
             }
-        } catch (error) {
-            console.log("failed to place order",error.message);
-            
+        } else {
+            throw new Error(result.message);
         }
+    } catch (error) {
+        console.error("Failed to place order:", error);
+        Swal.fire({
+            icon: "error",
+            title: "Failed to place order",
+            text: error.message
+        });
+    }
     })
 });
 </script>

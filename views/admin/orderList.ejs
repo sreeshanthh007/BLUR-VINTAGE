@@ -171,16 +171,24 @@
                                         <a href="#" class="text-decoration-none text-dark" id="dropdownMenu<%= order.id %>" data-bs-toggle="dropdown" aria-expanded="false">
                                             <i class="bi bi-three-dots-vertical"></i>
                                         </a>
-                                        <ul class="dropdown-menu" aria-labelledby="dropdownMenu<%= order.id %>">
-                                            <li><a class="dropdown-item" href="/admin/order-details?id=<%= order.id%>">See Details</a></li>
-                                            <li><hr class="dropdown-divider"></li>
-                                            <li><a class="dropdown-item status-update" data-order-id="<%= order.id %>" data-status="Processing" href="#">Processing</a></li>
-                                            <li><a class="dropdown-item status-update" data-order-id="<%= order.id %>" data-status="Delivered" href="#">Delivered</a></li>
-                                            <li><a class="dropdown-item status-update" data-order-id="<%= order.id %>" data-status="Cancelled" href="#">Cancelled</a></li>
-                                        </ul>
+                                        <% if (order.status.toLowerCase() !== 'cancelled') { %>
+                                            <div class="dropdown">
+                                                <ul class="dropdown-menu" aria-labelledby="dropdownMenu<%= order.id %>">
+                                                    <li><a class="dropdown-item" href="/admin/order-details?id=<%= order.id %>">See Details</a></li>
+                                                    <% if (order.status.toLowerCase() !== 'delivered') { %>
+                                                        <li><hr class="dropdown-divider"></li>
+                                                        <li><a class="dropdown-item status-update" data-order-id="<%= order.id %>" data-status="Processing" href="#">Processing</a></li>
+                                                        <li><a class="dropdown-item status-update" data-order-id="<%= order.id %>" data-status="Delivered" href="#">Delivered</a></li>
+                                                        <li><a class="dropdown-item status-update" data-order-id="<%= order.id %>" data-status="Cancelled" href="#">Cancelled</a></li>
+                                                    <% } %>
+                                                </ul>
+                                            </div>
+                                        <% } %>
+                                        
                                     </div>
                                 <% } %>
-                            </td>    
+                            </td>
+                               
                         </tr>
                     <% }); %>   
                 </tbody>

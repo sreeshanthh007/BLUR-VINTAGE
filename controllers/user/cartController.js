@@ -132,14 +132,15 @@ const getCart = async (req, res) => {
 
 const updateCartCounter = async(req,res)=>{
     try {
-        if(!req.session.user){
+        const userId = req.session?.user || req.session?.passport?.user
+        if(!userId){
             return res.json({count:0})
         }
-        const cart = await  Cart.findOne({user:req.session.user});
+        const cart = await  Cart.findOne({user:userId});
 
-        const count = cart ? cart.items.reduce((total, item) => total + item.quantity, 0) : 0;
-
-        res.json({success:true,count});
+        let  count = cart ? cart.items.reduce((total, item) => total + item.quantity, 0) : 0;
+        console.log("count is",count)
+        res.status(200).json({success:true,count});
     } catch (error) {
         console.log("error in updateCartCounter",error.message);
     }

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BLUR VINTAGE ★</title>
+    <title>BLUR VINTAGE ★ AAA</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css">
     <link rel="stylesheet" href="/styles/landingpage.css">
@@ -141,17 +141,28 @@
                                     style="top: 100%; left: 0; z-index: 1000; display: none; max-height: 400px; overflow-y: auto;">
                                 </div>
                             </form> 
-                            <a class="bi bi-person me-3" style="font-size: 1.5rem; color: black;" href="/user/manage"></a>
-                            <div class="position-relative me-3">
-                                <a class="bi bi-cart" href="/user/cart" style="font-size: 1.5rem; color: black;"></a>
-                                <span id="cartCounter" class="position-absolute top-0  start-100 translate-middle badge rounded-pill bg-danger" 
-                                      style="font-size: 0.75rem; margin-top: 5px;">
-                                    0
-                                </span>
-                            </div>
-                           
-                            <a class="bi bi-heart" style="font-size: 1.5rem; color: black;"  href="/user/wishlist"></a>
-                          </a>
+                            <% if (locals.user) { %>
+                              
+                                <a class="bi bi-person me-3" style="font-size: 1.5rem; color: black;" href="/user/manage"></a>
+                                <div class="position-relative me-3">
+                                    <a class="bi bi-cart" href="/user/cart" style="font-size: 1.5rem; color: black;"></a>
+                                    <span id="cartCounter" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" 
+                                          style="font-size: 0.75rem; margin-top: 5px;">
+                                        0
+                                    </span>
+                                </div>
+                                <div class="position-relative me-3">
+                                    <a class="bi bi-heart" style="font-size: 1.5rem; color: black;" href="/user/wishlist"></a>
+                                    <span id="wishlist-counter" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" 
+                                          style="font-size: 0.75rem; margin-top: 5px; display: none;">
+                                        0
+                                    </span>
+                                </div>
+                            <% } else { %>
+                                <a href="/user/login" class="text-dark text-decoration-none me-2">Login</a>
+                                <span class="text-dark mx-2">|</span>
+                                <a href="/user/register" class="text-dark text-decoration-none">Signup</a>
+                            <% } %>
                         </div>
                     </div>
                 </div>
@@ -195,6 +206,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const searchButton = document.querySelector('.btn-outline-dark');
     let debounceTimer;
 
+    // calling the wishlist counter function
+        updateWishlistCounter()
+        // calling the cart funtiion for counter
+        updateCartCounter()
     // Function to get current category from URL
     function getCurrentCategory() {
         const path = window.location.pathname;
@@ -355,15 +370,18 @@ if (sortSelect) {
 }
 });
 
+
+// for updating cart counter
    async function updateCartCounter(){
     try {
         const response  = await fetch('/user/cart/count');
+
         if (!response.ok) {
             throw new Error('Failed to fetch cart count');
         }
 
         const data = await response.json();
-
+        console.log("cart counter",data )
         const counter = document.getElementById('cartCounter');
 
         if(counter){
@@ -379,18 +397,33 @@ if (sortSelect) {
     }
    }
 
-   document.addEventListener('DOMContentLoaded', updateCartCounter);
+   // for updating wishlist counter
+     async function updateWishlistCounter() {
+      try {
+        const response = await fetch('/user/wishlist/count');
+        const data = await response.json();
 
-// Modify your existing addToCart event listener
-const addToCartButton = document.getElementById("addToCart");
-if (addToCartButton) {
-    const existingClickHandler = addToCartButton.onclick;
-    addToCartButton.onclick = async function(e) {
-        if (existingClickHandler) {
-            await existingClickHandler.call(this, e);
+        const wishlistCounter = document.getElementById('wishlist-counter');
+        if (wishlistCounter) {
+            wishlistCounter.textContent = data.wishlistCount;
+            wishlistCounter.style.display = data.wishlistCount > 0 ? 'inline-block' : 'none';
         }
-        // Update cart counter after adding item
-        updateCartCounter();
-    };
-}
+     } catch (error) {
+        console.error("Error updating wishlist counter:", error);
+     }
+ }
+// ========   FOR REMOVING SUGGETIONS WHILE CLICKING ON OUTSIDE =========
+
+   document.addEventListener('click', (e) => {
+    const searchBox = document.getElementById('searchInput');
+    const searchResults = document.getElementById('searchResults');
+    
+ 
+    if (!searchBox?.contains(e.target) && !searchResults?.contains(e.target)) {
+        if (searchResults) {
+            searchResults.style.display = 'none';
+        }
+    }
+});
+
     </script>

@@ -44,7 +44,13 @@
                                     0
                                 </span>
                             </div>                         
-                            <a class="bi bi-heart" style="font-size: 1.5rem; color: black;"></a>
+                            <div class="position-relative me-3">
+                                <a class="bi bi-heart" style="font-size: 1.5rem; color: black;" href="/user/wishlist"></a>
+                                <span id="wishlist-counter" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" 
+                                      style="font-size: 0.75rem; margin-top: 5px; display: none;">
+                                    0
+                                </span>
+                            </div> 
                         <% } %>                     
                     </div>                 
                 </div>             
@@ -68,3 +74,45 @@
 
 
     <!-- header ends -->
+
+    <script>
+        async function updateCartCounter(){
+            try {
+                const response = await fetch('/user/cart/count')
+
+                const data = await response.json();
+
+                const cartCounter = document.getElementById('cartCounter');
+
+                if(cartCounter){
+                    cartCounter.textContent = data.count || '0'
+
+                    cartCounter.style.display = data.count>0  ? "inline-block":"none"
+                }
+            } catch (error) {
+                
+            }
+        }
+
+
+        async function updateWishlistCounter() {
+            try {
+                const response = await fetch('/user/wishlist/count');
+
+                const data = await response.json();
+
+                const wishlistCounter = document.getElementById('wishlist-counter');
+
+                if(wishlistCounter){
+                    wishlistCounter.textContent = data.wishlistCount || "0";
+                    wishlistCounter.style.display = data.wishlistCount>0 ? "inline-block" : "none"
+                }
+            } catch (error) {
+                console.log("error in update wishlist counter",error.message)
+            }
+        }
+        document.addEventListener("DOMContentLoaded",function(){
+            updateCartCounter()
+            updateWishlistCounter()
+        })
+    </script>

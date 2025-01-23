@@ -55,7 +55,15 @@ router.delete('/cart/remove/:id/:itemId',cartDetailsController.removeProducts);
 router.put("/cart/update-quantity",cartDetailsController.updateQuantity);
 
 router.get('/wishlist',wishlistController.getWishlist);
-router.post('/wishlist/add',userAuth,wishlistController.addToWishlist)
+
+router.post('/wishlist/add',wishlistController.addToWishlist);
+// for checking the wishlist status
+router.get("/wishlist/check-status",wishlistController.wishlistStatus)
+
+// for counting items in the wishlist
+router.get('/wishlist/count',wishlistController.wishlistCounter)
+// removing product from wishlist
+// router.delete("/wishlist/remove-product/:productId",wishlistController.removeProduct)
 // checkout page
 router.get("/checkout",userAuth,cartDetailsController.checkout)
 // manage address page
@@ -84,9 +92,10 @@ router.put("/editAddress/:id",userDetailscController.updateAddress)
 router.get("/search",userController.userSearch);
 
 // thankYou page
-router.get("/thankYou",userController.thankYou)
+router.get("/thankYou",userAuth,userController.thankYou)
 
 router.post('/order/place',orderDetailsController.placeOrder);
+router.post("/order/verify-payment",orderDetailsController.verifyPayment)
 
 
 
@@ -103,5 +112,7 @@ router.post("/reset-password",userController.resetPassword)
 
 router.get("/order-details",orderDetailsController.orderDetails);
 
-router.post("/cancel-order/:orderId",orderDetailsController.cancelOrder)
+router.post("/cancel-order-item/:orderId/:itemId",orderDetailsController.cancelOrder);
+router.post("/cancel-all/:orderId",orderDetailsController.cancelAllOrder);
+
 module.exports = router;
