@@ -82,7 +82,25 @@
     <!-- Header -->
     <%-include ("../../views/partials/user/landingpageHeader")%>
             <!-- Products Grid -->
-           
+          
+            <div class="col-12">
+                <form action="/user/shop" method="get" id="categoryFilterForm" class="d-flex justify-content-start align-items-center">
+                    <label for="categorySelect" class="text-nowrap">Category:</label>
+                    <select id="categorySelect" name="category" class="form-select form-select-sm" style="width: fit-content; max-width: 200px;">
+                        <option value="">All Categories</option>
+                        <% if (locals.categories) { %>
+                            <% categories.forEach(function(category) { %>
+                                <option value="<%= category.name %>" 
+                                        <%= locals.currentCategory === category.name ? 'selected' : '' %>>
+                                    <%= category.name %>
+                                </option>
+                            <% }); %>
+                        <% } %>
+                    </select>
+                </form>
+            </div>
+            
+       
     <main class="container-fluid px-2 px-sm-3 px-md-4 py-3 py-md-5">
         <div class="row g-2 g-sm-3 g-md-4">
             <% for (let i = 0; i < products.length; i++) { %>
@@ -153,3 +171,6 @@
 </body>
 </html>
 
+<script>
+ 
+</script>

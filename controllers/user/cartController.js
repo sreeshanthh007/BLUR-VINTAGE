@@ -409,7 +409,7 @@ const checkout = async (req,res)=>{
         await Address.findById(selectedAddressId):
         await Address.findOne({userId:userId});
 
-
+        
 
         const deliveryCharge=148;
         res.render("user/checkOutPage",{

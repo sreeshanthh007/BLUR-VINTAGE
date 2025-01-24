@@ -197,6 +197,7 @@
   <body>
     <!-- Inside your orderDetails.ejs -->
     <div class="container">
+      
       <% if (!orders || orders.length === 0) { %>
       <div
         class="order-card"
@@ -232,8 +233,7 @@
           </div>
         </div>
         <div class="order-header">
-          <% if (order.orderStatus !== 'Cancelled' && order.orderStatus !==
-          'Delivered') { %>
+          <% if (order.orderStatus !== 'Cancelled' && order.orderStatus !== 'Delivered' && order.orderStatus !== 'Returned') { %>
           <button
             class="cancel-order-btn"
             style="
@@ -312,7 +312,7 @@
               <% } else if (item.status.return && item.status.return.requested)
               { %>
               <p class="return-status">
-                Return <%= item.status.return.status %>
+                Return status : <%= item.status.return.status %>
               </p>
               <% } else if (order.orderStatus !== 'Cancelled' &&
               order.orderStatus !== 'Delivered') { %>
@@ -332,11 +332,22 @@
               >
                 Cancel This Item
               </button>
-              <% } %> <% if (order.orderStatus === 'Delivered') { %>
-              <button
-                class="return-item-btn"
-                onclick="initiateReturn('<%= order._id %>', '<%= item._id %>')"
-                style="
+     <% } %>   <% if (order.orderStatus === 'Delivered') { %>
+      <% if (item.status.return && item.status.return.requested) { %>
+          <p class="return-status" 
+             style="
+                 color: #007bff; 
+                 font-weight: bold; 
+                 margin-top: 10px;
+                 text-align: center;
+             ">
+              Item returned: <%= item.status.return.status %>
+          </p>
+      <% } else { %>
+          <button
+              class="return-item-btn"
+              onclick="initiateReturn('<%= order._id %>', '<%= item._id %>')"
+              style="
                   background-color: #28a745;
                   color: white;
                   padding: 4px 12px;
@@ -345,11 +356,12 @@
                   cursor: pointer;
                   margin-top: 10px;
                   font-size: 0.9rem;
-                "
-              >
-                Return Item
-              </button>
-              <% } %>
+              "
+          >
+              Return Item
+          </button>
+      <% } %>
+  <% } %>
             </div>
             <div class="price-details">
               <% if (item.price.originalPrice !== item.price.discountedPrice) {
@@ -559,7 +571,7 @@
   async function processReturn(orderId, itemId, reason) {
     try {
       const response = await fetch(
-        `/user/return-order-item/${orderId}/${itemId}`,
+        `/admin/return-order-item/${orderId}/${itemId}`,
         {
           method: "post",
           headers: {

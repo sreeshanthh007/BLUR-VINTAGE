@@ -406,30 +406,6 @@ const orderDetails = async(req,res)=>{
 
 
 
-    const returnOrders = async(req,res)=>{
-        try {
-            const {itemId,orderId}=req.params;
-            const {reason} = req.body;
-
-            const order = await Order.findById(orderId);
-
-            if(!order){
-                return res.status(404).json({success:false,message:"order not found"})
-            }
-
-            const orderItem = order.orderItems.id(itemId);
-
-            if(!orderItem){
-                return res.status(404).json({success:false,message:"item not found"})
-            }
-
-
-
-
-        } catch (error) {
-            
-        }
-    }
 module.exports={
     placeOrder,
     orderDetails,

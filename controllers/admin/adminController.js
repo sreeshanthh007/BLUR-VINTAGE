@@ -200,7 +200,7 @@ const orderDetails = async(req,res)=>{
   } 
 }
 
-
+// for changing the order status of the item
 const updateOrderStatus = async(req,res)=>{
     try {
         console.log("req.query",req.query);

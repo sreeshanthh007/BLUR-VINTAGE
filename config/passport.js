@@ -28,7 +28,7 @@ async (accessToken, refreshToken, profile, done) => {
 
         // Create a new user if not found
         user = new User({
-            firstName: profile.displayName,
+            firstName: profile.displayName, 
             email: profile.emails[0].value,
             googleId: profile.id,
         });

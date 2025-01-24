@@ -4,7 +4,8 @@ const router = express.Router();
 const admincontroller = require("../controllers/admin/adminController");
 const userManageController = require("../controllers/admin/customerController")
 const categoryController = require('../controllers/admin/categoryController');
-const productController = require('../controllers/admin/productController')
+const productController = require('../controllers/admin/productController');
+const returnController = require('../controllers/admin/orderReturnController')
 const multer = require('multer');
 const upload = multer();
 const {v4:uuidv4} = require('uuid');
@@ -92,8 +93,13 @@ router.get("/order-details",adminAuth,admincontroller.orderDetails);
 
 router.get("/update-order-status",adminAuth,admincontroller.updateOrderStatus)
 
+router.get('/manageOrder',adminAuth,returnController.getReturnRequests);
 
+// for getting the return requests  with details
+router.post('/return-order-item/:orderId/:itemId',returnController.initiateReturn)
 
+// for approving the returned items
+router.put("/returns/:orderId/:itemId/approve",returnController.approvedReturn)
 
 
 

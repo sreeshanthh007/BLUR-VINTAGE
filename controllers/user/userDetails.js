@@ -1,6 +1,6 @@
 const users = require("../../models/userSchema");
 const address = require("../../models/adressSchema");
-
+const Wallet = require('../../models/walletSchema')
 
 // user profile
 const manage= async (req,res)=>{
@@ -180,6 +180,55 @@ const deleteAddress = async(req,res)=>{
     }
 
 }
+
+   const wallet = async (req,res)=>{
+    try {
+        const userId = req.session?.user || req.session?.passport?.user
+        const wallet = await Wallet.findOne({userId:userId});
+
+        return res.render('user/wallet',{
+            wallet:wallet ||  { balance: 0, transactions: [] }
+        });
+    } catch (error) {
+        console.log("error in wallet rendering",error.message)
+    }
+   }
+
+   const addMoney = async(req,res)=>{
+    try {
+        const {amount} = req.body
+        console.log("amt",amount)
+        const userId = req.session?.user || req.session?.passport?.user;
+
+        if(!userId){
+            return res.status(404).json({success:false,message:"user not found"});
+        }
+
+        if(amount<1 || amount>10000){
+            return res.status(404).json({success:false,message:"Invalid amount. amount must be between ₹1 and ₹10,000"})
+        }
+
+        const wallet = await Wallet.findOne({userId:userId});
+
+        if(!wallet){
+            return res.status(404).json({success:false,message:"wallet not found"})
+        }
+
+
+        wallet.balance += parseFloat(amount);
+
+        await wallet.save();
+
+        res.status(200).json({ 
+            message: 'Money added successfully', 
+            newBalance: wallet.balance 
+        });
+
+    } catch (error) {
+        console.log("error while adding money",error.message);
+        
+    }
+   }
 module.exports={
     manage,
     updateDetails,
@@ -189,6 +238,8 @@ module.exports={
     loadAddAddress,
     deleteAddress,
     updateAddress,
+    wallet,
+    addMoney,
 
 }
 

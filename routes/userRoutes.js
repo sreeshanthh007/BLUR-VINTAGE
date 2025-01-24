@@ -80,8 +80,13 @@ router.get("/editAddress/:id",userDetailscController.editAddress);
 
 // add address page
 router.get("/addAddress",userDetailscController.loadAddAddress);
+
 router.post("/addAddress",userDetailscController.addAddress);
 
+// wallet details
+router.get('/wallet',userDetailscController.wallet);
+
+    router.post("/wallet/add",userDetailscController.addMoney)
 // delete address
 router.get("/deleteAddress",userDetailscController.deleteAddress);
 

@@ -117,7 +117,7 @@
             status: {
                 type: String,
                 enum: ['Pending', 'Completed', 'Failed'],
-                default: 'Pending'
+                default: null
             },
             razorpay: {
                 orderId: {

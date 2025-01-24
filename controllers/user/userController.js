@@ -284,10 +284,21 @@ const loadShop = async (req, res) => {
         const productsPerPage = 8; // 4 products per row * 2 rows
         const sortOption = req.query.sort || "default"
         const query = req.query.search
+        const categoryFilter = req.query.category
+
         const baseQuery={
             isBlocked:false,
         }
+        if(categoryFilter){
+            const categoryDoc = await Category.findOne({
+                isListed:true,
+                name:categoryFilter.toLowerCase()
+            })
 
+            if(categoryDoc){
+                baseQuery.category = categoryDoc._id
+            }
+        }
         let sortConfig={};
 
         switch(sortOption) {
@@ -318,12 +329,22 @@ const loadShop = async (req, res) => {
        
         const products = await Product.find(baseQuery)
         .lean()
-        .select("productName variants")
+        .select("productName variants category")
         .sort(sortConfig)
             .skip((page - 1) * productsPerPage)
             .limit(productsPerPage)
-            console.log("proddd",products);
-            
+           
+
+            if (req.xhr) {
+                return res.json({
+                    products,
+                    currentPage: page,
+                    totalPages,
+                    hasNextPage: page < totalPages,
+                    hasPrevPage: page > 1,
+                });
+            }
+        const categories  = await Category.find({isListed:true})
         return res.render('user/shop', {
             products,
             currentPage: page,
@@ -331,6 +352,8 @@ const loadShop = async (req, res) => {
             currentSort:sortOption,
             totalPages,
             search:query,
+            categories,
+            currentCategory:categoryFilter,
             hasNextPage: page < totalPages,
             hasPrevPage: page > 1
         });
