@@ -3,7 +3,10 @@ const Product = require("../../models/productSchema");
 const users = require('../../models/userSchema')
 const Address = require("../../models/adressSchema")
 
-const addtoCart = async(req,res) => {
+
+
+
+const addtoCart = async(req,res) => { 
     try {
         const userId = req.session.user || req.session?.passport?.user;
         if(!userId) {
@@ -12,7 +15,16 @@ const addtoCart = async(req,res) => {
         
         const {productId, quantity, color, colorName, size} = req.body;
 
-        const product = await Product.findById(productId);
+        const product = await Product.findById(productId)
+          .populate('productOffer')
+            .populate({
+           path: 'category',
+             populate: {
+            path: 'categoryOffer'
+        }
+      });
+
+
         if(!product) {
             return res.status(400).json({success: false, message: "product not found"});
         }
@@ -65,6 +77,35 @@ const addtoCart = async(req,res) => {
         
     
 
+            // Calculate discounted price with offers
+        const now = new Date();
+        let bestDiscount = 0;
+        let offerName = "";
+        let discountedPrice = variant.price;
+        let originalPrice = variant.price;
+
+        // Check product offer
+        if (product.productOffer && 
+            now >= product.productOffer.startDate && 
+            now <= product.productOffer.expiryDate) {
+            bestDiscount = product.productOffer.discount;
+            discountedPrice = originalPrice - (originalPrice * (bestDiscount / 100));
+            offerName = product.productOffer.offerName;
+        }
+
+        // Check category offer if no product offer or category offer is better
+        if (product.category?.categoryOffer &&
+            now >= product.category.categoryOffer.startDate &&
+            now <= product.category.categoryOffer.expiryDate) {
+            const categoryDiscount = product.category.categoryOffer.discount;
+            if (categoryDiscount > bestDiscount) {
+                bestDiscount = categoryDiscount;
+                discountedPrice = originalPrice - (originalPrice * (bestDiscount / 100));
+                offerName = product.category.categoryOffer.offerName;
+            }
+        }
+
+        // Update or add cart item
         if (existingItemIndex > -1) {
             cart.items[existingItemIndex].quantity = totalQuantity;
         } else {
@@ -74,30 +115,33 @@ const addtoCart = async(req,res) => {
                 color,
                 colorName,
                 size,
-                price: variant.price,
-                discountedPrice: variant.price * (1 - (product.productOffer || 0) / 100),
+                price: originalPrice,
+                discountedPrice: Math.round(discountedPrice),
                 productImage: variant.productImage[0]
             });
         }
-
-       
         
-        // Calculate total amount
+        // Recalculate total amount
         cart.totalAmount = cart.items.reduce((total, item) => 
             total + (item.discountedPrice || item.price) * item.quantity, 0
         );
 
+        // Save cart
         await cart.save();
 
         return res.status(200).json({
             success: true,
             message: "Product added to cart",
             newStock: variant.stock,
-            cartTotal: cart.totalAmount
+            cartTotal: cart.totalAmount,
+            appliedOffer: offerName ? {
+                name: offerName,
+                discount: bestDiscount
+            } : null
         });
 
     } catch (error) {
-        console.log("error in add to cart", error.message);
+        console.log("error in add to cart", error);
         return res.status(500).json({
             success: false,
             message: "Failed to add product to cart",
@@ -118,12 +162,17 @@ const getCart = async (req, res) => {
         await syncCartPrices(userId);
 
         const cart = await Cart.findOne({ user: userId })
-            .populate("items.product");
+            .populate({
+                path: 'items.product',
+                model: 'Product'
+            });
         
-        res.render("user/addtoCart", {
-            cart: cart || { items: [], totalAmount: 0 },
-            deliveryCharge: 148
-        });
+            if (!cart) {
+                return res.render('user/addtoCart', { cart: { items: [], totalAmount: 0 } });
+            }
+    
+            console.log('Cart Items:', JSON.stringify(cart.items, null, 2)); // Debug log
+            res.render('user/addtoCart', { cart });
 
     } catch (error) {
         console.log("error in get cart", error.message);
@@ -230,8 +279,14 @@ const updateQuantity = async (req, res) => {
             });
         }
 
-        // Fetch the current product data to get updated price
-        const product = await Product.findById(cartItem.product);
+        // Fetch the current product data to get updated price and offers
+        const product = await Product.findById(cartItem.product)
+            .populate('productOffer')
+            .populate({
+                path: 'category',
+                populate: { path: 'categoryOffer' }
+            });
+
         if (!product) {
             return res.status(404).json({
                 success: false,
@@ -253,38 +308,76 @@ const updateQuantity = async (req, res) => {
             });
         }
 
-        if(variant.stock < quantity) {
+        if (variant.stock < quantity) {
             return res.status(400).json({
                 success: false,
                 message: `Only ${variant.stock} items available in stock`
             });
         }
+
+        
+        const now = new Date();
+        let bestDiscount = 0;
+        let discountedPrice = variant.price;
+        let originalPrice = variant.price;
+
+       
+        if (product.productOffer && 
+            now >= product.productOffer.startDate && 
+            now <= product.productOffer.expiryDate) {
+            bestDiscount = product.productOffer.discount;
+            discountedPrice = originalPrice - (originalPrice * (bestDiscount / 100));
+        }
+
+        
+        if (product.category?.categoryOffer &&
+            now >= product.category.categoryOffer.startDate &&
+            now <= product.category.categoryOffer.expiryDate) {
+            const categoryDiscount = product.category.categoryOffer.discount;
+            if (categoryDiscount > bestDiscount) {
+                bestDiscount = categoryDiscount;
+                discountedPrice = originalPrice - (originalPrice * (bestDiscount / 100));
+            }
+        }
+
+        // Ensure discountedPrice is a valid number
+        discountedPrice = Number.isNaN(discountedPrice) ? originalPrice : discountedPrice;
+        discountedPrice = Math.round(discountedPrice);
+
         // Update quantity and prices
         cartItem.quantity = quantity;
-        cartItem.price = variant.price;
-        cartItem.discountedPrice = variant.price * (1 - (product.productOffer || 0) / 100);
+        cartItem.price = originalPrice;
+        cartItem.discountedPrice = discountedPrice;
 
-        // Recalculate total amount with updated prices
-        cart.totalAmount = cart.items.reduce((total, item) => 
-            total + (item.discountedPrice || item.price) * item.quantity, 0
-        );
+        
+        cart.totalAmount = cart.items.reduce((total, item) => {
+            const itemPrice = Number(item.discountedPrice) || Number(item.price);
+            const itemQuantity = Number(item.quantity);
+            return total + (itemPrice * itemQuantity);
+        }, 0);
+
+        
+        cart.totalAmount = Number.isNaN(cart.totalAmount) ? 0 : Math.round(cart.totalAmount);
 
         await cart.save();
 
         return res.status(200).json({
             success: true,
             message: "Quantity and price updated successfully",
-            newTotal: (cartItem.discountedPrice || cartItem.price) * quantity,
+            newTotal: (discountedPrice || originalPrice) * quantity,
             cartTotal: cart.totalAmount,
-            itemPrice: cartItem.discountedPrice || cartItem.price,
-            quantity: quantity
+            itemPrice: discountedPrice || originalPrice,
+            quantity: quantity,
+            originalPrice: originalPrice,
+            discountedPrice: discountedPrice
         });
 
     } catch (error) {
         console.error("Error in update quantity:", error);
         return res.status(500).json({
             success: false,
-            message: "Error updating quantity"
+            message: "Error updating quantity",
+            errorDetails: error.message
         });
     }
 };
@@ -298,7 +391,13 @@ const syncCartPrices = async (userId) => {
         let updated = false;
         
         for (const item of cart.items) {
-            const product = await Product.findById(item.product);
+            const product = await Product.findById(item.product)
+                .populate('productOffer')
+                .populate({
+                    path: 'category',
+                    populate: { path: 'categoryOffer' }
+                });
+            
             if (!product) continue;
 
             const variant = product.variants.find(v => 
@@ -308,12 +407,36 @@ const syncCartPrices = async (userId) => {
             );
 
             if (variant) {
-                const newPrice = variant.price;
-                const newDiscountedPrice = newPrice * (1 - (product.productOffer || 0) / 100);
+                const now = new Date();
+                const originalPrice = variant.price;
+                let discountedPrice = originalPrice;
+                let bestDiscount = 0;
 
-                if (item.price !== newPrice || item.discountedPrice !== newDiscountedPrice) {
-                    item.price = newPrice;
-                    item.discountedPrice = newDiscountedPrice;
+                // Check product offer
+                if (product.productOffer && 
+                    now >= product.productOffer.startDate && 
+                    now <= product.productOffer.expiryDate) {
+                    bestDiscount = product.productOffer.discount;
+                    discountedPrice = originalPrice - (originalPrice * (bestDiscount / 100));
+                }
+
+                // Check category offer
+                if (product.category?.categoryOffer &&
+                    now >= product.category.categoryOffer.startDate &&
+                    now <= product.category.categoryOffer.expiryDate) {
+                    const categoryDiscount = product.category.categoryOffer.discount;
+                    if (categoryDiscount > bestDiscount) {
+                        bestDiscount = categoryDiscount;
+                        discountedPrice = originalPrice - (originalPrice * (bestDiscount / 100));
+                    }
+                }
+
+                // Round to avoid floating point issues
+                discountedPrice = Math.round(discountedPrice);
+
+                if (item.price !== originalPrice || item.discountedPrice !== discountedPrice) {
+                    item.price = originalPrice;
+                    item.discountedPrice = discountedPrice;
                     updated = true;
                 }
             }
@@ -408,7 +531,6 @@ const checkout = async (req,res)=>{
         const address  = selectedAddressId?
         await Address.findById(selectedAddressId):
         await Address.findOne({userId:userId});
-
         
 
         const deliveryCharge=148;

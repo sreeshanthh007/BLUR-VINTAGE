@@ -109,77 +109,92 @@
       </div>
 <!--  -->
     <!-- Header -->
-    <main class="container-fluid px-2 px-sm-3 px-md-4 py-3 py-md-5">
-        <div class="row g-2 g-sm-3 g-md-4">
-            <% for (let i = 0; i < products.length; i++) { %>
-                <div class="col-6 col-sm-4 col-lg-3">
-                    <div class="product-card">
-                        <div class="product-image-container">
-                            <button class="heart-btn" data-product-id="<%= products[i]._id %>">
-                                <i class="fa-regular fa-heart"></i>
-                            </button>
-                            <a href="/user/buy?id=<%= products[i]._id %>" class="product-link">
-                                <% if (products[i].variants && products[i].variants.length > 0 && 
-                                      products[i].variants[0].productImage && products[i].variants[0].productImage.length > 0) { %>
-                                    <img src="<%= products[i].variants[0].productImage[0] %>" 
-                                         alt="<%= products[i].productName %>" 
-                                         class="img-fluid">
-                                <% } else { %>
-                                    <img src="/images/default-product.jpg" 
-                                         alt="No image available" 
-                                         class="img-fluid">
-                                <% } %>
-                            </a>
+   <main class="container-fluid px-2 px-sm-3 px-md-4 py-3 py-md-5">
+        
+            <!-- Products Grid -->
+            <div class="row g-2 g-sm-3 g-md-4">
+                <% for (const product of products) { %>
+                    <% if (product.variants && product.variants.length > 0 && product.variants[0].stock > 0) { %>
+                        <div class="col-6 col-sm-4 col-lg-3">
+                            <div class="product-card">
+                                <div class="product-image-container">
+                                    <button class="heart-btn" data-product-id="<%= product._id %>">
+                                        <i class="fa-regular fa-heart"></i>
+                                    </button>
+                                    <a href="/user/buy?id=<%= product._id %>" class="product-link">
+                                        <% if (product.variants[0].productImage && product.variants[0].productImage.length > 0) { %>
+                                            <img src="<%= product.variants[0].productImage[0] %>" 
+                                                 alt="<%= product.productName %>" 
+                                                 class="img-fluid">
+                                        <% } else { %>
+                                            <img src="/images/default-product.jpg" 
+                                                 alt="No image available" 
+                                                 class="img-fluid">
+                                        <% } %>
+                                    </a>
+                                </div>
+                                <h3 class="product-title"><%= product.productName %></h3>
+                                <div class="price-section">
+                                    <% if (product.discount > 0) { %>
+                                        <p class="card-text mb-0">
+                                            <span class="original-price text-muted text-decoration-line-through">
+                                                Rs/-<%= product.originalPrice %>
+                                            </span>
+                                            <span class="discounted-price ms-2 fw-bold">
+                                                Rs/-<%= product.finalPrice %>
+                                            </span>
+                                        </p>
+                                        <div class="offer-badge">
+                                            <span class="badge bg-danger">
+                                                <%= product.discount %>% OFF - <%= product.offerName %>
+                                            </span>
+                                        </div>
+                                    <% } else { %>
+                                        <p class="product-price" style="font-weight: bolder;">
+                                            Rs/-<%= product.originalPrice %>
+                                        </p>
+                                    <% } %>
+                                </div>
+                            </div>
                         </div>
-                        <h3 class="product-title"><%= products[i].productName %></h3>
-                        <% if (products[i].variants && products[i].variants.length > 0) { %>
-                            <p class="product-price" style="font-weight: bolder;">
-                                Rs/-<%= products[i].variants[0].price %>
-                            </p>
-                        <% } else { %>
-                            <p class="product-price" style="font-weight: bolder;">Price not available</p>
-                        <% } %>
-                    </div>
+                    <% } %>
+                <% } %>
+            </div>
+        
+            <!-- Pagination Section -->
+            <% if (totalPages > 1) { %>
+                <div class="pagination-container d-flex justify-content-center">
+                    <nav aria-label="Product pagination">
+                        <ul class="pagination">
+                            <% if (hasPrevPage) { %>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page=<%= prevPage %>&sort=<%= currentSort %><%= search ? `&search=${search}` : '' %>">
+                                        Previous
+                                    </a>
+                                </li>
+                            <% } %>
+        
+                            <% for (let i = 1; i <= totalPages; i++) { %>
+                                <li class="page-item <%= currentPage === i ? 'active' : '' %>">
+                                    <a class="page-link" href="?page=<%= i %>&sort=<%= currentSort %><%= search ? `&search=${search}` : '' %>">
+                                        <%= i %>
+                                    </a>
+                                </li>
+                            <% } %>
+        
+                            <% if (hasNextPage) { %>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page=<%= nextPage %>&sort=<%= currentSort %><%= search ? `&search=${search}` : '' %>">
+                                        Next
+                                    </a>
+                                </li>
+                            <% } %>
+                        </ul>
+                    </nav>
                 </div>
             <% } %>
-        </div>
+        </main> 
 
-        <!-- Pagination Section -->
-        <div class="pagination-container">
-            <nav aria-label="Product navigation">
-                <ul class="pagination justify-content-center">
-                    <li class="page-item <%= !hasPrevPage ? 'disabled' : '' %>">
-                        <a class="page-link" href="?page=1<%= currentSort !== 'default' ? '&sort=' + currentSort : '' %>" <%= !hasPrevPage ? 'tabindex="-1"' : '' %>>First</a>
-                    </li>
-                    <li class="page-item <%= !hasPrevPage ? 'disabled' : '' %>">
-                        <a class="page-link" href="?page=<%= currentPage - 1 %><%= currentSort !== 'default' ? '&sort=' + currentSort : '' %>" <%= !hasPrevPage ? 'tabindex="-1"' : '' %>>Previous</a>
-                    </li>
-                    
-                    <% for(let i = Math.max(1, currentPage - 2); i <= Math.min(totalPages, currentPage + 2); i++) { %>
-                        <li class="page-item <%= currentPage === i ? 'active' : '' %>">
-                            <a class="page-link" href="?page=<%= i %><%= currentSort !== 'default' ? '&sort=' + currentSort : '' %>"><%= i %></a>
-                        </li>
-                    <% } %>
-
-                    <li class="page-item <%= !hasNextPage ? 'disabled' : '' %>">
-                        <a class="page-link" href="?page=<%= currentPage + 1 %><%= currentSort !== 'default' ? '&sort=' + currentSort : '' %>" <%= !hasNextPage ? 'tabindex="-1"' : '' %>>Next</a>
-                    </li>
-                    <li class="page-item <%= !hasNextPage ? 'disabled' : '' %>">
-                        <a class="page-link" href="?page=<%= totalPages %><%= currentSort !== 'default' ? '&sort=' + currentSort : '' %>" <%= !hasNextPage ? 'tabindex="-1"' : '' %>>Last</a>
-                    </li>
-                </ul>
-            </nav>
-        </div>
-
-        <!-- Page indicator -->
-        <div class="text-center mt-3">
-            <small class="text-muted">
-                Page <%= currentPage %> of <%= totalPages %>
-            </small>
-        </div>
-    </main>
-    </div>
-    </main>
 
     <%-include ("../../views/partials/user/footer")%>
     <script src="/js/spinner.js"></script>

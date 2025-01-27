@@ -10,98 +10,71 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
     <style>
-            .search-result-item {
-        padding: 10px 15px;
-        border-bottom: 1px solid #eee;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        gap: 10px;
+           .search-result-item {
+    padding: 15px 20px; /* Increased padding for better size */
+    border-bottom: 1px solid #eee;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 15px; /* Slightly increased gap between icon and text */
+    font-size: 1.1rem; /* Increased font size */
+}
+
+.search-result-item:hover {
+    background-color: #f8f9fa;
+}
+
+.search-result-item img {
+    width: 50px; /* Increased size of the image */
+    height: 50px;
+    object-fit: cover;
+}
+
+.search-result-info {
+    flex: 1;
+}
+
+.search-result-name {
+    font-weight: 600; /* Slightly bolder text */
+    margin-bottom: 5px; /* Increased margin for spacing */
+    font-size: 1rem; /* Adjusted font size */
+}
+
+.search-result-price {
+    color: #666;
+    font-size: 0.95rem; /* Adjusted font size for price */
+}
+
+.form-select-sm {
+    padding-right: 2rem;
+    background-color: white;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    font-size: 1rem; /* Increased font size for dropdown */
+    padding: 10px; /* Increased padding inside select box */
+}
+
+.form-select-sm:focus {
+    border-color: black;
+    box-shadow: none;
+}
+
+@media (max-width: 768px) {
+    .search-container {
+        max-width: 100%;
     }
 
-    .search-result-item:hover {
-        background-color: #f8f9fa;
+    .nav-menu a {
+        padding: 1rem 2rem; /* Larger padding for nav items */
+        font-size: 1.2rem; /* Adjusted font size */
     }
 
-    .search-result-item img {
-        width: 40px;
-        height: 40px;
-        object-fit: cover;
+    .icon-link {
+        margin-left: 1rem;
+        font-size: 1.5rem; /* Larger icon size */
     }
+}
 
-    .search-result-info {
-        flex: 1;
-    }
-
-    .search-result-name {
-        font-weight: 500;
-        margin-bottom: 2px;
-    }
-
-    .search-result-price {
-        color: #666;
-        font-size: 0.9em;
-    }   
-       .search-result-item {
-        padding: 10px 15px;
-        border-bottom: 1px solid #eee;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-
-    .search-result-item:hover {
-        background-color: #f8f9fa;
-    }
-
-    .search-result-item img {
-        width: 40px;
-        height: 40px;
-        object-fit: cover;
-    }
-
-    .search-result-info {
-        flex: 1;
-    }
-
-    .search-result-name {
-        font-weight: 500;
-        margin-bottom: 2px;
-    }
-
-    .search-result-price {
-        color: #666;
-        font-size: 0.9em;
-    }
-
-    .form-select-sm {
-        padding-right: 2rem;
-        background-color: white;
-        border: 1px solid #dee2e6;
-        border-radius: 4px;
-        font-size: 0.875rem;
-    }
-
-    .form-select-sm:focus {
-        border-color: black;
-        box-shadow: none;
-    }    
-    @media (max-width: 768px) {
-            .search-container {
-                max-width: 100%;
-            }
-
-            .nav-menu a {
-                padding: 0.5rem 1rem;
-                font-size: 1rem;
-            }
-
-            .icon-link {
-                margin-left: 1rem;
-                font-size: 1.25rem;
-            }
-        }
         </style>
     </head>
 
@@ -110,6 +83,8 @@
         <header class="py-3 bg-light">
             <div class="container">
                 <div class="row align-items-center">
+
+                    
                     <!-- Left Section -->
                     <div class="col-4 d-flex align-items-center justify-content-start">
                         <a href="#" class="text-dark me-3 text-decoration-none">Contact Us</a>
@@ -124,15 +99,7 @@
                     <div class="col-lg-3 col-md-4">
                         <div class="d-flex align-items-center justify-content-end">
                             <form class="d-flex me-3 position-relative">
-                                <input 
-                                    class="form-control form-control-sm me-2" 
-                                    type="search" 
-                                    placeholder="Search products..." 
-                                    aria-label="Search" 
-                                    id="searchInput"
-                                    autocomplete="off"
-                                    value="<%=search || ''%>"
-                                >
+                                <input id="searchInput" class="form-control form-control-sm" type="text" placeholder="Search..." oninput="searchProducts()" aria-label="Search">
                                 <button class="btn btn-outline-dark btn-md" type="submit">
                                     <i class="bi bi-search"></i>
                                 </button>
@@ -206,11 +173,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const searchButton = document.querySelector('.btn-outline-dark');
     let debounceTimer;
 
-    // calling the wishlist counter function
+   
         updateWishlistCounter()
-        // calling the cart funtiion for counter
+       
         updateCartCounter()
-    // Function to get current category from URL
+   
     function getCurrentCategory() {
         const path = window.location.pathname;
         if (path.includes('/men')) return 'men';
@@ -344,31 +311,131 @@ searchInput.addEventListener('input', (e) => {
         }
     });
 
-    
+   // Update the sort select event listener
 if (sortSelect) {
-    sortSelect.addEventListener('change', function() {
-        const currentUrl = new URL(window.location.href);
-        const searchParams = new URLSearchParams(currentUrl.search);
+    sortSelect.addEventListener('change', (e) => {
+        e.preventDefault(); // Prevent default form submission
+        const currentPath = window.location.pathname;
+        const sortValue = sortSelect.value;
+        const searchParams = new URLSearchParams(window.location.search);
         
-        
-        searchParams.set('sort', this.value);
-        
-       
-        if (window.location.pathname.includes('/shop')) {
-            searchParams.set('page_context', 'shop');
+        // Update sort parameter
+        if (sortValue !== 'default') {
+            searchParams.set('sort', sortValue);
+        } else {
+            searchParams.delete('sort');
         }
-        
-  
-        const searchQuery = document.getElementById('searchInput').value.trim();
+
+        // Keep the existing search query if present
+        const searchQuery = document.getElementById('searchInput')?.value;
         if (searchQuery) {
             searchParams.set('search', searchQuery);
         }
+
+        // Keep the current page context
+        let targetPath = currentPath;
         
-        // Navigate to new URL with all parameters
-        window.location.href = `${currentUrl.pathname}?${searchParams.toString()}`;
+        // Determine the correct path based on current location
+        if (currentPath.includes('/shop')) {
+            targetPath = '/user/shop';
+        } else if (currentPath.includes('/men')) {
+            targetPath = '/user/men';
+        } else if (currentPath.includes('/women')) {
+            targetPath = '/user/women';
+        } else if (currentPath.includes('/kids')) {
+            targetPath = '/user/kids';
+        }
+
+        // Make AJAX request instead of full page reload
+        fetch(`${targetPath}?${searchParams.toString()}`, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Update URL without page reload
+            window.history.pushState({}, '', `${targetPath}?${searchParams.toString()}`);
+            
+            // Update the product grid
+            updateProductGrid(data.products);
+            
+            // Update pagination if needed
+            updatePagination(data);
+        })
+        .catch(error => {
+            console.error('Error updating products:', error);
+        });
     });
 }
+
+// Function to update product grid
+function updateProductGrid(products) {
+    const productContainer = document.querySelector('.product-grid') || document.querySelector('.row.products');
+    if (!productContainer) return;
+
+    const productsHtml = products.map(product => `
+        <div class="col-md-3 mb-4">
+            <div class="card h-100">
+                <img src="${product.variants[0]?.productImage[0] || '/images/default-product.jpg'}" 
+                     class="card-img-top" alt="${product.productName}">
+                <div class="card-body">
+                    <h5 class="card-title">${product.productName}</h5>
+                    <div class="price-section">
+                        ${product.discount > 0 ? `
+                            <span class="final-price">₹${product.finalPrice}</span>
+                            <span class="original-price text-decoration-line-through">₹${product.originalPrice}</span>
+                            <span class="discount text-success">${product.discount}% off</span>
+                        ` : `
+                            <span class="final-price">₹${product.originalPrice}</span>
+                        `}
+                    </div>
+                    ${product.offerName ? `<div class="offer-badge">${product.offerName}</div>` : ''}
+                </div>
+            </div>
+        </div>
+    `).join('');
+
+    productContainer.innerHTML = productsHtml;
+}
+
+// Function to update pagination
+function updatePagination(data) {
+    const paginationContainer = document.querySelector('.pagination');
+    if (!paginationContainer) return;
+
+    const { currentPage, totalPages, hasNextPage, hasPrevPage } = data;
+    
+    const paginationHtml = `
+        <ul class="pagination justify-content-center">
+            ${hasPrevPage ? `
+                <li class="page-item">
+                    <a class="page-link" href="?page=${data.prevPage}" data-page="${data.prevPage}">Previous</a>
+                </li>
+            ` : ''}
+            
+            <li class="page-item ${currentPage === 1 ? 'active' : ''}">
+                <a class="page-link" href="?page=1" data-page="1">1</a>
+            </li>
+            
+            ${totalPages > 1 ? Array.from({ length: Math.min(totalPages - 1, 3) }, (_, i) => `
+                <li class="page-item ${currentPage === i + 2 ? 'active' : ''}">
+                    <a class="page-link" href="?page=${i + 2}" data-page="${i + 2}">${i + 2}</a>
+                </li>
+            `).join('') : ''}
+            
+            ${hasNextPage ? `
+                <li class="page-item">
+                    <a class="page-link" href="?page=${data.nextPage}" data-page="${data.nextPage}">Next</a>
+                </li>
+            ` : ''}
+        </ul>
+    `;
+
+    paginationContainer.innerHTML = paginationHtml;
+}
 });
+
 
 
 // for updating cart counter

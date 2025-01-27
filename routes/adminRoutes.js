@@ -5,7 +5,9 @@ const admincontroller = require("../controllers/admin/adminController");
 const userManageController = require("../controllers/admin/customerController")
 const categoryController = require('../controllers/admin/categoryController');
 const productController = require('../controllers/admin/productController');
-const returnController = require('../controllers/admin/orderReturnController')
+const returnController = require('../controllers/admin/orderReturnController');
+const couponController = require("../controllers/admin/couponController");
+const OfferController = require('../controllers/admin/offerController')
 const multer = require('multer');
 const upload = multer();
 const {v4:uuidv4} = require('uuid');
@@ -95,11 +97,27 @@ router.get("/update-order-status",adminAuth,admincontroller.updateOrderStatus)
 
 router.get('/manageOrder',adminAuth,returnController.getReturnRequests);
 
+router.get('/coupons',adminAuth,couponController.couponPage);
+
+// for adding coupons
+router.post("/addcoupons",couponController.addCoupon)
 // for getting the return requests  with details
-router.post('/return-order-item/:orderId/:itemId',returnController.initiateReturn)
+router.post('/return-order-item/:orderId/:itemId',returnController.initiateReturn);
+
+router.delete('/removeCoupon',couponController.deleteCoupon);
+
+
+
+router.get("/addOffer",adminAuth,OfferController.loadOffer);
+router.get("/offers/items",OfferController.getItemByType);
+
+router.post("/offers/add",OfferController.addOffer)
 
 // for approving the returned items
-router.put("/returns/:orderId/:itemId/approve",returnController.approvedReturn)
+router.put("/returns/:orderId/:itemId/approve",returnController.approvedReturn);
+
+
+router.get("/sales-report",admincontroller.getSalesReport)
 
 
 

@@ -186,6 +186,10 @@ const deleteAddress = async(req,res)=>{
         const userId = req.session?.user || req.session?.passport?.user
         const wallet = await Wallet.findOne({userId:userId});
 
+        if (wallet && wallet.transactions) {
+            wallet.transactions.sort((a, b) => b.date - a.date);
+        }
+
         return res.render('user/wallet',{
             wallet:wallet ||  { balance: 0, transactions: [] }
         });
@@ -210,9 +214,18 @@ const deleteAddress = async(req,res)=>{
 
         const wallet = await Wallet.findOne({userId:userId});
 
+        
         if(!wallet){
             return res.status(404).json({success:false,message:"wallet not found"})
         }
+        
+        wallet.transactions.unshift({
+            type: 'Deposit',
+            amount: parseFloat(amount),
+            description: 'Wallet top-up via online payment',
+            status: 'Completed'
+        });
+
 
 
         wallet.balance += parseFloat(amount);

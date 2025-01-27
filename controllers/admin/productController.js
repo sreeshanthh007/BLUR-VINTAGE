@@ -31,32 +31,34 @@ const addProducts = async (req, res) => {
     try {
         console.log("files", req.files);
         const productData = req.body;
-        console.log("data", productData);
-        
+        console.log("data", req.body);
+
         const variant = JSON.parse(productData.variants);
         console.log("body", variant);
 
-           // Group files by variant
-           const filesByVariant = {};
-           if (req.files && req.files.length > 0) {
-               req.files.forEach(file => {
-                   const matches = file.fieldname.match(/^productImages\[(\d+)\]/);
-                   if (matches) {
-                       const variantIndex = matches[1];
-                       if (!filesByVariant[variantIndex]) {
-                           filesByVariant[variantIndex] = [];
-                       }
-                       filesByVariant[variantIndex].push(file);
-                   }
-               });
-           }
-   
-           const existingProduct = await Product.findOne({
-               productName: productData.productName,
-           });
- 
+        // Group files by variant
+        const filesByVariant = {};
+        if (req.files && req.files.length > 0) {
+            req.files.forEach((file) => {
+                const matches = file.fieldname.match(/^productImages\[(\d+)\]/);
+                if (matches) {
+                    const variantIndex = matches[1];
+                    if (!filesByVariant[variantIndex]) {
+                        filesByVariant[variantIndex] = [];
+                    }
+                    filesByVariant[variantIndex].push(file);
+                }
+            });
+        }
+
+        const existingProduct = await Product.findOne({
+            productName: productData.productName,
+        });
+
         if (existingProduct) {
-            return res.status(400).json("Product already exists, please try with another name");
+            return res
+                .status(400)
+                .json("Product already exists, please try with another name");
         }
 
         // Process images for each variant
@@ -73,34 +75,25 @@ const addProducts = async (req, res) => {
             for (let i = 0; i < files.length; i++) {
                 try {
                     const file = files[i];
-                    // Verify that we have valid image data
-                    if (!file.buffer) {
-                        throw new Error('No image buffer found');
-                    }
-
                     const fileExtension = path.extname(file.originalname);
                     const uniqueFileName = `${Date.now()}-${variantIndex}-${i}${fileExtension}`;
                     const resizedImagePath = path.join(uploadDirectory, uniqueFileName);
 
-                    // Add error handling and validation before processing
-                    const supportedFormats = ['.jpg', '.jpeg', '.png', '.webp'];
+                    const supportedFormats = [".jpg", ".jpeg", ".png", ".webp"];
                     if (!supportedFormats.includes(fileExtension.toLowerCase())) {
-                        throw new Error('Unsupported image format');
+                        throw new Error("Unsupported image format");
                     }
 
-                    // Process the image with additional error handling
                     await sharp(file.buffer, { failOnError: true })
                         .resize({ width: 440, height: 440, fit: sharp.fit.cover })
                         .sharpen({ sigma: 1.5 })
                         .jpeg({ quality: 95 })
-                        .toColourspace('srgb')
-                        .toFile(resizedImagePath)
-                        .catch(err => {
-                            console.error('Sharp processing error:', err);
-                            throw new Error('Image processing failed');
-                        });
+                        .toColourspace("srgb")
+                        .toFile(resizedImagePath);
 
-                    processedImages[variantIndex].push(`/uploads/product-images/${uniqueFileName}`);
+                    processedImages[variantIndex].push(
+                        `/uploads/product-images/${uniqueFileName}`
+                    );
                 } catch (imageError) {
                     console.error("Error processing image:", imageError);
                     return res.status(500).json("Error processing image");
@@ -115,6 +108,12 @@ const addProducts = async (req, res) => {
             return res.status(400).json("Invalid category name");
         }
 
+        // Validate and process productOffer
+        let productOffer = null;
+        if (productData.productOffer && mongoose.Types.ObjectId.isValid(productData.productOffer)) {
+            productOffer = productData.productOffer;
+        }
+
         // Map variants with their processed images
         const variantsWithImages = variant.map((variantData, index) => ({
             color: variantData.color,
@@ -122,27 +121,27 @@ const addProducts = async (req, res) => {
             size: variantData.size,
             stock: parseInt(variantData.stock, 10),
             price: parseFloat(variantData.price),
-            productImage: processedImages[index] || []
+            productImage: processedImages[index] || [],
         }));
 
         const newProduct = new Product({
             productName: productData.productName,
             description: productData.description,
             category: category._id,
-            productOffer: productData.productOffer || 0,
+            productOffer: productOffer, // Either a valid ObjectId or null
             variants: variantsWithImages,
             status: productData.status || "Available",
             createdOn: new Date(),
         });
 
         await newProduct.save();
-        return res.status(200).json({success: true, message: "product added successfully"});
-
+        return res.status(200).json({ success: true, message: "Product added successfully" });
     } catch (error) {
         console.error("Error while adding product:", error.message, error.stack);
         return res.status(500).json("Error adding product");
     }
 };
+
   
 
 // edit product

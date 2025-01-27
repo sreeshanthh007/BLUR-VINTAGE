@@ -63,7 +63,7 @@ router.get("/wishlist/check-status",wishlistController.wishlistStatus)
 // for counting items in the wishlist
 router.get('/wishlist/count',wishlistController.wishlistCounter)
 // removing product from wishlist
-// router.delete("/wishlist/remove-product/:productId",wishlistController.removeProduct)
+router.delete("/wishlist/remove-product/:productId",wishlistController.removeProduct)
 // checkout page
 router.get("/checkout",userAuth,cartDetailsController.checkout)
 // manage address page
@@ -100,6 +100,7 @@ router.get("/search",userController.userSearch);
 router.get("/thankYou",userAuth,userController.thankYou)
 
 router.post('/order/place',orderDetailsController.placeOrder);
+router.post('/applyCoupon',orderDetailsController.applyCoupon)
 router.post("/order/verify-payment",orderDetailsController.verifyPayment)
 
 

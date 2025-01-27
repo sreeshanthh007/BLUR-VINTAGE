@@ -567,7 +567,7 @@
             } else {
                 Swal.fire({
                     icon: "error",
-                    title: "The product already exists",
+                    title: response.message,
                 });
             }
         } catch (error) {

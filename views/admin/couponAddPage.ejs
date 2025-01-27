@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coupon Management - BLUR VINTAGE</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        :root {
+            --mint-bg: #f0f7f7;
+            --sidebar-bg: #f5f5f5;
+            --text-dark: #333;
+        }
+
+        body {
+            background-color: #fff;
+            color: var(--text-dark);
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+
+        .sidebar {
+            background: var(--sidebar-bg);
+            min-height: 100vh;
+            padding: 2rem 0;
+            position: fixed;
+            width: 250px;
+        }
+
+        .sidebar .nav-link {
+            color: var(--text-dark);
+            padding: 0.5rem 2rem;
+            opacity: 0.8;
+        }
+
+        .sidebar .nav-link:hover {
+            opacity: 1;
+            background: rgba(0,0,0,0.05);
+        }
+
+        .sidebar .nav-link.active {
+            opacity: 1;
+            font-weight: 500;
+        }
+
+        .main-content {
+            margin-left: 250px;
+            padding: 2rem;
+        }
+
+        .brand {
+            font-size: 1.75rem;
+            text-align: center;
+            padding: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .form-control, .btn {
+            border-radius: 4px;
+        }
+
+        .form-control {
+            background-color: var(--mint-bg);
+            border: 1px solid #e0e0e0;
+        }
+
+        .table {
+            background: var(--mint-bg);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .table th {
+            font-weight: 500;
+            background: rgba(0,0,0,0.02);
+        }
+
+        .btn-remove {
+            color: #dc3545;
+            background: none;
+            border: none;
+            padding: 0;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            background: #e0e0e0;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+        }
+
+        @media (max-width: 991px) {
+            .sidebar {
+                width: 200px;
+            }
+            .main-content {
+                margin-left: 200px;
+            }
+        }
+
+        @media (max-width: 767px) {
+            .sidebar {
+                width: 100%;
+                height: auto;
+                min-height: auto;
+                position: relative;
+            }
+            .main-content {
+                margin-left: 0;
+                padding: 1rem;
+            }
+            .table-responsive {
+                font-size: 0.875rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <%-include('../../views/partials/admin/sidebar.ejs')%>
+    </div>
+
+    <main class="main-content">
+        <div class="container-fluid">
+            <h2 class="mb-4">Add coupon</h2>
+            
+            <form class="row g-3 mb-5">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label">Coupon code :</label>
+                        <input type="text" class="form-control" placeholder="Coupon code">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Limit :</label>
+                        <input type="number" class="form-control" placeholder="Limit">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label">Coupon amount :</label>
+                        <input type="number" class="form-control" placeholder="Coupon amount">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Minimum Order Amount</label>
+                        <input type="number" class="form-control" placeholder="Minimum Order amount">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description :</label>
+                        <input type="text" class="form-control" placeholder="Description">
+                    </div>
+                    <div class="row">
+                        <div class="col-6">
+                            <label class="form-label">Start Date :</label>
+                            <input type="date" class="form-control" placeholder="first-of-type">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">End Date :</label>
+                            <input type="date" class="form-control" placeholder="last-of-type">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12">
+                    <button type="submit" class="btn btn-dark px-4">Add</button>
+                </div>
+            </form>
+
+
+
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Code</th>
+                            <th>Coupon Code</th>
+                            <th>Coupon Amount</th>
+                            <th>Description</th>
+                            <th>Usage Limit</th>
+                            <th>Expiry Date</th>
+                            <th>Remove</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% coupons.forEach(function(coupon) { %>
+                        <tr>
+                            <td><%= coupon.description %></td>
+                            <td><%= coupon.code %></td>
+                            <td><%= coupon.discountValue %></td>
+                            <td><%= coupon.description %></td>
+                            <td><%= coupon.usageLimit %></td>
+                            <td><%= coupon.endDate.toLocaleDateString() %></td>
+                            <td>
+                                <button class="btn-remove" onclick="removeCoupon('<%= coupon._id %>')">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        <% }); %>
+                         </tbody>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
+
+
+<script>
+        document.addEventListener("DOMContentLoaded",function(){
+            const couponForm = document.querySelector('form');
+
+            couponForm.addEventListener("submit",async function(e){
+                e.preventDefault();
+
+                const amount = document.querySelector('input[placeholder="Coupon amount"]').value;
+               const discountPercentage = amount.endsWith('%') 
+            ? parseFloat(amount) 
+            : parseFloat(amount);
+            const formData = {
+            code: document.querySelector('input[placeholder="Coupon code"]').value,
+            limit: document.querySelector('input[placeholder="Limit"]').value,
+            amount: discountPercentage,
+            description: document.querySelector('input[placeholder="Description"]').value,
+            startDate: document.querySelector('input[type="date"]:first-of-type').value,
+            endDate: document.querySelector('input[type="date"]:last-of-type').value,
+            minOrder : document.querySelector('input[placeholder="Minimum Order amount"]').value
+           };
+
+
+           try {
+            const response = await fetch("/admin/addCoupons",{
+                method:"post",
+                headers:{
+                    "Content-type":"application/json"
+                },
+                body:JSON.stringify(formData)
+            });
+
+            const data = await response.json();
+            console.log("data is",data)
+            if(data.success){
+                Swal.fire({
+                    icon:"success",
+                    title:"coupon added",
+                    text:data.message
+                }).then(()=>{
+                    location.reload();
+                });
+            }else{
+                Swal.fire({
+                    icon:"error",
+                    title:"error",
+                    text:data.message
+                });
+            }
+           } catch (error) {
+            console.log("error adding coupons in admin",error.message)
+           }
+         })
+    });
+
+    async function removeCoupon(couponId) {
+        Swal.fire({
+            icon:"info",
+            title:"are you sure",
+            text:"you want to remove this coupon",
+            showCancelButton:true,
+            cancelButtonText:"no keep it",
+            cancelButtonColor:"#d33",
+            confirmButtonText:"remove it",
+            confirmButtonColor:"#3085d6",
+        }).then((result)=>{
+            if(result.isConfirmed){
+               fetch(`/admin/removeCoupon?couponId=${couponId}`,{
+                method:"delete",
+               })
+               .then((response)=>response.json())
+               .then(data =>{
+                if(data.success){
+                    Swal.fire({
+                        icon:"success",
+                        title:"coupon deleted successfully",
+                        text:data.message,
+                        timer:1500
+                    }).then(()=>{
+                        location.reload()
+                    })
+                }else{
+                    Swal.fire({
+                        icon:"error",
+                        title:"failed",
+                        text:data.message
+                    });
+                }
+               }).catch(err =>{
+                console.log("error in remove coupon fetch",err.message)
+               })
+            }
+        })
+    }
+</script>

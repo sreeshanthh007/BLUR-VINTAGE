@@ -28,7 +28,7 @@
                 required: true
                 },
                 size: {
-                    type: String,
+                 type: String,
                     required: true
                 },
                 productImage: {
@@ -48,6 +48,11 @@
                 productOffer: {
                     type: Number,
                     default: 0
+                },
+                offerType: {
+                    type: String,
+                    enum: ['Product Offer', 'Category Offer', 'No Offer'],
+                    default: 'No Offer'
                 }
             },
             status: {   

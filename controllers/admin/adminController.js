@@ -4,7 +4,7 @@ const mongoose = require('mongoose');
 const bcrypt = require("bcrypt");
 const Order = require("../../models/orderSchema");
 const Product = require("../../models/productSchema");
-
+const Coupon = require("../../models/couponSchema")
 
 
 const login = async (req,res)=>{
@@ -252,6 +252,96 @@ const updateOrderStatus = async(req,res)=>{
     }
 }
 
+// controllers/adminController.js
+
+
+
+const getSalesReport = async (req, res) => {
+    try {
+        const { startDate, endDate } = req.query;
+        
+        const matchStage = {
+            createdAt: {
+                $gte: startDate ? new Date(startDate) : new Date('2000-01-01'),
+                $lte: endDate ? new Date(endDate) : new Date()
+            },
+            orderStatus: { $nin: ['Cancelled', 'Failed'] }
+        };
+
+        const salesReport = await Order.aggregate([
+            { $match: matchStage },
+            {
+                $group: {
+                    _id: null,
+                    totalOrders: { $sum: 1 },
+                    totalSales: { $sum: '$pricing.subtotal' },
+                    totalCouponDiscount: { $sum: '$pricing.coupon.discount' },
+                    totalProductOffers: { $sum: '$pricing.productOffersTotal' },
+                    finalRevenue: { $sum: '$pricing.finalAmount' },
+                    orders: {
+                        $push: {
+                            orderNumber: '$orderNumber',
+                            orderDate: '$createdAt',
+                            subtotal: '$pricing.subtotal',
+                            couponDiscount: '$pricing.coupon.discount',
+                            productOffers: '$pricing.productOffersTotal',
+                            finalAmount: '$pricing.finalAmount',
+                            paymentMethod: '$payment.method',
+                            status: '$orderStatus'
+                        }
+                    }
+                }
+            },
+            {
+                $project: {
+                    _id: 0,
+                    totalOrders: 1,
+                    totalSales: 1,
+                    totalCouponDiscount: 1,
+                    totalProductOffers: 1,
+                    finalRevenue: 1,
+                    orders: 1,
+                    totalDiscount: {
+                        $add: ['$totalCouponDiscount', '$totalProductOffers']
+                    }
+                }
+            }
+        ]);
+
+        // Get discount percentages
+        const report = salesReport[0] || {
+            totalOrders: 0,
+            totalSales: 0,
+            totalCouponDiscount: 0,
+            totalProductOffers: 0,
+            finalRevenue: 0,
+            totalDiscount: 0,
+            orders: []
+        };
+
+        report.couponDiscountPercentage = (report.totalCouponDiscount / report.totalSales * 100) || 0;
+        report.productOffersPercentage = (report.totalProductOffers / report.totalSales * 100) || 0;
+        report.totalDiscountPercentage = (report.totalDiscount / report.totalSales * 100) || 0;
+
+        // Render the sales report page
+        res.render('admin/salesreport', {
+            title: 'Sales Report',
+            report,
+            startDate: startDate || '',
+            endDate: endDate || '',
+            moment: require('moment')  // For date formatting
+        });
+
+    } catch (error) {
+        console.error('Error generating sales report:', error);
+        res.status(500).render('error', {
+            message: 'Error generating sales report'
+        });
+    }
+};
+
+
+
 
 
 
@@ -274,5 +364,6 @@ module.exports ={
     unblockUser,
     orderList,
     orderDetails,
-    updateOrderStatus
+    updateOrderStatus,
+    getSalesReport
 }

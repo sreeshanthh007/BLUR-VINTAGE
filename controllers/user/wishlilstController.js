@@ -68,6 +68,67 @@ const addToWishlist = async (req, res) => {
     }
 };
 
+const addExternalProductToWishlist = async (req, res) => {
+    try {
+        const userId = req.session.user || req.session?.passport?.user;
+        const { productId } = req.body;
+
+        if (!userId) {
+            return res.status(401).json({ 
+                success: false, 
+                message: "Please login first" 
+            });
+        }
+    
+        const product = await Product.findById(productId);
+        if (!product) {
+            return res.status(404).json({ success: false, message: "Product not found" });
+        }
+
+        // Use the first available variant
+        const variant = product.variants.find(v => v.stock > 0);
+        if (!variant) {
+            return res.status(400).json({ success: false, message: "No available variants" });
+        }
+
+        // Check if product is already in wishlist
+        const existingWishlistItem = await Wishlist.findOne({ 
+            userId, 
+            product: productId
+        });
+
+        if (existingWishlistItem) {
+            return res.status(400).json({ success: false, message: "Product already in wishlist" });
+        }
+
+        // Create new wishlist item with first available variant
+        const wishlistItem = new Wishlist({
+            userId,
+            product: productId,
+            variant: {
+                color: variant.color,
+                colorName: variant.colorName,
+                size: variant.size,
+                stock: variant.stock,
+                price: variant.price,
+                productImage: variant.productImage,
+                status: variant.stock > 0 ? "Available" : "out of stock"
+            }
+        });
+
+        await wishlistItem.save();
+
+        res.status(200).json({ 
+            success: true, 
+            message: "Added to wishlist",
+            wishlistItem 
+        });
+    } catch (error) {
+        console.error("Error adding to wishlist:", error);
+        res.status(500).json({ success: false, message: "Failed to add to wishlist" });
+    }
+};
+
 const getWishlist = async (req, res) => {
     try {
         const userId = req.session.user || req.session?.passport?.user;
@@ -90,24 +151,32 @@ const getWishlist = async (req, res) => {
 };
 
 
-// const removeProduct = async(req,res)=>{
-//     try {
-//         const {productId} = req.params;
-//         const userId = req.session?.user || req.session?.passport?.user;
+const removeProduct = async(req,res)=>{
+    try {
+        const {productId} = req.params;
+        const userId = req.session?.user || req.session?.passport?.user;
 
-//         if(!userId){
-//             return res.status(400).json({success:false,message:"user not found"})
-//         }
+        if(!userId){
+            return res.status(400).json({success:false,message:"user not found"})
+        }
 
-//        await Wishlist.findOneAndDelete(
-//         productId
-//        )
+        const result = await Wishlist.findOneAndDelete({ 
+            userId, 
+            product: productId 
+        });
 
-//       return res.status(200).json({success:true,message:"product removed successfully"})
-//     } catch (error) {
-//         console.log("error in removing products from wishlist",error.message)
-//     }
-// }
+
+        if (result) {
+            res.status(200).json({ success: true, message: "Product removed from wishlist." });
+        } else {
+            res.status(404).json({ success: false, message: "Product not found in wishlist." });
+        }
+
+        
+    } catch (error) {
+        console.log("error in removing products from wishlist",error.message)
+    }
+}
 
     const wishlistStatus = async(req,res)=>{
         try {
@@ -146,7 +215,8 @@ const getWishlist = async (req, res) => {
 module.exports={
     getWishlist,
     addToWishlist,
-    // removeProduct,
+    removeProduct,
     wishlistStatus,
-    wishlistCounter
+    wishlistCounter,
+    addExternalProductToWishlist,
 }

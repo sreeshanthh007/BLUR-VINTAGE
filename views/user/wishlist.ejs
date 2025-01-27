@@ -77,7 +77,7 @@
 </head>
 <body>
     <!-- Header -->
-    <%-include('../partials/user/landingpageHeader.ejs')%>
+    <%-include('../partials/user/header.ejs')%>
 
     <!-- Main Content -->
     <main class="container my-5">
@@ -144,7 +144,7 @@
                             title:data.message,
                             timer:1500
                         }).then(()=>{
-                            document.querySelector(`[data-product-id="${productId}"]`)?.remove();
+                         location.reload()
                         })
                     }else{
                         Swal.fire({
