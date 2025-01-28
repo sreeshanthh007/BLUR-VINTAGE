@@ -183,15 +183,29 @@ const deleteAddress = async(req,res)=>{
 
    const wallet = async (req,res)=>{
     try {
-        const userId = req.session?.user || req.session?.passport?.user
-        const wallet = await Wallet.findOne({userId:userId});
+        const userId = req.session?.user || req.session?.passport?.user;
+
+        if(!userId){
+            return res.redirect('/user/login')
+        }
+
+        let wallet = await Wallet.findOne({userId:userId});
+
+        if (!wallet) {
+            wallet = new Wallet({
+                userId: userId,
+                balance: 0,
+                transactions: []
+            });
+            await wallet.save();
+        }
 
         if (wallet && wallet.transactions) {
             wallet.transactions.sort((a, b) => b.date - a.date);
         }
 
         return res.render('user/wallet',{
-            wallet:wallet ||  { balance: 0, transactions: [] }
+            wallet:wallet
         });
     } catch (error) {
         console.log("error in wallet rendering",error.message)
@@ -212,11 +226,15 @@ const deleteAddress = async(req,res)=>{
             return res.status(404).json({success:false,message:"Invalid amount. amount must be between ₹1 and ₹10,000"})
         }
 
-        const wallet = await Wallet.findOne({userId:userId});
+        let  wallet = await Wallet.findOne({userId:userId});
 
         
         if(!wallet){
-            return res.status(404).json({success:false,message:"wallet not found"})
+            wallet = new Wallet({
+                userId: userId,
+                balance: 0,
+                transactions: []
+            });
         }
         
         wallet.transactions.unshift({

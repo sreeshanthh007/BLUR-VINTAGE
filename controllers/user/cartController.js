@@ -1,7 +1,9 @@
 const Cart = require("../../models/cartSchema");
 const Product = require("../../models/productSchema");
 const users = require('../../models/userSchema')
-const Address = require("../../models/adressSchema")
+const Address = require("../../models/adressSchema");
+const Coupons = require('../../models/couponSchema');
+const { availableCoupons } = require("../admin/couponController");
 
 
 
@@ -412,7 +414,7 @@ const syncCartPrices = async (userId) => {
                 let discountedPrice = originalPrice;
                 let bestDiscount = 0;
 
-                // Check product offer
+                
                 if (product.productOffer && 
                     now >= product.productOffer.startDate && 
                     now <= product.productOffer.expiryDate) {
@@ -420,7 +422,7 @@ const syncCartPrices = async (userId) => {
                     discountedPrice = originalPrice - (originalPrice * (bestDiscount / 100));
                 }
 
-                // Check category offer
+                
                 if (product.category?.categoryOffer &&
                     now >= product.category.categoryOffer.startDate &&
                     now <= product.category.categoryOffer.expiryDate) {
@@ -431,7 +433,7 @@ const syncCartPrices = async (userId) => {
                     }
                 }
 
-                // Round to avoid floating point issues
+                
                 discountedPrice = Math.round(discountedPrice);
 
                 if (item.price !== originalPrice || item.discountedPrice !== discountedPrice) {
@@ -504,11 +506,6 @@ const updateAddress = async(req,res)=>{
             res.json({success:true})
         });
         
-        // Send back the address details
-        // res.json({
-        //     success: true,
-        //     address: address
-        // });
     } catch (error) {
         console.log("error in updating address",error.message);
         res.status(500).json({ error: 'Failed to update address' });
@@ -531,13 +528,12 @@ const checkout = async (req,res)=>{
         const address  = selectedAddressId?
         await Address.findById(selectedAddressId):
         await Address.findOne({userId:userId});
+     
         
-
-        const deliveryCharge=148;
         res.render("user/checkOutPage",{
             cart,
-            deliveryCharge,
            address,
+          
             pageTitle:"checkout"
         });
     } catch (error) {

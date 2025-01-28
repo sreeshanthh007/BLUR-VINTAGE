@@ -29,6 +29,18 @@ const wishlistSchema = new Schema({
             type: Number,
             default: 0
         },
+        originalPrice: {
+            type: Number,
+            required: true
+        },
+        discount: {       
+            type: Number,
+            default: 0
+        },
+        offerName: {     
+            type: String,
+            default: ''
+        },
         price: {
             type: Number,
             required: true

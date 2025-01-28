@@ -292,13 +292,17 @@ const loadShop = async (req, res) => {
             isBlocked:false,
         }
         if(categoryFilter){
+          
             const categoryDoc = await Category.findOne({
                 isListed:true,
-                name:categoryFilter.toLowerCase()
+                name: { 
+                    $regex: new RegExp(`^${categoryFilter}$`, 'i') 
+                }
             })
-
             if(categoryDoc){
                 baseQuery.category = categoryDoc._id
+            } else {
+                console.log('No category found for:', categoryFilter);
             }
         }
         let sortConfig={};
@@ -325,7 +329,7 @@ const loadShop = async (req, res) => {
         }
         
         
-        const totalProducts = await Product.countDocuments({});
+        const totalProducts = await Product.countDocuments(baseQuery);
         const totalPages = Math.ceil(totalProducts / productsPerPage);
         
        
@@ -391,15 +395,19 @@ const loadShop = async (req, res) => {
     });
            
 
-            if (req.xhr) {
-                return res.json({
-                    products,
-                    currentPage: page,
-                    totalPages,
-                    hasNextPage: page < totalPages,
-                    hasPrevPage: page > 1,
-                });
-            }
+    if (req.xhr || req.headers['x-requested-with'] === 'XMLHttpRequest') {
+        return res.json({
+            products: productsWithOffers,
+            currentSort: sortOption,
+            currentPage: page,
+            totalPages,
+            hasPrevPage: page > 1,
+            hasNextPage: page < totalPages,
+            prevPage: page - 1,
+            nextPage: page + 1,
+            currentCategory: categoryFilter
+        });
+    }
         const categories  = await Category.find({isListed:true})
         return res.render('user/shop', {
             products:productsWithOffers,
@@ -720,7 +728,19 @@ const loadWomen = async (req, res) => {
             prevPage: page - 1
 
         };
-        
+           
+    if (req.xhr || req.headers['x-requested-with'] === 'XMLHttpRequest') {
+    return res.json({
+        products: productsWithOffers,
+        currentSort: sortOption,
+        currentPage: page,
+        totalPages: totalPages,
+        hasPrevPage: page > 1,
+        hasNextPage: page < totalPages,
+        prevPage: page - 1,
+        nextPage: page + 1
+    });
+  }
 
         if (user) {
             res.render("user/women", renderOptions);
@@ -853,6 +873,20 @@ const loadKids =async (req,res)=>{
         prevPage: page - 1
     };
 
+
+if (req.xhr || req.headers['x-requested-with'] === 'XMLHttpRequest') {
+    return res.json({
+        products: productsWithOffers,
+        currentSort: sortOption,
+        currentPage: page,
+        totalPages: totalPages,
+        hasPrevPage: page > 1,
+        hasNextPage: page < totalPages,
+        prevPage: page - 1,
+        nextPage: page + 1
+    });
+}
+
     if(user){
         return res.render('user/kids',renderOptions)
     }else{
@@ -875,6 +909,7 @@ const userSearch = async (req, res) => {
         const isSuggestion = req.query.suggest === 'true';
         const category = req.query.category;
         const page_context = req.query.page_context;
+        const strict_filter = req.query.strict_filter === 'true'
         
         const page = parseInt(req.query.page) || 1;
         const productsPerPage = 8;
@@ -893,7 +928,7 @@ const userSearch = async (req, res) => {
         }
 
         // Add category filter if specified
-        if (category) {
+        if (category && strict_filter) {
             const categoryDoc = await Category.findOne({ 
                 isListed: true, 
                 name: category.toLowerCase() 

@@ -100,7 +100,8 @@ router.get("/search",userController.userSearch);
 router.get("/thankYou",userAuth,userController.thankYou)
 
 router.post('/order/place',orderDetailsController.placeOrder);
-router.post('/applyCoupon',orderDetailsController.applyCoupon)
+router.post('/applyCoupon',orderDetailsController.applyCoupon);
+
 router.post("/order/verify-payment",orderDetailsController.verifyPayment)
 
 

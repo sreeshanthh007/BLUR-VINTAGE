@@ -93,13 +93,38 @@
                         <a href="/user/buy?id=<%=item.product._id%>">
                         <img src="<%= item.variant.productImage[0] %>" class="card-img-top" alt="<%= item.product.productName %>">
                        </a>
-                        <div class="card-body">
-                            <i class="fas fa-trash delete-icon" id="delete-icon" onclick="removeProduct('<%=item.product._id%>')"></i>
-                            <h5 class="card-title" style="color: black; font-weight: bold;"><%= item.product.productName %></h5>
-                            <p class="card-text" style="color: red; font-weight: bold;">Rs/- <%= item.variant.price %></p>
-                            <p class="card-text text-muted">Color: <%= item.variant.colorName %></p>
-                            <!-- <button class="add-to-cart">ADD TO CART</button> -->
-                        </div>
+                       <div class="card-body">
+                        <i class="fas fa-trash delete-icon" id="delete-icon" onclick="removeProduct('<%=item.product._id%>')"></i>
+                        <h5 class="card-title" style="color: black; font-weight: bold;"><%= item.product.productName %></h5>
+                        
+                        
+                        <% if (item.variant.discount > 0) { %>
+                            <div class="price-section">
+                                <p class="card-text mb-0">
+                                    <span class="original-price text-muted text-decoration-line-through">
+                                        Rs/- <%= item.variant.originalPrice %>
+                                    </span>
+                                    <span class="discounted-price ms-2" style="color: red; font-weight: bold;">
+                                        Rs/- <%= item.variant.price %>
+                                    </span>
+                                </p>
+                                <div class="offer-badge">
+                                    <span class="badge bg-danger">
+                                        <%= item.variant.discount %>% OFF
+                                        <% if (item.variant.offerName) { %>
+                                            - <%= item.variant.offerName %>
+                                        <% } %>
+                                    </span>
+                                </div>
+                            </div>
+                        <% } else { %>
+                            <p class="card-text" style="color: red; font-weight: bold;">
+                                Rs/- <%= item.variant.price %>
+                            </p>
+                        <% } %>
+                        
+                        <p class="card-text text-muted">Color: <%= item.variant.colorName %></p>
+                    </div>
                     
                     </div>
                 </div>

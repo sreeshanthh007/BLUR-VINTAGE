@@ -260,10 +260,14 @@ document.getElementById("addMoneyForm").addEventListener("submit", async functio
 
         // Update wallet balance dynamically
         const balanceElement = document.getElementById("walletBalance");
-        if (balanceElement) {
-            balanceElement.textContent = result.newBalance;
+        if (balanceElement && result.newBalance !== undefined) {
+            balanceElement.textContent = `₹${result.newBalance.toFixed(2)}`;
         }
 
+        const modal = bootstrap.Modal.getInstance(document.getElementById('addMoneyModal'));
+        modal.hide()
+
+        location.reload()
 
         // Success toast
         Toastify({

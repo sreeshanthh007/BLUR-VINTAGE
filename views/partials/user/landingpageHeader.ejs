@@ -178,7 +178,7 @@ document.addEventListener('DOMContentLoaded', function() {
        
         updateCartCounter()
    
-    function getCurrentCategory() {
+   function getCurrentCategory() {
         const path = window.location.pathname;
         if (path.includes('/men')) return 'men';
         if (path.includes('/women')) return 'women';
@@ -190,7 +190,6 @@ document.addEventListener('DOMContentLoaded', function() {
         return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     }
 
-   
     function highlightMatch(text, query) {
         if (!query) return text;
         const regex = new RegExp(`(${escapeRegExp(query)})`, 'gi');
@@ -198,99 +197,100 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     async function searchProducts(query) {
-    try {
-        const currentPath = window.location.pathname;
-        const sortValue = sortSelect ? sortSelect.value : 'default';
-        
-        // Create URLSearchParams object for cleaner URL construction
-        const searchParams = new URLSearchParams();
-        
-        // Add search query if it exists
-        if (query.trim()) {
-            searchParams.set('search', query);
+        try {
+            const currentPath = window.location.pathname;
+            const sortValue = sortSelect ? sortSelect.value : 'default';
+            const searchParams = new URLSearchParams();
+            
+            if (query.trim()) {
+                searchParams.set('search', query);
+            }
+            
+            if (sortValue !== 'default') {
+                searchParams.set('sort', sortValue);
+            }
+            
+            // Always set strict filtering except for shop page
+            if (currentPath.includes('/shop')) {
+                searchParams.set('page_context', 'shop');
+                searchParams.set('strict_filter', 'false');
+            } else {
+                const category = getCurrentCategory();
+                if (category) {
+                    searchParams.set('category', category);
+                    searchParams.set('strict_filter', 'true');
+                }
+            }
+            
+            window.location.href = `/user/search?${searchParams.toString()}`;
+        } catch (error) {
+            console.error('Search error:', error);
         }
-        
-      
-        if (sortValue !== 'default') {
-            searchParams.set('sort', sortValue);
-        }
-        
-        // Set category and page context based on current path
-        if (currentPath.includes('/shop')) {
-            searchParams.set('page_context', 'shop');
-        } else if (currentPath.includes('/men')) {
-            searchParams.set('category', 'men');
-        } else if (currentPath.includes('/women')) {
-            searchParams.set('category', 'women');
-        } else if (currentPath.includes('/kids')) {
-            searchParams.set('category', 'kids');
-        }
-        
-        // Navigate to the search URL with all parameters
-        window.location.href = `/user/search?${searchParams.toString()}`;
-    } catch (error) {
-        console.error('Search error:', error);
     }
-}
 
-// Update the suggestion fetch as well
-searchInput.addEventListener('input', (e) => {
-    const query = e.target.value.trim();
-    const currentPath = window.location.pathname;
-    
-    if (query.length >= 2) {
-        clearTimeout(debounceTimer);
-        debounceTimer = setTimeout(async () => {
-            try {
-                // Build search params for suggestions
-                const searchParams = new URLSearchParams({
-                    search: query,
-                    suggest: 'true'
-                });
-                
-                // Add appropriate context
-                if (currentPath.includes('/shop')) {
-                    searchParams.set('page_context', 'shop');
-                } else {
-                    const currentCategory = getCurrentCategory();
+    searchInput.addEventListener('input', (e) => {
+        const query = e.target.value.trim();
+        const currentCategory = getCurrentCategory();
+        
+        if (query.length >= 2) {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(async () => {
+                try {
+                    const searchParams = new URLSearchParams({
+                        search: query,
+                        suggest: 'true',
+                        strict_filter: currentCategory ? 'true' : 'false'
+                    });
+
                     if (currentCategory) {
                         searchParams.set('category', currentCategory);
                     }
-                }
 
-                const response = await fetch(`/user/search?${searchParams.toString()}`);
-                const data = await response.json();
+                    const response = await fetch(`/user/search?${searchParams.toString()}`);
+                    const data = await response.json();
 
-                if (data.products && data.products.length > 0) {
-                    const resultsHtml = data.products.map(product => `
-                        <div class="search-result-item" onclick="window.location.href='/user/buy?id=${product._id}'">
-                            <img src="${product.variants[0]?.productImage[0] || '/images/default-product.jpg'}" 
-                                alt="${product.productName}">
-                            <div class="search-result-info">
-                                <div class="search-result-name">
-                                    ${highlightMatch(product.productName, query)}
+                    if (data.products && data.products.length > 0) {
+                        // Filter products based on category if we're on a category page
+                        const filteredProducts = currentCategory 
+                            ? data.products.filter(product => 
+                                product.category && 
+                                product.category.name.toLowerCase() === currentCategory.toLowerCase())
+                            : data.products;
+
+                        if (filteredProducts.length > 0) {
+                            const resultsHtml = filteredProducts.map(product => `
+                                <div class="search-result-item" onclick="window.location.href='/user/buy?id=${product._id}'">
+                                    <img src="${product.variants[0]?.productImage[0] || '/images/default-product.jpg'}" 
+                                        alt="${product.productName}">
+                                    <div class="search-result-info">
+                                        <div class="search-result-name">
+                                            ${highlightMatch(product.productName, query)}
+                                        </div>
+                                        <div class="search-result-price">
+                                            Rs/-${product.variants[0]?.price || 'Price not available'}
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="search-result-price">
-                                    Rs/-${product.variants[0]?.price || 'Price not available'}
-                                </div>
-                            </div>
-                        </div>
-                    `).join('');
+                            `).join('');
 
-                    searchResults.innerHTML = resultsHtml;
-                    searchResults.style.display = 'block';
-                } else {
-                    searchResults.innerHTML = '<div class="p-3 text-center text-muted">No products found</div>';
-                    searchResults.style.display = 'block';
+                            searchResults.innerHTML = resultsHtml;
+                            searchResults.style.display = 'block';
+                        } else {
+                            searchResults.innerHTML = '<div class="p-3 text-center text-muted">No products found in this category</div>';
+                            searchResults.style.display = 'block';
+                        }
+                    } else {
+                        searchResults.innerHTML = '<div class="p-3 text-center text-muted">No products found</div>';
+                        searchResults.style.display = 'block';
+                    }
+                } catch (error) {
+                    console.error('Suggestion error:', error);
                 }
-            } catch (error) {
-                console.error('Suggestion error:', error);
-            }
-        }, 300);
-    } else {
-        searchResults.style.display = 'none';
-    }   
-});
+            }, 300);
+        } else {
+            searchResults.style.display = 'none';
+        }   
+    });
 
     // Handle form submission
     searchInput.closest('form').addEventListener('submit', (e) => {
@@ -311,129 +311,161 @@ searchInput.addEventListener('input', (e) => {
         }
     });
 
-   // Update the sort select event listener
-if (sortSelect) {
-    sortSelect.addEventListener('change', (e) => {
-        e.preventDefault(); // Prevent default form submission
-        const currentPath = window.location.pathname;
-        const sortValue = sortSelect.value;
-        const searchParams = new URLSearchParams(window.location.search);
-        
-        // Update sort parameter
-        if (sortValue !== 'default') {
-            searchParams.set('sort', sortValue);
-        } else {
-            searchParams.delete('sort');
-        }
 
-        // Keep the existing search query if present
-        const searchQuery = document.getElementById('searchInput')?.value;
-        if (searchQuery) {
-            searchParams.set('search', searchQuery);
-        }
-
-        // Keep the current page context
-        let targetPath = currentPath;
-        
-        // Determine the correct path based on current location
-        if (currentPath.includes('/shop')) {
-            targetPath = '/user/shop';
-        } else if (currentPath.includes('/men')) {
-            targetPath = '/user/men';
-        } else if (currentPath.includes('/women')) {
-            targetPath = '/user/women';
-        } else if (currentPath.includes('/kids')) {
-            targetPath = '/user/kids';
-        }
-
-        // Make AJAX request instead of full page reload
-        fetch(`${targetPath}?${searchParams.toString()}`, {
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest'
+    if (sortSelect) {
+        sortSelect.addEventListener('change', (e) => {
+            e.preventDefault(); 
+            const currentPath = window.location.pathname;
+            const sortValue = sortSelect.value;
+            const searchParams = new URLSearchParams(window.location.search);
+            
+            // Update sort parameter
+            if (sortValue !== 'default') {
+                searchParams.set('sort', sortValue);
+            } else {
+                searchParams.delete('sort');
             }
-        })
-        .then(response => response.json())
-        .then(data => {
-            // Update URL without page reload
-            window.history.pushState({}, '', `${targetPath}?${searchParams.toString()}`);
-            
-            // Update the product grid
-            updateProductGrid(data.products);
-            
-            // Update pagination if needed
-            updatePagination(data);
-        })
-        .catch(error => {
-            console.error('Error updating products:', error);
+
+            // Keep the existing search query if present
+            const searchQuery = document.getElementById('searchInput')?.value;
+            if (searchQuery) {
+                searchParams.set('search', searchQuery);
+            }
+
+            // Make AJAX request instead of full page reload
+            fetch(`${currentPath}?${searchParams.toString()}`, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Update URL without page reload
+                window.history.pushState({}, '', `${currentPath}?${searchParams.toString()}`);
+                
+                // Update the product grid
+                updateProductGrid(data.products);
+                
+                
+                updatePagination(data);
+            })
+            .catch(error => {
+                console.error('Error updating products:', error);
+            });
         });
-    });
-}
+    }
 
 // Function to update product grid
 function updateProductGrid(products) {
-    const productContainer = document.querySelector('.product-grid') || document.querySelector('.row.products');
+    const productContainer = document.querySelector('.row.g-2');
     if (!productContainer) return;
 
-    const productsHtml = products.map(product => `
-        <div class="col-md-3 mb-4">
-            <div class="card h-100">
-                <img src="${product.variants[0]?.productImage[0] || '/images/default-product.jpg'}" 
-                     class="card-img-top" alt="${product.productName}">
-                <div class="card-body">
-                    <h5 class="card-title">${product.productName}</h5>
-                    <div class="price-section">
-                        ${product.discount > 0 ? `
-                            <span class="final-price">₹${product.finalPrice}</span>
-                            <span class="original-price text-decoration-line-through">₹${product.originalPrice}</span>
-                            <span class="discount text-success">${product.discount}% off</span>
-                        ` : `
-                            <span class="final-price">₹${product.originalPrice}</span>
-                        `}
-                    </div>
-                    ${product.offerName ? `<div class="offer-badge">${product.offerName}</div>` : ''}
-                </div>
-            </div>
-        </div>
-    `).join('');
-
-    productContainer.innerHTML = productsHtml;
-}
-
-// Function to update pagination
-function updatePagination(data) {
-    const paginationContainer = document.querySelector('.pagination');
-    if (!paginationContainer) return;
-
-    const { currentPage, totalPages, hasNextPage, hasPrevPage } = data;
+  
+    productContainer.className = 'row g-2 g-sm-3 g-md-4';
     
-    const paginationHtml = `
-        <ul class="pagination justify-content-center">
-            ${hasPrevPage ? `
-                <li class="page-item">
-                    <a class="page-link" href="?page=${data.prevPage}" data-page="${data.prevPage}">Previous</a>
-                </li>
-            ` : ''}
-            
-            <li class="page-item ${currentPage === 1 ? 'active' : ''}">
-                <a class="page-link" href="?page=1" data-page="1">1</a>
-            </li>
-            
-            ${totalPages > 1 ? Array.from({ length: Math.min(totalPages - 1, 3) }, (_, i) => `
-                <li class="page-item ${currentPage === i + 2 ? 'active' : ''}">
-                    <a class="page-link" href="?page=${i + 2}" data-page="${i + 2}">${i + 2}</a>
-                </li>
-            `).join('') : ''}
-            
-            ${hasNextPage ? `
-                <li class="page-item">
-                    <a class="page-link" href="?page=${data.nextPage}" data-page="${data.nextPage}">Next</a>
-                </li>
-            ` : ''}
-        </ul>
-    `;
+ 
+    productContainer.innerHTML = '';
 
-    paginationContainer.innerHTML = paginationHtml;
+    
+    products.forEach(product => {
+        // Only add products with in-stock variants
+        const inStockVariants = product.variants?.filter(v => v.stock > 0) || [];
+        if (inStockVariants.length > 0) {
+            const productHtml = `
+                <div class="col-6 col-sm-4 col-lg-3">
+                    <div class="product-card">
+                        <div class="product-image-container">
+                            <button class="heart-btn" data-product-id="${product._id}">
+                                <i class="fa-regular fa-heart"></i>
+                            </button>
+                            <a href="/user/buy?id=${product._id}" class="product-link">
+                                ${inStockVariants[0].productImage && inStockVariants[0].productImage.length > 0 
+                                    ? `<img src="${inStockVariants[0].productImage[0]}" 
+                                           alt="${product.productName}" 
+                                           class="img-fluid">`
+                                    : `<img src="/images/default-product.jpg" 
+                                           alt="No image available" 
+                                           class="img-fluid">`
+                                }
+                            </a>
+                        </div>
+                        <h3 class="product-title">${product.productName}</h3>
+                        <div class="price-section">
+                            ${product.discount > 0 
+                                ? `<p class="card-text mb-0">
+                                    <span class="original-price text-muted text-decoration-line-through">
+                                        Rs/-${product.originalPrice}
+                                    </span>
+                                    <span class="discounted-price ms-2">
+                                        Rs/-${product.finalPrice}
+                                    </span>
+                                   </p>
+                                   <div class="offer-badge">
+                                       <span class="badge bg-danger">
+                                           ${product.discount}% OFF - ${product.offerName}
+                                       </span>
+                                   </div>`
+                                : `<p class="product-price" style="font-weight: bolder;">
+                                    Rs/-${product.originalPrice}
+                                   </p>`
+                            }
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            productContainer.insertAdjacentHTML('beforeend', productHtml);
+        }
+    });
+
 }
+
+
+
+
+function updatePagination(data) {
+        const paginationContainer = document.querySelector('.pagination-container');
+        if (!paginationContainer) return;
+
+        const { currentPage, totalPages, hasNextPage, hasPrevPage } = data;
+        
+        const paginationHtml = `
+            <nav aria-label="Product navigation">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item ${!hasPrevPage ? 'disabled' : ''}">
+                        <a class="page-link" href="?page=1${data.currentSort ? `&sort=${data.currentSort}` : ''}">First</a>
+                    </li>
+                    <li class="page-item ${!hasPrevPage ? 'disabled' : ''}">
+                        <a class="page-link" href="?page=${currentPage - 1}${data.currentSort ? `&sort=${data.currentSort}` : ''}">Previous</a>
+                    </li>
+
+                    ${Array.from({length: Math.min(totalPages, 5)}, (_, i) => {
+                        const pageNum = Math.max(1, Math.min(totalPages, currentPage - 2 + i));
+                        return `
+                            <li class="page-item ${currentPage === pageNum ? 'active' : ''}">
+                                <a class="page-link" href="?page=${pageNum}${data.currentSort ? `&sort=${data.currentSort}` : ''}">${pageNum}</a>
+                            </li>
+                        `;
+                    }).join('')}
+
+                    <li class="page-item ${!hasNextPage ? 'disabled' : ''}">
+                        <a class="page-link" href="?page=${currentPage + 1}${data.currentSort ? `&sort=${data.currentSort}` : ''}">Next</a>
+                    </li>
+                    <li class="page-item ${!hasNextPage ? 'disabled' : ''}">
+                        <a class="page-link" href="?page=${totalPages}${data.currentSort ? `&sort=${data.currentSort}` : ''}">Last</a>
+                    </li>
+                </ul>
+            </nav>
+
+            <div class="text-center mt-3">
+                <small class="text-muted">
+                    Page ${currentPage} of ${totalPages}
+                </small>
+            </div>
+        `;
+
+        paginationContainer.innerHTML = paginationHtml;
+    }
 });
 
 
@@ -475,6 +507,8 @@ function updatePagination(data) {
             wishlistCounter.textContent = data.wishlistCount;
             wishlistCounter.style.display = data.wishlistCount > 0 ? 'inline-block' : 'none';
         }
+
+
      } catch (error) {
         console.error("Error updating wishlist counter:", error);
      }

@@ -68,9 +68,26 @@ const couponPage = async(req,res)=>{
     }
 
 
+    const availableCoupons = async(req,res)=>{
+        try {
+            const now = new Date();
+
+            const availableCoupons = await Coupon.find({
+                isActive: true,
+                startDate: { $lte: now },
+                endDate: { $gte: now },
+                currentUsageCount: { $lt: '$usageLimit' }
+            });
+
+            res.json(availableCoupons)
+        } catch (error) {
+            console.log("availabel coupons error  in cupon controller",error)
+        }
+    }
     
 module.exports={
     couponPage,
     addCoupon,
     deleteCoupon,
+    availableCoupons,
 }

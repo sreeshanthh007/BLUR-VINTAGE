@@ -258,29 +258,35 @@
                 const subtotalElement = orderSummary.querySelector('.order-summary-subtotal');
                 const totalElement = orderSummary.querySelector('.order-summary-total');
 
-                // Hide coupon input and apply button
+                
                 const couponContainer = couponInput.closest('.row');
                 couponContainer.style.display = 'none';
 
-                // Create coupon details div
-                let couponDetailsDiv = document.getElementById('coupon-details');
-                if (!couponDetailsDiv) {
-                    couponDetailsDiv = document.createElement('div');
-                    couponDetailsDiv.id = 'coupon-details';
-                    couponDetailsDiv.classList.add('d-flex', 'justify-content-between', 'mb-3');
-                    
-                    // Find the last summary item and insert before total
-                    const summaryItems = orderSummary.querySelectorAll('.d-flex.justify-content-between');
-                    const lastSummaryItem = summaryItems[summaryItems.length - 1];
-                    orderSummary.insertBefore(couponDetailsDiv, totalElement.closest('.d-flex.justify-content-between'));
-                }
+              
+             let couponDetailsDiv = document.getElementById('coupon-details');
+            if (!couponDetailsDiv) {
+                couponDetailsDiv = document.createElement('div');
+                couponDetailsDiv.id = 'coupon-details';
+                couponDetailsDiv.classList.add('mb-3');
+                
+                // Find the last summary item and insert before total
+                const summaryItems = orderSummary.querySelectorAll('.d-flex.justify-content-between');
+                const lastSummaryItem = summaryItems[summaryItems.length - 1];
+                orderSummary.insertBefore(couponDetailsDiv, totalElement.closest('.d-flex.justify-content-between'));
+            }
 
-                // Update coupon details
-                couponDetailsDiv.innerHTML = `
-                    <span>Coupon (${couponCode})</span>
-                    <span class="text-success">-Rs. ${data.discountAmount.toFixed(2)}</span>
-                `;
 
+            couponDetailsDiv.innerHTML = `
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span>Coupon (${couponCode})</span>
+                        <span class="text-success">-Rs. ${data.discountAmount.toFixed(2)}</span>
+                    </div>
+                    <button class="btn btn-sm btn-outline-danger" onclick="clearCoupon()">
+                        <i class="bi bi-x"></i> Clear
+                    </button>
+                </div>
+            `;
                 
 
                 // Update total
@@ -309,6 +315,37 @@
         }
     }
 
+
+    // =======function to remove the applied coupon=============//
+
+    function clearCoupon(){
+
+    const orderSummary = document.querySelector('.col-lg-4 .bg-white.p-4.rounded.shadow-sm');
+     const subtotalElement = orderSummary.querySelector('.order-summary-subtotal');
+      const totalElement = orderSummary.querySelector('.order-summary-total');
+     const couponDetailsDiv = document.getElementById('coupon-details');
+     const couponInput = document.querySelector('input[placeholder="Coupon code"]');
+    const couponContainer = couponInput.closest('.row');
+
+
+    if(couponDetailsDiv){
+        couponDetailsDiv.remove()
+    }
+
+    couponContainer.style.display = 'flex';
+    couponInput.value = '';
+
+    
+    const originalSubtotal = parseFloat(subtotalElement.textContent.replace('Rs.',''));
+    totalElement.textContent     = `Rs.${originalSubtotal.toFixed(2)}`
+
+    Swal.fire({
+        icon:"success",
+        title:"removed",
+        text:"coupon removed successfully"
+    })
+
+    }
         
         // Frontend JavaScript for handling the modal and address selection
     document.addEventListener('DOMContentLoaded', function() {
@@ -547,7 +584,8 @@
                                         razorpay_payment_id: response.razorpay_payment_id,
                                         razorpay_signature: response.razorpay_signature,
                                         cart: orderData.cart,
-                                        address: orderData.address
+                                        address: orderData.address,
+                                        coupon:orderData.coupon
                                     })
                                 });
 
@@ -616,6 +654,11 @@
             });
         }
         })
+
+
+
+
+        
     });
 
     </script>

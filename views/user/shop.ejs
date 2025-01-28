@@ -451,9 +451,10 @@
 
     categorySelect.addEventListener('change', (e) => {
         const selectedCategory = e.target.value;
+        const currentSort = new URLSearchParams(window.location.search).get('sort') || 'default';
         
-        // Construct URL with selected category
-        const url = `/user/shop?category=${encodeURIComponent(selectedCategory)}`;
+        // Construct URL with both category and sort parameters
+        const url = `/user/shop?category=${encodeURIComponent(selectedCategory)}&sort=${currentSort}`;
         
         fetch(url, {
             headers: {
@@ -464,74 +465,52 @@
         .then(data => {
             // Update products display
             const productsContainer = document.querySelector('.row.g-2');
-            productsContainer.innerHTML = ''; // Clear existing products
+            productsContainer.innerHTML = '';
 
             // Render new products
             data.products.forEach(product => {
-                const inStockVariants = product.variants.filter(v => v.stock > 0);
-                if (inStockVariants.length > 0) {
-                    const productCardHtml = `
-                        <div class="col-6 col-sm-4 col-lg-3">
-                            <div class="product-card">
-                                <div class="product-image-container">
-                                    <button class="heart-btn" data-product-id="${product._id}">
-                                        <i class="fa-regular fa-heart"></i>
-                                    </button>
-                                    <a href="/user/buy?id=${product._id}">
-                                        <img src="${inStockVariants[0].productImage && inStockVariants[0].productImage.length > 0 
-                                            ? inStockVariants[0].productImage[0] 
-                                            : '/images/default-product.jpg'}" 
-                                            alt="${product.productName}" 
-                                            class="img-fluid">
-                                    </a>
-                                </div>
-                                <h3 class="product-title">${product.productName}</h3>
-                                <p class="product-price" style="font-weight: bolder;">
-                                    Rs/-${inStockVariants[0].price}
-                                </p>
+                const productCardHtml = `
+                    <div class="col-6 col-sm-4 col-lg-3">
+                        <div class="product-card">
+                            <div class="product-image-container">
+                                <button class="heart-btn" data-product-id="${product._id}">
+                                    <i class="fa-regular fa-heart"></i>
+                                </button>
+                                ${product.discount > 0 ? `
+                                    <div class="offer-badge">
+                                        ${product.discount}% OFF
+                                    </div>
+                                ` : ''}
+                                <a href="/user/buy?id=${product._id}">
+                                    <img src="${product.variants[0]?.productImage?.[0] || '/images/default-product.jpg'}" 
+                                         alt="${product.productName}" 
+                                         class="img-fluid">
+                                </a>
+                            </div>
+                            <h3 class="product-title">${product.productName}</h3>
+                            <div class="price-container">
+                                ${product.discount > 0 ? `
+                                    <p class="product-price">
+                                        <span class="original-price">₹${product.originalPrice}</span>
+                                        <span class="final-price">₹${product.finalPrice}</span>
+                                    </p>
+                                    <p class="offer-name">${product.offerName}</p>
+                                ` : `
+                                    <p class="product-price">₹${product.originalPrice}</p>
+                                `}
                             </div>
                         </div>
-                    `;
-                    productsContainer.insertAdjacentHTML('beforeend', productCardHtml);
-                }
+                    </div>
+                `;
+                productsContainer.insertAdjacentHTML('beforeend', productCardHtml);
             });
 
-            // Update pagination
-            const paginationContainer = document.querySelector('.pagination-container');
-            paginationContainer.innerHTML = `
-                <nav aria-label="Product navigation">
-                    <ul class="pagination justify-content-center">
-                        <li class="page-item ${!data.hasPrevPage ? 'disabled' : ''}">
-                            <a class="page-link" href="?page=1" ${!data.hasPrevPage ? 'tabindex="-1"' : ''}>First</a>
-                        </li>
-                        <li class="page-item ${!data.hasPrevPage ? 'disabled' : ''}">
-                            <a class="page-link" href="?page=${data.currentPage - 1}" ${!data.hasPrevPage ? 'tabindex="-1"' : ''}>Previous</a>
-                        </li>
-                        
-                        ${Array.from({length: Math.min(5, data.totalPages)}, (_, i) => {
-                            const pageNum = Math.max(1, data.currentPage - 2) + i;
-                            return pageNum <= data.totalPages 
-                                ? `<li class="page-item ${data.currentPage === pageNum ? 'active' : ''}">
-                                       <a class="page-link" href="?page=${pageNum}">${pageNum}</a>
-                                   </li>` 
-                                : '';
-                        }).join('')}
+            
+            const newUrl = `${window.location.pathname}?category=${selectedCategory}&sort=${currentSort}`;
+            window.history.pushState({ path: newUrl }, '', newUrl);
 
-                        <li class="page-item ${!data.hasNextPage ? 'disabled' : ''}">
-                            <a class="page-link" href="?page=${data.currentPage + 1}" ${!data.hasNextPage ? 'tabindex="-1"' : ''}>Next</a>
-                        </li>
-                        <li class="page-item ${!data.hasNextPage ? 'disabled' : ''}">
-                            <a class="page-link" href="?page=${data.totalPages}" ${!data.hasNextPage ? 'tabindex="-1"' : ''}>Last</a>
-                        </li>
-                    </ul>
-                </nav>
-            `;
-
-            // Update page indicator
-            const pageIndicator = document.querySelector('.text-center small');
-            pageIndicator.textContent = `Page ${data.currentPage} of ${data.totalPages}`;
-
-            // Reattach wishlist functionality
+                
+            updatePagination(data);
             attachHeartButtonListeners();
             checkWishlistStatus();
         })

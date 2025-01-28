@@ -4,7 +4,8 @@ const mongoose = require('mongoose');
 const bcrypt = require("bcrypt");
 const Order = require("../../models/orderSchema");
 const Product = require("../../models/productSchema");
-const Coupon = require("../../models/couponSchema")
+const Coupon = require("../../models/couponSchema");
+const moment = require('moment')
 
 
 const login = async (req,res)=>{
@@ -256,27 +257,56 @@ const updateOrderStatus = async(req,res)=>{
 
 
 
+
 const getSalesReport = async (req, res) => {
     try {
-        const { startDate, endDate } = req.query;
+        const { dateRange, startDate, endDate } = req.query;
         
+        // Calculate date range based on selection
+        let startDateTime, endDateTime;
+        
+        switch(dateRange) {
+            case 'day':
+                startDateTime = moment().startOf('day');
+                endDateTime = moment().endOf('day');
+                break;
+            case 'week':
+                startDateTime = moment().startOf('week');
+                endDateTime = moment().endOf('week');
+                break;
+            case 'month':
+                startDateTime = moment().startOf('month');
+                endDateTime = moment().endOf('month');
+                break;
+            case 'custom':
+                startDateTime = startDate ? moment(startDate).startOf('day') : moment().subtract(30, 'days').startOf('day');
+                endDateTime = endDate ? moment(endDate).endOf('day') : moment().endOf('day');
+                break;
+            default:
+                startDateTime = moment().subtract(30, 'days').startOf('day');
+                endDateTime = moment().endOf('day');
+        }
+
+        // Updated match stage to only include delivered orders
         const matchStage = {
             createdAt: {
-                $gte: startDate ? new Date(startDate) : new Date('2000-01-01'),
-                $lte: endDate ? new Date(endDate) : new Date()
+                $gte: startDateTime.toDate(),
+                $lte: endDateTime.toDate()
             },
-            orderStatus: { $nin: ['Cancelled', 'Failed'] }
+            orderStatus: 'Delivered' // Only count delivered orders
         };
 
         const salesReport = await Order.aggregate([
             { $match: matchStage },
             {
                 $group: {
-                    _id: null,
-                    totalOrders: { $sum: 1 },
-                    totalSales: { $sum: '$pricing.subtotal' },
-                    totalCouponDiscount: { $sum: '$pricing.coupon.discount' },
-                    totalProductOffers: { $sum: '$pricing.productOffersTotal' },
+                    _id: {
+                        date: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } }
+                    },
+                    ordersCount: { $sum: 1 },
+                    grossSales: { $sum: '$pricing.subtotal' },
+                    couponDiscount: { $sum: '$pricing.coupon.discount' },
+                    productOffers: { $sum: '$pricing.productOffersTotal' },
                     finalRevenue: { $sum: '$pricing.finalAmount' },
                     orders: {
                         $push: {
@@ -293,65 +323,87 @@ const getSalesReport = async (req, res) => {
                 }
             },
             {
+                $sort: { "_id.date": 1 }
+            },
+            {
+                $group: {
+                    _id: null,
+                    dailyData: { $push: "$$ROOT" },
+                    totalOrders: { $sum: "$ordersCount" },
+                    totalGrossSales: { $sum: "$grossSales" },
+                    totalCouponDiscount: { $sum: "$couponDiscount" },
+                    totalProductOffers: { $sum: "$productOffers" },
+                    totalFinalRevenue: { $sum: "$finalRevenue" }
+                }
+            },
+            {
                 $project: {
                     _id: 0,
+                    dailyData: 1,
                     totalOrders: 1,
-                    totalSales: 1,
+                    totalGrossSales: 1,
                     totalCouponDiscount: 1,
                     totalProductOffers: 1,
-                    finalRevenue: 1,
-                    orders: 1,
+                    totalFinalRevenue: 1,
                     totalDiscount: {
                         $add: ['$totalCouponDiscount', '$totalProductOffers']
+                    },
+                    averageOrderValue: {
+                        $divide: ['$totalFinalRevenue', '$totalOrders']
                     }
                 }
             }
         ]);
 
-        // Get discount percentages
+        // Calculate additional metrics
         const report = salesReport[0] || {
             totalOrders: 0,
-            totalSales: 0,
+            totalGrossSales: 0,
             totalCouponDiscount: 0,
             totalProductOffers: 0,
-            finalRevenue: 0,
+            totalFinalRevenue: 0,
             totalDiscount: 0,
-            orders: []
+            averageOrderValue: 0,
+            dailyData: []
         };
 
-        report.couponDiscountPercentage = (report.totalCouponDiscount / report.totalSales * 100) || 0;
-        report.productOffersPercentage = (report.totalProductOffers / report.totalSales * 100) || 0;
-        report.totalDiscountPercentage = (report.totalDiscount / report.totalSales * 100) || 0;
+        // Calculate percentages
+        report.discountPercentage = (report.totalDiscount / report.totalGrossSales * 100) || 0;
+        report.couponDiscountPercentage = (report.totalCouponDiscount / report.totalGrossSales * 100) || 0;
+        report.productOffersPercentage = (report.totalProductOffers / report.totalGrossSales * 100) || 0;
 
-        // Render the sales report page
+        // Get payment method distribution - updated to only include delivered orders
+        const paymentMethodStats = await Order.aggregate([
+            { $match: matchStage },
+            {
+                $group: {
+                    _id: '$payment.method',
+                    count: { $sum: 1 },
+                    total: { $sum: '$pricing.finalAmount' }
+                }
+            }
+        ]);
+
+        report.paymentMethods = paymentMethodStats;
+
+        // Render the sales report page with all metrics
         res.render('admin/salesreport', {
             title: 'Sales Report',
             report,
-            startDate: startDate || '',
-            endDate: endDate || '',
-            moment: require('moment')  // For date formatting
+            dateRange: dateRange || 'month',
+            startDate: startDateTime.format('YYYY-MM-DD'),
+            endDate: endDateTime.format('YYYY-MM-DD'),
+            moment
         });
 
     } catch (error) {
         console.error('Error generating sales report:', error);
         res.status(500).render('error', {
-            message: 'Error generating sales report'
+            message: 'Error generating sales report',
+            error
         });
     }
 };
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 module.exports ={

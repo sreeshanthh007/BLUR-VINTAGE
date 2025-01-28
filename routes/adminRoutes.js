@@ -105,7 +105,7 @@ router.post("/addcoupons",couponController.addCoupon)
 router.post('/return-order-item/:orderId/:itemId',returnController.initiateReturn);
 
 router.delete('/removeCoupon',couponController.deleteCoupon);
-
+router.get('/available-coupons',couponController.availableCoupons)
 
 
 router.get("/addOffer",adminAuth,OfferController.loadOffer);
@@ -117,7 +117,7 @@ router.post("/offers/add",OfferController.addOffer)
 router.put("/returns/:orderId/:itemId/approve",returnController.approvedReturn);
 
 
-router.get("/sales-report",admincontroller.getSalesReport)
+router.get("/sales-report",adminAuth,admincontroller.getSalesReport)
 
 
 
