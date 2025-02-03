@@ -421,30 +421,90 @@
 
         // Export to Excel functionality
         function exportToExcel() {
-        const orders = [];
-        <% report.dailyData.forEach(day => {
-            day.orders.forEach(order => { %>
-                orders.push({
-                    'Order Number': '<%= order.orderNumber %>',
-                    'Date': '<%= moment(order.orderDate).format("DD-MM-YYYY") %>',
-                    'Subtotal': <%= order.subtotal %>,
-                    'Coupon Discount': <%= order.couponDiscount %>,
-                    'Product Offers': <%= order.productOffers %>,
-                    'Final Amount': <%= order.finalAmount %>,
-                    'Payment Method': '<%= order.paymentMethod %>',
-                    'Status': '<%= order.status %>'
-                });
-            <% });
-        }); %>
+    // Prepare the data
+    const orders = [];
+    <% report.dailyData.forEach(day => {
+        day.orders.forEach(order => { %>
+            orders.push({
+                'Order Number': '<%= order.orderNumber %>',
+                'Date': '<%= moment(order.orderDate).format("DD-MM-YYYY") %>',
+                'Subtotal': <%= order.subtotal %>,
+                'Coupon Discount': <%= order.couponDiscount %>,
+                'Product Offers': <%= order.productOffers %>,
+                'Final Amount': <%= order.finalAmount %>,
+                'Payment Method': '<%= order.paymentMethod %>',
+                'Status': '<%= order.status %>'
+            });
+        <% });
+    }); %>
 
-        const worksheet = XLSX.utils.json_to_sheet(orders);
-        const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, 'Sales Report');
-        
-        // Generate filename with current date
-        const filename = `sales-report-${moment().format('YYYY-MM-DD')}.xlsx`;
-        XLSX.writeFile(workbook, filename);
+    // Create worksheet
+    const worksheet = XLSX.utils.json_to_sheet(orders);
+
+    // Set column widths
+    const columnWidths = [
+        { wch: 15 },  // Order Number
+        { wch: 12 },  // Date
+        { wch: 12 },  // Subtotal
+        { wch: 15 },  // Coupon Discount
+        { wch: 15 },  // Product Offers
+        { wch: 12 },  // Final Amount
+        { wch: 15 },  // Payment Method
+        { wch: 12 }   // Status
+    ];
+    worksheet['!cols'] = columnWidths;
+
+    // Add headers row with styling
+    const headerRow = [
+        'Order Number', 'Date', 'Subtotal', 'Coupon Discount', 
+        'Product Offers', 'Final Amount', 'Payment Method', 'Status'
+    ];
+    XLSX.utils.sheet_add_aoa(worksheet, [headerRow], { origin: 'A1' });
+
+    // Add summary section at the top
+    const summaryData = [
+        ['Sales Report Summary'],
+        ['Period:', '<%= dateRange === "custom" ? "Custom Range" : dateRange %>'],
+        ['Total Orders:', <%= report.totalOrders %>],
+        ['Gross Sales:', <%= report.totalGrossSales %>],
+        ['Total Discounts:', <%= report.totalDiscount %>],
+        ['Net Revenue:', <%= report.totalFinalRevenue %>],
+        ['Average Order Value:', <%= Math.round(report.averageOrderValue) %>],
+        [] // Empty row for spacing
+    ];
+    
+    // Create a new worksheet for the complete report
+    const finalWorksheet = XLSX.utils.aoa_to_sheet(summaryData);
+    
+    // Copy the orders data to the final worksheet, starting after the summary
+    const orderDataRange = XLSX.utils.decode_range(worksheet['!ref']);
+    const orderData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+    XLSX.utils.sheet_add_aoa(finalWorksheet, orderData, { origin: 'A' + (summaryData.length + 1) });
+
+    // Adjust column widths for the final worksheet
+    finalWorksheet['!cols'] = columnWidths;
+
+    // Create workbook and add worksheet
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, finalWorksheet, 'Sales Report');
+
+    // Add number format for currency cells
+    const range = XLSX.utils.decode_range(finalWorksheet['!ref']);
+    for (let R = summaryData.length + 1; R <= range.e.r; ++R) {
+        for (let C = 2; C <= 5; ++C) { // Columns C-F (Subtotal through Final Amount)
+            const cell = XLSX.utils.encode_cell({r: R, c: C});
+            if (!finalWorksheet[cell]) continue;
+            finalWorksheet[cell].z = '"₹"#,##0.00';
+        }
     }
+
+    // Generate filename with current date and time
+    const date = moment().format('YYYY-MM-DD-HH-mm');
+    const filename = `sales-report-${date}.xlsx`;
+
+    // Save the file
+    XLSX.writeFile(workbook, filename);
+}
 
     function exportToPDF() {
         // Create jsPDF instance with proper initialization

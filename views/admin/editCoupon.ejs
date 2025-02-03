@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Coupon</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2c3e50;
+            --success-color: #2ecc71;
+            --danger-color: #e74c3c;
+            --light-bg: #ecf0f1;
+            --dark-text: #34495e;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--light-bg);
+            color: var(--dark-text);
+        }
+
+        .sidebar {
+            background-color: var(--secondary-color);
+            color: white;
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 250px;
+            padding-top: 20px;
+            transition: all 0.3s;
+        }
+
+        .main-content {
+            margin-left: 250px;
+            padding: 20px;
+            transition: all 0.3s;
+        }
+
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease-in-out;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background-color: #2980b9;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+            }
+            .main-content {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="d-flex">
+        <div class="sidebar">
+            <%- include('../../views/partials/admin/sidebar.ejs') %>
+        </div>
+
+        <main class="main-content flex-grow-1">
+            <div class="container-fluid">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h1 class="h2">Edit Coupon</h1>
+                    <a href="/admin/coupons" class="btn btn-outline-primary">
+                        <i class="bi bi-arrow-left me-2"></i>Back to Coupons
+                    </a>
+                </div>
+                
+                <div class="card">
+                    <div class="card-body">
+                        <form id="editCouponForm" class="row g-3">
+                            <input type="hidden" id="couponId" value="<%= coupon._id %>">
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Coupon Code</label>
+                                    <input type="text" class="form-control" value="<%= coupon.code %>" readonly>
+                                    <small class="text-muted">Coupon code cannot be modified</small>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Usage Limit</label>
+                                    <input type="number" class="form-control" name="usageLimit" value="<%= coupon.usageLimit %>" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Description</label>
+                                    <textarea class="form-control" name="description" rows="3" required><%= coupon.description %></textarea>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Discount Amount (₹)</label>
+                                    <input type="number" class="form-control" name="discountValue" value="<%= coupon.discountValue %>" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Minimum Order Amount (₹)</label>
+                                    <input type="number" class="form-control" name="minOrder" value="<%= coupon.minimumOrderAmount %>" required>
+                                </div>
+                                <div class="row">
+                                    <div class="col-6 mb-3">
+                                        <label class="form-label">Start Date</label>
+                                        <input type="date" class="form-control" name="startDate" value="<%= coupon.startDate %>" required>
+                                    </div>
+                                    <div class="col-6 mb-3">
+                                        <label class="form-label">End Date</label>
+                                        <input type="date" class="form-control" name="endDate" value="<%= coupon.endDate %>" required>
+                                    </div>
+                                </div>
+                            </div>
+    
+                            <div class="col-12 text-end">
+                                <button type="button" class="btn btn-secondary me-2" onclick="location.href='/admin/coupons'">Cancel</button>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-check2 me-2"></i>Save Changes
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        function validateForm(formData) {
+            if (parseInt(formData.usageLimit) < 1) {
+                throw new Error("Usage limit must be at least 1");
+            }
+            if (parseFloat(formData.discountValue) <= 0) {
+                throw new Error("Discount value must be greater than 0");
+            }
+            if (parseFloat(formData.minOrder) < 0) {
+                throw new Error("Minimum order amount cannot be negative");
+            }
+            if (!formData.description.trim()) {
+                throw new Error("Description is required");
+            }
+            if (!formData.startDate || !formData.endDate) {
+                throw new Error("Start date and end date are required");
+            }
+            if (new Date(formData.startDate) > new Date(formData.endDate)) {
+                throw new Error("End date must be after start date");
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const editCouponForm = document.getElementById('editCouponForm');
+
+            editCouponForm.addEventListener("submit", async (e) => {
+                e.preventDefault();
+
+                const couponId = document.getElementById("couponId").value;
+                const formData = {
+                    usageLimit: document.querySelector('input[name="usageLimit"]').value,
+                    discountValue: document.querySelector('input[name="discountValue"]').value,
+                    minOrder: document.querySelector('input[name="minOrder"]').value,
+                    description: document.querySelector('textarea[name="description"]').value,
+                    startDate: document.querySelector('input[name="startDate"]').value,
+                    endDate: document.querySelector('input[name="endDate"]').value
+                };
+
+                try {
+                    validateForm(formData);
+
+                    const response = await fetch(`/admin/edit-coupon/${couponId}`, {
+                        method: "PUT",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify(formData)
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        Swal.fire({
+                            icon: "success",
+                            title: "Success",
+                            text: "Coupon edited successfully",
+                            showConfirmButton: false,
+                            timer: 1500
+                        }).then(() => {
+                            window.location.href = data.redirectUrl;
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: "error",
+                            title: "Error",
+                            text: data.message || "Error editing coupon"
+                        });
+                    }
+                } catch (error) {
+                    Swal.fire({
+                        icon: "error",
+                        title: "Validation Error",
+                        text: error.message
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
+

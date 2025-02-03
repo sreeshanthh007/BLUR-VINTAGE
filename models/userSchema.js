@@ -37,7 +37,20 @@ const userSchema = mongoose.Schema({
     unique:true ,
     required:false,
    },
-
+   referralCode: {
+      type: String,
+      unique: true,
+      required: true
+     },
+     referredBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Users',
+      required: false
+     },
+     referralCount: {
+      type: Number,
+      default: 0
+     },
    isBlocked:{
     type:Boolean,
     default:false

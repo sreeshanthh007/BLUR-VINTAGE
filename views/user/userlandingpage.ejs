@@ -132,8 +132,6 @@
                 </div>
             </div>
         </div>
-
-        
         <main class="container-fluid px-2 px-sm-3 px-md-4 py-3 py-md-5">
         
             <!-- Products Grid -->
@@ -198,7 +196,7 @@
                                     </a>
                                 </li>
                             <% } %>
-        
+            
                             <% for (let i = 1; i <= totalPages; i++) { %>
                                 <li class="page-item <%= currentPage === i ? 'active' : '' %>">
                                     <a class="page-link" href="?page=<%= i %>&sort=<%= currentSort %><%= search ? `&search=${search}` : '' %>">
@@ -206,7 +204,7 @@
                                     </a>
                                 </li>
                             <% } %>
-        
+            
                             <% if (hasNextPage) { %>
                                 <li class="page-item">
                                     <a class="page-link" href="?page=<%= nextPage %>&sort=<%= currentSort %><%= search ? `&search=${search}` : '' %>">

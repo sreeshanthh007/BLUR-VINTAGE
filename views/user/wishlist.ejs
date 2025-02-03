@@ -63,6 +63,9 @@
             display: block;
             margin-bottom: 10px;
         }
+
+
+        
         .social-icons {
             display: flex;
             gap: 15px;
@@ -85,8 +88,8 @@
             <h2 class="h3">FAVOURITES</h2>
             <span><%= wishlistItems.length %> item(s)</span>
         </div>
-    
-        <div class="row g-4">
+        <div class="row g-4 mt-2">
+           
             <% wishlistItems.forEach(item => { %>
                 <div class="col-12 col-md-6 col-lg-4" data-product-id="<'%=item.product._id%'>">
                     <div class="card product-card">
@@ -124,11 +127,48 @@
                         <% } %>
                         
                         <p class="card-text text-muted">Color: <%= item.variant.colorName %></p>
+
+                        <button 
+                        class="btn btn-primary w-100 mt-2"
+                        onclick="addToCart('<%=item.product._id%>', '<%=item.variant._id%>')"
+                       >
+                        Add to Cart
+                    </button>
                     </div>
                     
                     </div>
                 </div>
             <% }); %>
+        </div>
+        <div class="modal fade" id="variantModal" tabindex="-1" aria-labelledby="variantModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="variantModalLabel">Select Product Variant</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="variant-options">
+                            <div class="mb-3">
+                                <label class="form-label">Color:</label>
+                                <div class="color-options" id="colorOptions"></div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Size:</label>
+                                <div class="size-options" id="sizeOptions"></div>
+                            </div>
+                            <div class="selected-variant-details mt-3">
+                                <p class="price mb-2">Price: <span id="selectedPrice">--</span></p>
+                                <p class="stock mb-2">Stock: <span id="selectedStock">--</span></p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary" id="addToCartBtn" disabled>Add to Cart</button>
+                    </div>
+                </div>
+            </div>
         </div>
     </main>
 
@@ -183,4 +223,203 @@
             }
         })
     }
+
+
+    async function addToCart(productId, variantId) {
+    try {
+        // Show variant selection modal
+        const modal = new bootstrap.Modal(document.getElementById('variantModal'));
+        
+        // Fetch product variants
+        const response = await fetch(`/user/wishlist-products/${productId}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to fetch product details');
+        }
+
+        const productData = await response.json();
+        
+        if (!productData.success) {
+            throw new Error(productData.message);
+        }
+
+        // Populate modal with variants
+        populateVariantModal(productData.data, productId);
+        modal.show();
+
+    } catch (error) {
+        console.error('Error:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: error.message || 'Failed to load product details'
+        });
+    }
+}
+
+function populateVariantModal(product, productId) {
+    const colorOptions = document.getElementById('colorOptions');
+   const sizeOptions = document.getElementById('sizeOptions');
+   const variantDetails = document.querySelector('.selected-variant-details');
+   
+   colorOptions.innerHTML = `
+       <div class="d-flex flex-wrap gap-3 mb-3">
+           ${product.variants.map(variant => `
+               <div class="variant-option">
+                   <input class="btn-check" type="radio" name="color" 
+                       id="color_${variant.color}" value="${variant.color}" 
+                       data-colorname="${variant.colorName}" 
+                       data-size="${variant.size}">
+                   <label class="btn btn-outline-secondary px-4 py-2" for="color_${variant.color}">
+                       ${variant.colorName}
+                   </label>
+               </div>
+           `).join('')}
+       </div>
+   `;
+
+   sizeOptions.style.display = 'none';
+   variantDetails.style.display = 'none';
+
+   document.querySelectorAll('input[name="color"]').forEach(input => {
+       input.addEventListener('change', () => {
+           const variant = product.variants.find(v => v.color === input.value);
+           if (variant) {
+               sizeOptions.style.display = 'block';
+               sizeOptions.innerHTML = `<p class="mb-2">Size: ${variant.size}</p>`;
+
+               variantDetails.style.display = 'block';
+               let priceDisplay = variant.price;
+               
+               // Check for product/category offers
+               if (product.productOffer || (product.category && product.category.categoryOffer)) {
+                   const now = new Date();
+                   let bestDiscount = 0;
+                   
+                   if (product.productOffer && 
+                       now >= new Date(product.productOffer.startDate) && 
+                       now <= new Date(product.productOffer.expiryDate)) {
+                       bestDiscount = Math.max(bestDiscount, product.productOffer.discount);
+                   }
+
+                   if (product.category?.categoryOffer &&
+                       now >= new Date(product.category.categoryOffer.startDate) &&
+                       now <= new Date(product.category.categoryOffer.expiryDate)) {
+                       bestDiscount = Math.max(bestDiscount, product.category.categoryOffer.discount);
+                   }
+
+                   if (bestDiscount > 0) {
+                       const discountedPrice = variant.price - (variant.price * (bestDiscount / 100));
+                       priceDisplay = `
+                           <span class="text-decoration-line-through text-muted">₹${variant.price}</span>
+                           <span class="text-danger ms-2">₹${Math.round(discountedPrice)}</span>
+                           <span class="badge bg-danger ms-2">${bestDiscount}% OFF</span>
+                       `;
+                   }
+               }
+
+               variantDetails.innerHTML = `
+                   <div class="card mt-4 p-3">
+                       <div class="row">
+                           <div class="col-6">
+                               <p class="mb-1 text-muted">Price:</p>
+                               <h4 class="mb-0">${priceDisplay}</h4>
+                           </div>
+                           <div class="col-6">
+                               <p class="mb-1 text-muted">Available Stock:</p>
+                               <h4 class="mb-0">${variant.stock}</h4>
+                           </div>
+                       </div>
+                   </div>
+               `;
+
+               document.getElementById('addToCartBtn').disabled = variant.stock <= 0;
+           }
+       });
+   });
+    const addToCartBtn = document.getElementById('addToCartBtn');
+    addToCartBtn.onclick = () => handleAddToCart(product, productId);
+    
+   
+    
+}
+
+
+async function handleAddToCart(product, productId) {
+    const selectedColor = document.querySelector('input[name="color"]:checked');
+    const selectedSize = document.querySelector('input[name="size"]:checked');
+
+    if (!selectedColor) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Please select both color and size'
+        });
+        return;
+    }
+
+    const variant = product.variants.find(v => v.color === selectedColor.value);
+
+        try {
+            const response = await fetch('/user/wishlist-to-cart', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    productId: productId,
+                    color: selectedColor.value,
+                    colorName: selectedColor.dataset.colorname,
+                    size: variant.size,
+                    quantity: 1
+                })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                bootstrap.Modal.getInstance(document.getElementById('variantModal')).hide();
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Added to cart successfully!',
+                    timer: 1500
+                }).then(() => {
+                    // Optionally refresh the cart counter if you have one
+                    updateCartCount();
+                });
+            } else {
+                throw new Error(result.message);
+            }
+        } catch (error) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: error.message || 'Failed to add to cart'
+            });
+        }
+    };
+
+function updateSelectedVariant(product) {
+    const selectedColor = document.querySelector('input[name="color"]:checked')?.value;
+    const selectedSize = document.querySelector('input[name="size"]:checked')?.value;
+    
+    if (selectedColor && selectedSize) {
+        const variant = product.variants.find(v => 
+            v.color === selectedColor && 
+            v.size === selectedSize
+        );
+        
+        if (variant) {
+            document.getElementById('selectedPrice').textContent = `₹${variant.price}`;
+            document.getElementById('selectedStock').textContent = variant.stock;
+            document.getElementById('addToCartBtn').disabled = variant.stock <= 0;
+        }
+    }
+}
+
+
 </script>

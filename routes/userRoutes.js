@@ -1,6 +1,7 @@
 
 const express = require('express');
 const  router = express.Router();
+const invoiceController = require('../controllers/user/invoiceController')
 const userController = require('../controllers/user/userController');
 const productController = require('../controllers/user/productdetails');
 const userDetailscController = require("../controllers/user/userDetails")
@@ -8,7 +9,6 @@ const cartDetailsController = require("../controllers/user/cartController");
 const orderDetailsController = require("../controllers/user/placeOrderController");
 const wishlistController = require('../controllers/user/wishlilstController')
 const {userAuth,adminAuth} = require('../middlewares/auth');
-const { route } = require('./adminRoutes');
 
 router.get('/register',userController.loadRegister);
 
@@ -46,7 +46,7 @@ router.post("/manage",userDetailscController.updateDetails)
 // cart page
 router.get("/cart",userAuth,cartDetailsController.getCart);
 
-router.get("/cart/count",cartDetailsController.updateCartCounter)
+router.get("/cart/count",userAuth,cartDetailsController.updateCartCounter)
 // add to cart
 router.post('/cart/add',cartDetailsController.addtoCart)
 // remove products from cart
@@ -54,7 +54,7 @@ router.delete('/cart/remove/:id/:itemId',cartDetailsController.removeProducts);
 // update quantity 
 router.put("/cart/update-quantity",cartDetailsController.updateQuantity);
 
-router.get('/wishlist',wishlistController.getWishlist);
+router.get('/wishlist',userAuth,wishlistController.getWishlist);
 
 router.post('/wishlist/add',wishlistController.addToWishlist);
 // for checking the wishlist status
@@ -63,7 +63,11 @@ router.get("/wishlist/check-status",wishlistController.wishlistStatus)
 // for counting items in the wishlist
 router.get('/wishlist/count',wishlistController.wishlistCounter)
 // removing product from wishlist
-router.delete("/wishlist/remove-product/:productId",wishlistController.removeProduct)
+router.delete("/wishlist/remove-product/:productId",wishlistController.removeProduct);
+
+router.get('/wishlist-products/:productId',userAuth,wishlistController.getProductDetails);
+
+router.post('/wishlist-to-cart',wishlistController.wishlistToCart)
 // checkout page
 router.get("/checkout",userAuth,cartDetailsController.checkout)
 // manage address page
@@ -97,19 +101,25 @@ router.put("/editAddress/:id",userDetailscController.updateAddress)
 router.get("/search",userController.userSearch);
 
 // thankYou page
-router.get("/thankYou",userAuth,userController.thankYou)
+router.get("/thankYou",userAuth,userController.thankYou);
+
+
+// retry payment;
+router.post('/retry-payment/:orderId',orderDetailsController.retryPayment);
+router.post('/retry-payment-verification',orderDetailsController.retryPaymentVerification)
 
 router.post('/order/place',orderDetailsController.placeOrder);
 router.post('/applyCoupon',orderDetailsController.applyCoupon);
 
 router.post("/order/verify-payment",orderDetailsController.verifyPayment)
+router.post('/order/payment-failed',orderDetailsController.verifyPaymentFailure)
 
 
 
 
 router.get("/managepassword",userController.managePassword)
 router.get("/email-verification",userController.emailverification)
-router.post("/update-password",userController.updatePassword)
+router.patch("/update-password",userController.updatePassword)
 router.post("/email-verification",userController.otpForPassword);
 
 router.get("/check-email",userController.checkYourGmail);
@@ -121,5 +131,12 @@ router.get("/order-details",orderDetailsController.orderDetails);
 
 router.post("/cancel-order-item/:orderId/:itemId",orderDetailsController.cancelOrder);
 router.post("/cancel-all/:orderId",orderDetailsController.cancelAllOrder);
+
+
+
+// invoice
+
+router.get('/download-invoice/:orderId',userAuth,invoiceController.downloadInvoice)
+
 
 module.exports = router;

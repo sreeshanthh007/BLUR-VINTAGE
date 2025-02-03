@@ -110,75 +110,48 @@
                 <h4 class="btn btn-primary">manage orders</h4>
             </a>
             </div>
-        <!-- Filters -->
-        <!-- <div class="filter-section shadow-sm">
-            <div class="row align-items-center">
-                <div class="col-md-3">
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="bi bi-funnel"></i></span>
-                        <select class="form-select">
-                            <option>Filter By</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <select class="form-select">
-                        <option>14 Feb 2019</option>
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <select class="form-select">
-                        <option>Order Type</option>
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <select class="form-select">
-                        <option>Order Status</option>
-                    </select>
-                </div>
-            </div>
-        </div> -->
+        
 
         <!-- Order List -->
         <h2 class="mb-4">Ordered list</h2>
         <div class="table-responsive shadow-sm">
             <table class="table table-hover">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>NAME</th>
-                        <th>ADDRESS</th>
-                        <th>DATE</th>
-                        <th>ITEM</th>
-                        <th>STATUS</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <% orders.forEach(order => { %>
+                    <thead>
                         <tr>
-                            <td><%= order.id %></td>
-                            <td><%= order.name %></td>
-                            <td><%= order.address %></td>
-                            <td><%= order.date %></td>
-                            <td><%= order.item %></td>
-                            <td>₹<%= order.amount %></td>
-                            <td>
-                                <span class="status-badge status-<%= order.status.toLowerCase() %>">
-                                    <%= order.status %>
-                                </span>
-                            </td>
-                            <td>
-                                <% if (order.status.toLowerCase() !== 'cancelled') { %>
-                                    <div class="dropdown">
-                                        <a href="#" class="text-decoration-none text-dark" id="dropdownMenu<%= order.id %>" data-bs-toggle="dropdown" aria-expanded="false">
-                                            <i class="bi bi-three-dots-vertical"></i>
-                                        </a>
-                                        <% if (order.status.toLowerCase() !== 'cancelled') { %>
+                            <th>ID</th>
+                            <th>NAME</th>
+                            <th>ADDRESS</th>
+                            <th>DATE</th>
+                            <th>ITEM</th>
+                            <th>AMT</th>
+                            <th>STATUS</th>
+                            
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% orders.forEach(order => { %>
+                            <tr>
+                                <td><%= order.id %></td>
+                                <td><%= order.name %></td>
+                                <td><%= order.address %></td>
+                                <td><%= order.date %></td>
+                                <td><%= order.item %></td>
+                                <td>₹<%= order.amount%></td>
+                                <td>
+                                    <span class="status-badge status-<%= order.status.toLowerCase() %>">
+                                        <%= order.status %>
+                                    </span>
+                                </td>
+                                <td>
+                                    <% if (order.status.toLowerCase() !== 'cancelled') { %>
+                                        <div class="dropdown">
+                                            <a href="#" class="text-decoration-none text-dark" id="dropdownMenu<%= order.id %>" data-bs-toggle="dropdown" aria-expanded="false">
+                                                <i class="bi bi-three-dots-vertical"></i>
+                                            </a>
                                             <div class="dropdown">
                                                 <ul class="dropdown-menu" aria-labelledby="dropdownMenu<%= order.id %>">
                                                     <li><a class="dropdown-item" href="/admin/order-details?id=<%= order.id %>">See Details</a></li>
-                                                    <% if (order.status.toLowerCase() !== 'delivered') { %>
+                                                    <% if (order.status.toLowerCase() !== 'delivered' && order.status.toLowerCase() !== 'failed') { %>
                                                         <li><hr class="dropdown-divider"></li>
                                                         <li><a class="dropdown-item status-update" data-order-id="<%= order.id %>" data-status="Processing" href="#">Processing</a></li>
                                                         <li><a class="dropdown-item status-update" data-order-id="<%= order.id %>" data-status="Delivered" href="#">Delivered</a></li>
@@ -186,17 +159,14 @@
                                                     <% } %>
                                                 </ul>
                                             </div>
-                                        <% } %>
-                                        
-                                    </div>
-                                <% } %>
-                            </td>
-                               
-                        </tr>
-                    <% }); %>   
-                </tbody>
-            </table>
-        </div>
+                                        </div>
+                                    <% } %>
+                                </td>
+                            </tr>
+                        <% }); %>   
+                    </tbody>
+                </table>
+            </div>
 
         <!-- Pagination -->
         <nav class="mt-4">

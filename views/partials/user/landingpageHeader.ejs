@@ -98,16 +98,21 @@
                     <!-- Right Section -->
                     <div class="col-lg-3 col-md-4">
                         <div class="d-flex align-items-center justify-content-end">
-                            <form class="d-flex me-3 position-relative">
-                                <input id="searchInput" class="form-control form-control-sm" type="text" placeholder="Search..." oninput="searchProducts()" aria-label="Search">
-                                <button class="btn btn-outline-dark btn-md" type="submit">
-                                    <i class="bi bi-search"></i>
-                                </button>
-                                <!-- Add this div for search results -->
-                                <div id="searchResults" class="position-absolute w-100 bg-white shadow-sm rounded-bottom" 
-                                    style="top: 100%; left: 0; z-index: 1000; display: none; max-height: 400px; overflow-y: auto;">
+                            <form id="searchForm" class="d-flex" role="search" method="GET">
+                                <div class="position-relative w-100">
+                                    <input 
+                                        class="form-control me-2" 
+                                        type="search" 
+                                        placeholder="Search products..." 
+                                        aria-label="Search"
+                                        name="search"
+                                        id="searchInput"
+                                        value="<%= locals.search || '' %>"
+                                    >
+                                    <div id="searchSuggestions" class="position-absolute w-100 bg-white shadow-sm d-none" style="top: 100%; z-index: 1000;"></div>
                                 </div>
-                            </form> 
+                                <button class="btn btn-outline-dark" type="submit">Search</button>
+                            </form>
                             <% if (locals.user) { %>
                               
                                 <a class="bi bi-person me-3" style="font-size: 1.5rem; color: black;" href="/user/manage"></a>
@@ -162,311 +167,408 @@
         </header>
         <!-- header ends -->
 
-
+        <!-- <script src="/js/dynamic-sorting.js"></script> -->
         <script>
 
 
-document.addEventListener('DOMContentLoaded', function() {
-    const searchInput = document.getElementById('searchInput');
-    const searchResults = document.getElementById('searchResults');
-    const sortSelect = document.getElementById('sortSelect');
-    const searchButton = document.querySelector('.btn-outline-dark');
-    let debounceTimer;
 
-   
-        updateWishlistCounter()
-       
-        updateCartCounter()
-   
-   function getCurrentCategory() {
+document.addEventListener('DOMContentLoaded', function() {
+    // const sortSelect = document.getElementById('sortSelect');
+    const productsGrid = document.querySelector('.row.g-2.g-sm-3.g-md-4');
+    const paginationContainer = document.querySelector('.pagination-container');
+    const searchInput = document.getElementById("searchInput");
+    const searchForm = document.getElementById('searchForm');
+    const searchSuggestions = document.getElementById('searchSuggestions');
+    let currentPath = window.location.pathname;
+
+
+
+    function getCategory() {
+        switch(currentPath) {
+            case '/user/men':
+                return 'men';
+            case '/user/women':
+                return 'women';
+            case '/user/kids':
+                return 'kids';
+            default:
+                return '';
+        }
+    }
+
+
+    searchForm.action = currentPath;
+
+
+
+    function getCurrentPageContext() {
         const path = window.location.pathname;
         if (path.includes('/men')) return 'men';
         if (path.includes('/women')) return 'women';
         if (path.includes('/kids')) return 'kids';
+        if (path.includes('/shop')) return 'shop';
         return '';
     }
 
-    function escapeRegExp(string) {
-        return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  
+
+
+    function formatPrice(price) {
+        return `Rs/-${price.toLocaleString()}`;
+    } 
+
+
+
+    function createSearchSuggestionItem(product) {
+        const displayPrice = product.discount > 0 
+            ? `<span class="search-result-price">
+                <span class="text-decoration-line-through text-muted">${formatPrice(product.originalPrice)}</span>
+                <span class="ms-2">${formatPrice(product.finalPrice)}</span>
+               </span>`
+            : `<span class="search-result-price">${formatPrice(product.originalPrice)}</span>`;
+
+        return `
+            <div class="search-result-item" data-product-id="${product._id}">
+                <img src="${product.variants[0]?.productImage?.[0] || '/images/default-product.jpg'}" 
+                     alt="${escapeHtml(product.productName)}" 
+                     class="search-result-image">
+                <div class="search-result-info">
+                    <div class="search-result-name">${escapeHtml(product.productName)}</div>
+                    ${displayPrice}
+                    ${product.discount > 0 
+                        ? `<span class="badge bg-danger ms-2">${product.discount}% OFF</span>` 
+                        : ''}
+                </div>
+            </div>`;
     }
 
-    function highlightMatch(text, query) {
-        if (!query) return text;
-        const regex = new RegExp(`(${escapeRegExp(query)})`, 'gi');
-        return text.replace(regex, '<strong>$1</strong>');
+
+
+    async function handleSearchSuggestions(query) {
+    if (!query.trim() || query.length < 2) {
+        searchSuggestions.classList.add('d-none');
+        return;
     }
 
-    async function searchProducts(query) {
-        try {
-            const currentPath = window.location.pathname;
-            const sortValue = sortSelect ? sortSelect.value : 'default';
-            const searchParams = new URLSearchParams();
+    try {
+        const category = getCategory();
+        const response = await fetch(`/user/search?q=${encodeURIComponent(query)}&suggest=true&category=${category}`);
+        const data = await response.json();
+
+        if (data.suggestions && data.suggestions.length > 0) {
+            const suggestionsHTML = data.suggestions.map(product => `
+                <div class="search-result-item" data-product-id="${product._id}">
+                    <img src="${product.variants[0]?.productImage?.[0] || '/images/default-product.jpg'}" 
+                         alt="${product.productName}" 
+                         class="search-result-image">
+                    <div class="search-result-info">
+                        <div class="search-result-name">${product.productName}</div>
+                        <div class="search-result-price">Rs/-${product.variants[0]?.price || 0}</div>
+                    </div>
+                </div>
+            `).join('');
             
-            if (query.trim()) {
-                searchParams.set('search', query);
-            }
-            
-            if (sortValue !== 'default') {
-                searchParams.set('sort', sortValue);
-            }
-            
-            // Always set strict filtering except for shop page
-            if (currentPath.includes('/shop')) {
-                searchParams.set('page_context', 'shop');
-                searchParams.set('strict_filter', 'false');
-            } else {
-                const category = getCurrentCategory();
-                if (category) {
-                    searchParams.set('category', category);
-                    searchParams.set('strict_filter', 'true');
-                }
-            }
-            
-            window.location.href = `/user/search?${searchParams.toString()}`;
-        } catch (error) {
-            console.error('Search error:', error);
-        }
-    }
+            searchSuggestions.innerHTML = suggestionsHTML;
+            searchSuggestions.classList.remove('d-none');
 
-    searchInput.addEventListener('input', (e) => {
-        const query = e.target.value.trim();
-        const currentCategory = getCurrentCategory();
-        
-        if (query.length >= 2) {
-            clearTimeout(debounceTimer);
-            debounceTimer = setTimeout(async () => {
-                try {
-                    const searchParams = new URLSearchParams({
-                        search: query,
-                        suggest: 'true',
-                        strict_filter: currentCategory ? 'true' : 'false'
-                    });
-
-                    if (currentCategory) {
-                        searchParams.set('category', currentCategory);
-                    }
-
-                    const response = await fetch(`/user/search?${searchParams.toString()}`);
-                    const data = await response.json();
-
-                    if (data.products && data.products.length > 0) {
-                        // Filter products based on category if we're on a category page
-                        const filteredProducts = currentCategory 
-                            ? data.products.filter(product => 
-                                product.category && 
-                                product.category.name.toLowerCase() === currentCategory.toLowerCase())
-                            : data.products;
-
-                        if (filteredProducts.length > 0) {
-                            const resultsHtml = filteredProducts.map(product => `
-                                <div class="search-result-item" onclick="window.location.href='/user/buy?id=${product._id}'">
-                                    <img src="${product.variants[0]?.productImage[0] || '/images/default-product.jpg'}" 
-                                        alt="${product.productName}">
-                                    <div class="search-result-info">
-                                        <div class="search-result-name">
-                                            ${highlightMatch(product.productName, query)}
-                                        </div>
-                                        <div class="search-result-price">
-                                            Rs/-${product.variants[0]?.price || 'Price not available'}
-                                        </div>
-                                    </div>
-                                </div>
-                            `).join('');
-
-                            searchResults.innerHTML = resultsHtml;
-                            searchResults.style.display = 'block';
-                        } else {
-                            searchResults.innerHTML = '<div class="p-3 text-center text-muted">No products found in this category</div>';
-                            searchResults.style.display = 'block';
-                        }
-                    } else {
-                        searchResults.innerHTML = '<div class="p-3 text-center text-muted">No products found</div>';
-                        searchResults.style.display = 'block';
-                    }
-                } catch (error) {
-                    console.error('Suggestion error:', error);
-                }
-            }, 300);
+            // Add click handlers for suggestions
+            document.querySelectorAll('.search-result-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    window.location.href = `/user/buy?id=${item.dataset.productId}`;
+                });
+            });
         } else {
-            searchResults.style.display = 'none';
-        }   
+            searchSuggestions.innerHTML = '<div class="p-3 text-muted">No products found</div>';
+            searchSuggestions.classList.remove('d-none');
+        }
+    } catch (error) {
+        console.error('Error fetching search suggestions:', error);
+    }
+}
+
+// Replace your existing performSearch function with this:
+async function performSearch(query, sort = 'default', page = 1) {
+    try {
+        const currentPath = window.location.pathname;
+        const url = new URL(window.location.href);
+        
+        // Set search parameters
+        url.searchParams.set('search', query);
+        if (sort !== 'default') {
+            url.searchParams.set('sort', sort);
+        }
+        url.searchParams.set('page', page);
+
+        // Make the fetch request to the current page's endpoint
+        const response = await fetch(`${currentPath}?${url.searchParams.toString()}`, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+
+        const data = await response.json();
+        
+        if (data.products && data.products.length > 0) {
+            // Update the products grid
+            const productsHTML = data.products
+                .map(product => `
+                    <div class="col-6 col-sm-4 col-lg-3">
+                        <div class="product-card">
+                            <div class="product-image-container">
+                                <button class="heart-btn" data-product-id="${product._id}">
+                                    <i class="fa-regular fa-heart"></i>
+                                </button>
+                                <a href="/user/buy?id=${product._id}" class="product-link">
+                                    <img src="${product.variants[0]?.productImage?.[0] || '/images/default-product.jpg'}" 
+                                         alt="${product.productName}" 
+                                         class="img-fluid">
+                                </a>
+                            </div>
+                            <h3 class="product-title">${product.productName}</h3>
+                            <div class="price-section">
+                                ${product.discount > 0 
+                                    ? `<p class="card-text mb-0">
+                                        <span class="original-price text-muted text-decoration-line-through">
+                                            Rs/-${product.originalPrice}
+                                        </span>
+                                        <span class="discounted-price ms-2">
+                                            Rs/-${product.finalPrice}
+                                        </span>
+                                       </p>
+                                       <div class="offer-badge">
+                                           <span class="badge bg-danger">
+                                               ${product.discount}% OFF - ${product.offerName}
+                                           </span>
+                                       </div>`
+                                    : `<p class="product-price" style="font-weight: bolder;">
+                                        Rs/-${product.originalPrice}
+                                       </p>`
+                                }
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            
+            // Update the products grid
+            const productsGrid = document.querySelector('.row.g-2.g-sm-3.g-md-4');
+            if (productsGrid) {
+                productsGrid.innerHTML = productsHTML;
+            }
+
+            // Update pagination if it exists
+            const paginationContainer = document.querySelector('.pagination-container');
+            if (paginationContainer && data.totalPages > 1) {
+                paginationContainer.innerHTML = createPagination(data);
+                attachPaginationListeners();
+            }
+
+            // Update URL without page reload
+            window.history.pushState({}, '', `${currentPath}?${url.searchParams.toString()}`);
+
+        } else {
+            // Show no results message
+            const productsGrid = document.querySelector('.row.g-2.g-sm-3.g-md-4');
+            if (productsGrid) {
+                productsGrid.innerHTML = `
+                    <div class="col-12 text-center py-5">
+                        <h3>No products found</h3>
+                        <p>Try different search terms or browse our categories</p>
+                    </div>`;
+            }
+        }
+
+        // Reattach event listeners
+        updateWishlistCounter();
+        updateCartCounter();
+
+    } catch (error) {
+        console.error('Error performing search:', error);
+    }
+}
+
+// Update your search input event listeners:
+if (searchInput) {
+    let searchTimeout;
+    
+    // Real-time search suggestions
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        const query = this.value;
+
+        searchTimeout = setTimeout(() => {
+            handleSearchSuggestions(query);
+        }, 300); // Debounce time
     });
 
     // Handle form submission
-    searchInput.closest('form').addEventListener('submit', (e) => {
+    searchForm.addEventListener('submit', function(e) {
         e.preventDefault();
         const query = searchInput.value.trim();
-        searchProducts(query);
-    });
-
-    searchButton.addEventListener('click', (e) => {
-        e.preventDefault();
-        const query = searchInput.value.trim();
-        searchProducts(query);
-    })
-   
-    document.addEventListener('click', (e) => {
-        if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
-            searchResults.style.display = 'none';
+        if (query) {
+            searchSuggestions.classList.add('d-none');
+            performSearch(query, sortSelect.value);
         }
     });
 
-
-    if (sortSelect) {
-        sortSelect.addEventListener('change', (e) => {
-            e.preventDefault(); 
-            const currentPath = window.location.pathname;
-            const sortValue = sortSelect.value;
-            const searchParams = new URLSearchParams(window.location.search);
-            
-            // Update sort parameter
-            if (sortValue !== 'default') {
-                searchParams.set('sort', sortValue);
-            } else {
-                searchParams.delete('sort');
-            }
-
-            // Keep the existing search query if present
-            const searchQuery = document.getElementById('searchInput')?.value;
-            if (searchQuery) {
-                searchParams.set('search', searchQuery);
-            }
-
-            // Make AJAX request instead of full page reload
-            fetch(`${currentPath}?${searchParams.toString()}`, {
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                // Update URL without page reload
-                window.history.pushState({}, '', `${currentPath}?${searchParams.toString()}`);
-                
-                // Update the product grid
-                updateProductGrid(data.products);
-                
-                
-                updatePagination(data);
-            })
-            .catch(error => {
-                console.error('Error updating products:', error);
-            });
-        });
-    }
-
-// Function to update product grid
-function updateProductGrid(products) {
-    const productContainer = document.querySelector('.row.g-2');
-    if (!productContainer) return;
-
-  
-    productContainer.className = 'row g-2 g-sm-3 g-md-4';
-    
- 
-    productContainer.innerHTML = '';
-
-    
-    products.forEach(product => {
-        // Only add products with in-stock variants
-        const inStockVariants = product.variants?.filter(v => v.stock > 0) || [];
-        if (inStockVariants.length > 0) {
-            const productHtml = `
-                <div class="col-6 col-sm-4 col-lg-3">
-                    <div class="product-card">
-                        <div class="product-image-container">
-                            <button class="heart-btn" data-product-id="${product._id}">
-                                <i class="fa-regular fa-heart"></i>
-                            </button>
-                            <a href="/user/buy?id=${product._id}" class="product-link">
-                                ${inStockVariants[0].productImage && inStockVariants[0].productImage.length > 0 
-                                    ? `<img src="${inStockVariants[0].productImage[0]}" 
-                                           alt="${product.productName}" 
-                                           class="img-fluid">`
-                                    : `<img src="/images/default-product.jpg" 
-                                           alt="No image available" 
-                                           class="img-fluid">`
-                                }
-                            </a>
-                        </div>
-                        <h3 class="product-title">${product.productName}</h3>
-                        <div class="price-section">
-                            ${product.discount > 0 
-                                ? `<p class="card-text mb-0">
-                                    <span class="original-price text-muted text-decoration-line-through">
-                                        Rs/-${product.originalPrice}
-                                    </span>
-                                    <span class="discounted-price ms-2">
-                                        Rs/-${product.finalPrice}
-                                    </span>
-                                   </p>
-                                   <div class="offer-badge">
-                                       <span class="badge bg-danger">
-                                           ${product.discount}% OFF - ${product.offerName}
-                                       </span>
-                                   </div>`
-                                : `<p class="product-price" style="font-weight: bolder;">
-                                    Rs/-${product.originalPrice}
-                                   </p>`
-                            }
-                        </div>
-                    </div>
-                </div>
-            `;
-            
-            productContainer.insertAdjacentHTML('beforeend', productHtml);
+    // Close suggestions when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!searchInput.contains(e.target) && !searchSuggestions.contains(e.target)) {
+            searchSuggestions.classList.add('d-none');
         }
     });
-
 }
 
 
+        // searchInput.addEventListener('keypress', function(e) {
+        //     if (e.key === 'Enter') {
+        //         e.preventDefault();
+        //         const query = this.value.trim();
+        //         if (query) {
+        //             searchResults.style.display = 'none';
+        //             performSearch(query);
+        //         }
+        //     }
+        // });
 
 
-function updatePagination(data) {
-        const paginationContainer = document.querySelector('.pagination-container');
-        if (!paginationContainer) return;
-
-        const { currentPage, totalPages, hasNextPage, hasPrevPage } = data;
+    updateWishlistCounter();
+     updateCartCounter()
+    
+    
+    function updateURLParameter(url, param, value) {
+        const regex = new RegExp(`([?&])${param}=.*?(&|$)`, 'i');
+        const separator = url.indexOf('?') !== -1 ? '&' : '?';
         
-        const paginationHtml = `
-            <nav aria-label="Product navigation">
-                <ul class="pagination justify-content-center">
-                    <li class="page-item ${!hasPrevPage ? 'disabled' : ''}">
-                        <a class="page-link" href="?page=1${data.currentSort ? `&sort=${data.currentSort}` : ''}">First</a>
-                    </li>
-                    <li class="page-item ${!hasPrevPage ? 'disabled' : ''}">
-                        <a class="page-link" href="?page=${currentPage - 1}${data.currentSort ? `&sort=${data.currentSort}` : ''}">Previous</a>
-                    </li>
+        if (url.match(regex)) {
+            return url.replace(regex, `$1${param}=${value}$2`);
+        }
+        return `${url}${separator}${param}=${value}`;
+    }
 
-                    ${Array.from({length: Math.min(totalPages, 5)}, (_, i) => {
-                        const pageNum = Math.max(1, Math.min(totalPages, currentPage - 2 + i));
-                        return `
-                            <li class="page-item ${currentPage === pageNum ? 'active' : ''}">
-                                <a class="page-link" href="?page=${pageNum}${data.currentSort ? `&sort=${data.currentSort}` : ''}">${pageNum}</a>
-                            </li>
-                        `;
-                    }).join('')}
 
-                    <li class="page-item ${!hasNextPage ? 'disabled' : ''}">
-                        <a class="page-link" href="?page=${currentPage + 1}${data.currentSort ? `&sort=${data.currentSort}` : ''}">Next</a>
-                    </li>
-                    <li class="page-item ${!hasNextPage ? 'disabled' : ''}">
-                        <a class="page-link" href="?page=${totalPages}${data.currentSort ? `&sort=${data.currentSort}` : ''}">Last</a>
-                    </li>
+    function createProductCard(product) {
+        return `
+            <div class="col-6 col-sm-4 col-lg-3">
+                <div class="product-card">
+                    <div class="product-image-container">
+                        <button class="heart-btn" data-product-id="${product._id}">
+                            <i class="fa-regular fa-heart"></i>
+                        </button>
+                        <a href="/user/buy?id=${product._id}" class="product-link">
+                            <img src="${product.variants[0]?.productImage?.[0] || '/images/default-product.jpg'}" 
+                                 alt="${product.productName}" 
+                                 class="img-fluid">
+                        </a>
+                    </div>
+                    <h3 class="product-title">${product.productName}</h3>
+                    <div class="price-section">
+                        ${product.discount > 0 
+                            ? `<p class="card-text mb-0">
+                                <span class="original-price text-muted text-decoration-line-through">
+                                    Rs/-${product.originalPrice}
+                                </span>
+                                <span class="discounted-price ms-2">
+                                    Rs/-${product.finalPrice}
+                                </span>
+                               </p>
+                               <div class="offer-badge">
+                                   <span class="badge bg-danger">
+                                       ${product.discount}% OFF - ${product.offerName}
+                                   </span>
+                               </div>`
+                            : `<p class="product-price" style="font-weight: bolder;">
+                                Rs/-${product.originalPrice}
+                               </p>`
+                        }
+                    </div>
+                </div>
+            </div>`;
+    }
+
+
+    function createPagination(data) {
+        if (!data.totalPages || data.totalPages <= 1) return '';
+        
+        let html = `
+            <nav aria-label="Product pagination">
+                <ul class="pagination">`;
+
+        if (data.hasPrevPage) {
+            html += `
+                <li class="page-item">
+                    <a class="page-link" href="#" data-page="${data.prevPage}">Previous</a>
+                </li>`;
+        }
+
+        for (let i = 1; i <= data.totalPages; i++) {
+            html += `
+                <li class="page-item ${i === data.currentPage ? 'active' : ''}">
+                    <a class="page-link" href="#" data-page="${i}">${i}</a>
+                </li>`;
+        }
+
+        if (data.hasNextPage) {
+            html += `
+                <li class="page-item">
+                    <a class="page-link" href="#" data-page="${data.nextPage}">Next</a>
+                </li>`;
+        }
+
+        html += `
                 </ul>
-            </nav>
+            </nav>`;
+        return html;
+    }
 
-            <div class="text-center mt-3">
-                <small class="text-muted">
-                    Page ${currentPage} of ${totalPages}
-                </small>
-            </div>
-        `;
+   
+    async function updateProducts(sort, page = 1) {
+        try {
+            const currentUrl = new URL(window.location.href);
+            const updatedUrl = updateURLParameter(currentUrl.toString(), 'sort', sort);
+            const finalUrl = updateURLParameter(updatedUrl, 'page', page);
+            
+            // Update URL without reload
+            window.history.pushState({}, '', finalUrl);
 
-        paginationContainer.innerHTML = paginationHtml;
+            const response = await fetch(`${finalUrl}&xhr=true`, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+
+            const data = await response.json();
+            
+            // Update products grid
+            let productsHTML = '';
+            data.products.forEach(product => {
+                productsHTML += createProductCard(product);
+            });
+            productsGrid.innerHTML = productsHTML;
+
+            // Update pagination
+            if (paginationContainer) {
+                paginationContainer.innerHTML = createPagination(data);
+                attachPaginationListeners();
+            }
+
+            // Reattach event listeners for heart buttons
+            
+
+        } catch (error) {
+            console.error('Error updating products:', error);
+        }
+    }
+
+    const sortSelect = document.getElementById('sortSelect');
+    if (sortSelect) {
+        sortSelect.addEventListener('change', function() {
+            const currentQuery = new URL(window.location.href).searchParams.get('search') || '';
+            performSearch(currentQuery, this.value);
+        });
     }
 });
+
+
 
 
 
@@ -515,16 +617,5 @@ function updatePagination(data) {
  }
 // ========   FOR REMOVING SUGGETIONS WHILE CLICKING ON OUTSIDE =========
 
-   document.addEventListener('click', (e) => {
-    const searchBox = document.getElementById('searchInput');
-    const searchResults = document.getElementById('searchResults');
-    
- 
-    if (!searchBox?.contains(e.target) && !searchResults?.contains(e.target)) {
-        if (searchResults) {
-            searchResults.style.display = 'none';
-        }
-    }
-});
 
     </script>

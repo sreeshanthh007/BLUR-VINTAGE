@@ -51,6 +51,22 @@
             padding: 2rem;
         }
 
+        .error-message {
+    display: none;
+}
+
+.is-invalid + .error-message {
+    display: block;
+}
+
+.is-invalid {
+    border-color: #dc3545;
+}
+
+.is-valid {
+    border-color: #198754;
+}
+
         .brand {
             font-size: 1.75rem;
             text-align: center;
@@ -255,17 +271,130 @@
 </body>
 </html>
 
-<script>
+<script>    
 
-        // for dynamically to come the proudct and category
+
+
+                function validateOfferName(value) {
+                    const offerNameInput = document.querySelector('input[name="offerName"]');
+                    const errorDiv = getOrCreateErrorDiv(offerNameInput);
+                    
+                    if (!value.trim()) {
+                        showError(offerNameInput, errorDiv, 'Offer name is required');
+                        return false;
+                    } else if (value.length < 3) {
+                        showError(offerNameInput, errorDiv, 'Offer name must be at least 3 characters');
+                        return false;
+                    } else {
+                        showSuccess(offerNameInput, errorDiv);
+                        return true;
+                    }
+                }
+
+                function validateDiscount(value) {
+                    const discountInput = document.querySelector('input[name="discount"]');
+                    const errorDiv = getOrCreateErrorDiv(discountInput);
+                    
+                    if (!value) {
+                        showError(discountInput, errorDiv, 'Discount is required');
+                        return false;
+                    } else if (isNaN(value) || value <= 0) {
+                        showError(discountInput, errorDiv, 'Please enter a valid positive number');
+                        return false;
+                    } else if (value > 100) {
+                        showError(discountInput, errorDiv, 'Discount cannot exceed 100%');
+                        return false;
+                    } else {
+                        showSuccess(discountInput, errorDiv);
+                        return true;
+                    }
+                }
+
+                function validateDates(startDate, expiryDate) {
+                    const startDateInput = document.querySelector('input[name="startDate"]');
+                    const expiryDateInput = document.querySelector('input[name="expiryDate"]');
+                    const startErrorDiv = getOrCreateErrorDiv(startDateInput);
+                    const expiryErrorDiv = getOrCreateErrorDiv(expiryDateInput);
+                    
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    const start = new Date(startDate);
+                    const expiry = new Date(expiryDate);
+                    
+                    let isValid = true;
+                    
+                    if (!startDate) {
+                        showError(startDateInput, startErrorDiv, 'Start date is required');
+                        isValid = false;
+                    } else if (start < today) {
+                        showError(startDateInput, startErrorDiv, 'Start date cannot be in the past');
+                        isValid = false;
+                    } else {
+                        showSuccess(startDateInput, startErrorDiv);
+                    }
+                    
+                    if (!expiryDate) {
+                        showError(expiryDateInput, expiryErrorDiv, 'Expiry date is required');
+                        isValid = false;
+                    } else if (expiry <= start) {
+                        showError(expiryDateInput, expiryErrorDiv, 'Expiry date must be after start date');
+                        isValid = false;
+                    } else {
+                        showSuccess(expiryDateInput, expiryErrorDiv);
+                    }
+                    
+                    return isValid;
+                }
+
+                // Helper functions for showing errors and success states
+                function getOrCreateErrorDiv(input) {
+                    let errorDiv = input.nextElementSibling;
+                    if (!errorDiv || !errorDiv.classList.contains('error-message')) {
+                        errorDiv = document.createElement('div');
+                        errorDiv.className = 'error-message text-danger mt-1';
+                        input.parentNode.insertBefore(errorDiv, input.nextSibling);
+                    }
+                    return errorDiv;
+                }
+
+                function showError(input, errorDiv, message) {
+                    input.classList.add('is-invalid');
+                    input.classList.remove('is-valid');
+                    errorDiv.textContent = message;
+                }
+
+                function showSuccess(input, errorDiv) {
+                    input.classList.remove('is-invalid');
+                    input.classList.add('is-valid');
+                    errorDiv.textContent = '';
+                }
+
+                // Add event listeners for real-time validation
+                document.querySelector('input[name="offerName"]').addEventListener('input', function() {
+                    validateOfferName(this.value);
+                });
+
+                document.querySelector('input[name="discount"]').addEventListener('input', function() {
+                    validateDiscount(this.value);
+                });
+
+                document.querySelector('input[name="startDate"]').addEventListener('change', function() {
+                    validateDates(this.value, document.querySelector('input[name="expiryDate"]').value);
+                });
+
+                document.querySelector('input[name="expiryDate"]').addEventListener('change', function() {
+                    validateDates(document.querySelector('input[name="startDate"]').value, this.value);
+                });
+
+
         function updateItemList() {
         const offerType = document.getElementById('offerType').value;
         const itemSelect = document.getElementById('itemSelect');
         
-        // Clear existing options
+        
         itemSelect.innerHTML = '';
         
-        // Fetch items based on type
+       
         fetch(`/admin/offers/items?type=${offerType}`)
             .then(response => response.json())
             .then(items => {
@@ -282,51 +411,57 @@
     }
 
     document.querySelector('.offer-form').addEventListener('submit', function(e) {
-        e.preventDefault();  
-        const offerNameInput = document.querySelector('input[type="text"]');
-    const discountInput = document.querySelector('input[type="number"]');
+    e.preventDefault();
+    
+    const offerNameInput = document.querySelector('input[name="offerName"]');
+    const discountInput = document.querySelector('input[name="discount"]');
     const typeSelect = document.getElementById('offerType');
     const itemSelect = document.getElementById('itemSelect');
-    const startDateInput = document.querySelectorAll('input[type="date"]')[0];
-    const expiryDateInput = document.querySelectorAll('input[type="date"]')[1];
+    const startDateInput = document.querySelector('input[name="startDate"]');
+    const expiryDateInput = document.querySelector('input[name="expiryDate"]');
 
+    const isOfferNameValid = validateOfferName(offerNameInput.value);
+    const isDiscountValid = validateDiscount(discountInput.value);
+    const areDatesValid = validateDates(startDateInput.value, expiryDateInput.value);
 
-
-    const offerName = offerNameInput.value;
-    const discount = discountInput.value;
-    const type = typeSelect.value;
-    const itemId = itemSelect.value;
-    const startDate = startDateInput.value;
-    const expiryDate = expiryDateInput.value;   
+  
+    if (isOfferNameValid && isDiscountValid && areDatesValid) {
+        const formData = {
+            offerName: offerNameInput.value,
+            discount: discountInput.value,
+            type: typeSelect.value,
+            itemId: itemSelect.value,
+            startDate: startDateInput.value,
+            expiryDate: expiryDateInput.value
+        };
 
         fetch('/admin/offers/add', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({
-                offerName,
-                discount,
-                type,
-                itemId,
-                startDate,
-                expiryDate
-            })
+            body: JSON.stringify(formData)
         })
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-        
                 Swal.fire({
                     icon: 'success',
                     title: 'Offer Added!',
                     text: data.message
                 });
+                this.reset();
+                document.querySelectorAll('.is-valid, .is-invalid').forEach(element => {
+                    element.classList.remove('is-valid', 'is-invalid');
+                });
+                document.querySelectorAll('.error-message').forEach(element => {
+                    element.textContent = '';
+                });
+                updateItemList();
             } else {
-    
                 Swal.fire({
                     icon: 'error',
-                    title: 'Oops.',
+                    title: 'Oops...',
                     text: data.message
                 });
             }
@@ -338,9 +473,9 @@
                 text: 'Unable to add the offer. Please try again later.'
             });
         });
-    });
+    }
+});
 
 
-    // Initialize on page load
-    document.addEventListener('DOMContentLoaded', updateItemList);
+document.addEventListener("DOMContentLoaded",updateItemList)
 </script>

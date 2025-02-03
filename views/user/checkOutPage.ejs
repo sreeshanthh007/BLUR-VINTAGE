@@ -210,8 +210,42 @@
                             <p class="text-danger small mt-2 mb-0">Please add a delivery address to proceed</p>
                         <% } %>
                     </div>
+
+                    <div class="mt-4">
+                        <h5 class="mb-4">Available Coupons</h5>
+                        <% if (coupons && coupons.length > 0) { %>
+                            <% coupons.forEach(coupon => { %>
+                                <div class="border rounded p-3 mb-2 position-relative" style="background-color: white;">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <span class="badge bg-primary mb-2"><%= coupon.code %></span>
+                                            <p class="mb-1 small"><%= coupon.description %></p>
+                                            <p class="mb-0 text-muted small">
+                                                Min order: Rs. <%= coupon.minimumOrderAmount %>
+                                            </p>
+                                        </div>
+                                        <div class="text-end">
+                                            <div class="text-success fw-bold">
+                                                <%= coupon.discountType === 'Percentage' ? 
+                                                    `${coupon.discountValue}% OFF` : 
+                                                    `Rs. ${coupon.discountValue} OFF` %>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <% if (coupon.endDate) { %>
+                                        <div class="text-muted small mt-2">
+                                            Valid till: <%= new Date(coupon.endDate).toLocaleDateString() %>
+                                        </div>
+                                    <% } %>
+                                </div>
+                            <% }); %>
+                        <% } else { %>
+                            <div class="alert alert-info">
+                                No coupons available for this order
+                            </div>
+                        <% } %>
+                    </div>
                 </div>
-                
             </div>
         </main>
 
@@ -617,20 +651,74 @@
                         },
                         theme: {
                             color: "#212529"
+                        },
+                        modal: {
+                        ondismiss: async function() {
+                            // Handle modal dismissal
+                            try {
+                                await fetch('/user/order/payment-failed', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json'
+                                    },
+                                    body: JSON.stringify({
+                                        razorpayOrderId: result.razorpayOrderId,
+                                        cart: orderData.cart,
+                                        address: orderData.address,
+                                        coupon: orderData.coupon
+                                    })
+                                });
+                            } catch (error) {
+                                console.error('Error handling payment dismissal:', error);
+                            }
                         }
-                    };
-
+                    }   
+                 };  
+                 
                     const rzp = new Razorpay(options);
                     rzp.open();
                     
                     // Handle payment failure
-                    rzp.on('payment.failed', function (response) {
+                    rzp.on('payment.failed',async function(response){
+                        try {
+                            const failureResponse = await fetch('/user/order/payment-failed',{
+                                method:"post",
+                                headers:{
+                                    "Content-Type":"application/json"
+                                },
+                                body:JSON.stringify({
+                                    razorpayOrderId: result.razorpayOrderId,
+                                  failureDetails: response.error,
+                                cart: orderData.cart,
+                                address: orderData.address,
+                                coupon: orderData.coupon
+                                })
+                            });
+
+                            const failureResult = await failureResponse.json();
+
+                            if(failureResult.success){
+                                Swal.fire({
+                                icon: "warning",
+                                title: "Payment Failed",
+                                text: `Order created with pending payment. Order number: ${failureResult.orderNumber}`,
+                                confirmButtonText: "View Orders"
+                            }).then(() => {
+                                window.location.href = "/user/order-details";
+                            });
+                         }else{
+                            throw new Error(failureResult.message);
+                         }
+
+                        } catch (error) {
+                            console.error('Error handling payment failure:', error);
                         Swal.fire({
                             icon: "error",
-                            title: "Payment failed",
-                            text: response.error.description
+                            title: "Error",
+                            text: "Failed to process payment failure. Please contact support."
                         });
-                    });
+                        }
+                    })
                 } else {
                     // Handle COD or wallet payment success 
                     Swal.fire({
@@ -654,10 +742,6 @@
             });
         }
         })
-
-
-
-
         
     });
 

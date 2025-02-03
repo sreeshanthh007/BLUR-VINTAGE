@@ -7,15 +7,71 @@ const Users = require('../../models/userSchema');
 const env = require('dotenv').config();
 const Category = require('../../models/categorySchema');
 const Product = require('../../models/productSchema');
-const product = require('../../models/productSchema');
-const users = require('../../models/userSchema');
-const { search } = require('../../app');
+const Wallet = require('../../models/walletSchema')
+const Order = require('../../models/orderSchema');
+const pdfDocument = require('pdfkit')
+// const product = require('../../models/productSchema');
+// const users = require('../../models/userSchema');
+
 
 // generating otp
 function generateOTP(){
     return Math.floor(100000 + Math.random()*900000).toString();
 }
 
+const generateReferralCode = (firstName) => {
+    const timestamp = Date.now().toString().slice(-4);
+    const prefix = firstName.slice(0, 3).toUpperCase();
+    const randomStr = Math.random().toString(36).substring(2, 5).toUpperCase();
+    return `${prefix}${randomStr}${timestamp}`;
+};
+
+
+
+async function handleReferalReward(newUserId,referrerId){
+
+    try {
+        const REFERRER_REWARD = 500;
+        const REFERRE_REWARD =1000;
+
+        let referrerWallet = await Wallet.findOne({userId:referrerId});
+
+        if(!referrerWallet){
+            referrerWallet = new Wallet({
+                userId:referrerId,
+                balance:0,
+                transactions:[]
+            });
+        }
+
+        referrerWallet.balance+=REFERRER_REWARD
+        referrerWallet.transactions.push({
+            type:"Referal",
+            amount:REFERRER_REWARD,
+            description:"Referal reward for bringing your friend",
+            status:"Completed"
+        });
+        await referrerWallet.save();
+
+        const newUserWallet = new Wallet({
+            userId:newUserId,
+            balance:REFERRE_REWARD,
+            transactions:[{
+                type:"Referal",
+                amount:REFERRE_REWARD,
+                description:"Welcome bounus for signing up with referal code",
+                status:"Completed"
+            }]
+        });
+
+        await newUserWallet.save();
+
+        return true
+
+    } catch (error) {
+        console.log("error in giving rewards",error.stack)
+    }
+}
 
 // sending verification email
 async function sendVerificationEmail(email, otp) {
@@ -44,7 +100,7 @@ async function sendVerificationEmail(email, otp) {
             © 2025 BLUR VINTAGE ⭐. All rights reserved.
           </footer>
         </div>
-      `;
+       `;
   
       const info = await transport.sendMail({
         from: `"BLUR VINTAGE ⭐" <${process.env.NODE_MAILER_EMAIL}>`,
@@ -64,11 +120,12 @@ async function sendVerificationEmail(email, otp) {
   }
 
 
-
 // signup post
 const signUp = async (req,res)=>{
    try {
-    const { firstName,phoneNo,email,password,lastName} = req.body;
+    const { firstName,phoneNo,email,password,lastName,referralCode} = req.body;
+
+    console.log("ref code",referralCode)
     
 
     const findUser = await Users.findOne({email});
@@ -78,21 +135,60 @@ const signUp = async (req,res)=>{
         return res.json({success:false , message:"the email is already in use"})
     }
 
+
+    let referredBy = null;
+    if (referralCode) {
+        const referrer = await Users.findOne({ referralCode });
+        if (referrer) {
+            referredBy = referrer._id;
+           
+            await Users.findByIdAndUpdate(
+                referrer._id,
+                { $inc: { referralCount: 1 } }
+            );
+        } else {
+            return res.json({ success: false, message: "Invalid referral code" });
+        }
+    }
+
+    let newReferralCode;
+    let isUnique=false;
+
+    while(!isUnique){
+        newReferralCode = generateReferralCode(firstName);
+        const existingCode = await Users.findOne({referralCode:newReferralCode})
+
+        if(!existingCode){
+            isUnique=true
+        }
+    }
+
+
     const otp = generateOTP();
     console.log('checking',otp);
    
 
     req.session.userOTP = otp;
-    req.session.userData = {firstName,lastName,email,phoneNo,password};
+    req.session.userData = {
+        firstName,
+        lastName,
+        email,
+        phoneNo,
+        password,
+        referralCode: newReferralCode,
+        referredBy
+    };
     const emailsent = await sendVerificationEmail(email,otp);
     
     if(!emailsent){
        return res.send("email-error");
     }
+
+    if(referredBy){
+        req.session.pendingReferralReward = true
+    }
     // const hashedpassword =  await bcrypt.hash(password,saltRound);
 
-
-  
     console.log("OTP IS :",otp);    
 
     return res.status(200).json({success:true,redirectUrl:"/user/otp-verification"});
@@ -147,10 +243,20 @@ const verifyOTP = async (req, res) => {
           lastName: User.lastName,
           email: User.email,
           phoneNo: User.phoneNo,
+          referralCode: User.referralCode,
+          referredBy: User.referredBy,
+          referralCount: 0,
           password: passwordHash,
         });
        console.log("saved",saveUser)
         await saveUser.save();
+
+
+
+        if(req.session.pendingReferralReward && saveUser.referredBy){
+            await handleReferalReward(saveUser._id,saveUser.referredBy);
+            req.session.referalSuccess=true
+        }
 
        
 
@@ -159,17 +265,18 @@ const verifyOTP = async (req, res) => {
           console.log('session user',req.session.user) 
           
           delete req.session.userOTP;
+          delete req.session.pendingReferralReward;
 
-        res.json({success:true,redirectUrl:"/user/login"})
+        res.json({success:true,redirectUrl:"/user/login",referralApplied:!!saveUser.referredBy})
       
     } else {
-        // OTP doesn't match
+       
         return res.json({ success: false, message: "Invalid OTP" });
       }
     } catch (err) {
       console.error("Error verifying OTP:", err);
   
-      // Send error response to the client
+    
       return res.status(500).json({ success: false, message: "Internal server error" });
     }
   };
@@ -200,15 +307,6 @@ const verifyOTP = async (req, res) => {
     res.status(400).json({success:false,message:"failed to resent otp"});
    }
   }
-
-
-// user login
-
-
-
-
-
-
 
     const login = async (req,res)=>{
         try {
@@ -304,6 +402,13 @@ const loadShop = async (req, res) => {
             } else {
                 console.log('No category found for:', categoryFilter);
             }
+        }
+
+        if (query) {
+            baseQuery.$or = [
+                { productName: { $regex: query, $options: 'i' } },
+                { 'variants.sku': { $regex: query, $options: 'i' } }
+            ];
         }
         let sortConfig={};
 
@@ -431,6 +536,8 @@ const loadShop = async (req, res) => {
 const loadHome = async (req, res) => {
     try {
         const userId = req.session.user || req.session?.passport?.user;
+        const referalSuccess = req.session.referalSuccess
+        delete req.session.referalSuccess
         let userData = null;
 
         if (userId) {
@@ -444,7 +551,10 @@ const loadHome = async (req, res) => {
         }
 
         return res.render("user/userhome", {
-            isNewUser: !userId, // This will be true for new users (no session)
+            isNewUser: !userId,
+            referalSuccess:referalSuccess
+
+
         });
 
     } catch (err) {
@@ -455,7 +565,7 @@ const loadHome = async (req, res) => {
 
 // user men page
 
-const loadmen = async (req,res)=>{
+const loadmen = async (req,res,next)=>{
     try {
         const user = req.session.user || req.session?.passport?.user;
         const sortOption = req.query.sort || "default";
@@ -477,6 +587,13 @@ const loadmen = async (req,res)=>{
             isBlocked: false,
             category: menCategory._id
         };
+
+        if (query) {
+            baseQuery.$or = [
+                { productName: { $regex: query, $options: 'i' } },
+                { 'variants.sku': { $regex: query, $options: 'i' } }
+            ];
+        }
 
         let sortConfig = {};
         switch(sortOption){
@@ -528,7 +645,8 @@ const loadmen = async (req,res)=>{
             let offerName = '';
 
             if (product.variants && product.variants.length > 0) {
-                originalPrice = product.variants[0].price;
+                activeVariant = product.variants.find(variant => variant.quantity > 0) || product.variants[0];
+                originalPrice = activeVariant.price;
                 finalPrice = originalPrice;
 
                 // Check product offer
@@ -579,16 +697,7 @@ const loadmen = async (req,res)=>{
         };
 
         if (req.xhr || req.headers['x-requested-with'] === 'XMLHttpRequest') {
-            return res.json({
-                products: productsWithOffers,
-                currentSort: sortOption,
-                currentPage: page,
-                totalPages: totalPages,
-                hasPrevPage: page > 1,
-                hasNextPage: page < totalPages,
-                prevPage: page - 1,
-                nextPage: page + 1
-            });
+            return res.json(renderOptions);
         }
         
         if(!user){
@@ -600,12 +709,11 @@ const loadmen = async (req,res)=>{
         }
 
     } catch (error) {
-        console.log("error in loadmen", error.message);
-        return res.status(500).render('error', { message: 'An error occurred while loading products' });
+        next(error)
     }
 }
 // women page
-const loadWomen = async (req, res) => {
+const loadWomen = async (req, res,next) => {
     try {
         const user = req.session.user || req.session?.passport?.user;
         const sortOption = req.query.sort || 'default';
@@ -627,6 +735,13 @@ const loadWomen = async (req, res) => {
             isBlocked: false,
             category: womenCategory._id,
         };
+
+        if (query) {
+            baseQuery.$or = [
+                { productName: { $regex: query, $options: 'i' } },
+                { 'variants.sku': { $regex: query, $options: 'i' } }
+            ];
+        }
 
         // Determine sort configuration
         let sortConfig = {};
@@ -749,12 +864,11 @@ const loadWomen = async (req, res) => {
         }
 
     } catch (error) {
-        console.log("error in loadwomen", error.message, error.stack);
-        res.status(500).render('error', { message: 'Internal server error' });
+        next(error)
     }
 };
 // kids page
-const loadKids =async (req,res)=>{
+const loadKids =async (req,res,next)=>{
   try {
     const user = req.session.user || req.session?.passport?.user;
     const sortOption = req.query.sort || "default";
@@ -775,6 +889,13 @@ const loadKids =async (req,res)=>{
         isBlocked:false,
         category:kidsCategory._id
     };
+
+    if (query) {
+        baseQuery.$or = [
+            { productName: { $regex: query, $options: 'i' } },
+            { 'variants.sku': { $regex: query, $options: 'i' } }
+        ];
+    }
     let sortConfig={};
     switch(sortOption){
         case 'price-low-high':
@@ -896,21 +1017,17 @@ if (req.xhr || req.headers['x-requested-with'] === 'XMLHttpRequest') {
 
      
   } catch (error) {
-    console.log("error in kids",error.message);
-    
+    next(error)
   }
 }  
 
 // user search
-const userSearch = async (req, res) => {    
+const userSearch = async (req, res, next) => {    
     try {
-        const query = req.query.search;
+        const query = req.query.q || req.query.search; // Support both q and search parameters
         const sort = req.query.sort || 'default';
         const isSuggestion = req.query.suggest === 'true';
-        const category = req.query.category;
-        const page_context = req.query.page_context;
-        const strict_filter = req.query.strict_filter === 'true'
-        
+        const category = req.query.category || req.query.page_context;
         const page = parseInt(req.query.page) || 1;
         const productsPerPage = 8;
 
@@ -919,7 +1036,7 @@ const userSearch = async (req, res) => {
             isBlocked: false,
         };
 
-        // Only add search criteria if there's a search query
+        // Add search query criteria if present
         if (query) {
             searchCriteria.$or = [
                 { productName: { $regex: query, $options: 'i' } },
@@ -927,12 +1044,15 @@ const userSearch = async (req, res) => {
             ];
         }
 
-        // Add category filter if specified
-        if (category && strict_filter) {
+        // Handle category filtering
+        if (category) {
+            // Find category document based on the current page context
+            const categoryName = category.charAt(0).toUpperCase() + category.slice(1).toLowerCase();
             const categoryDoc = await Category.findOne({ 
                 isListed: true, 
-                name: category.toLowerCase() 
+                name: categoryName 
             });
+            
             if (categoryDoc) {
                 searchCriteria.category = categoryDoc._id;
             }
@@ -954,20 +1074,24 @@ const userSearch = async (req, res) => {
                 sortOptions = { productName: -1 };
                 break;
             case 'new-arrivals':
-                sortOptions = { createdAt: -1 };
+                sortOptions = { createdAt: -1 };    
                 break;
             default:
                 sortOptions = { createdAt: -1 };
         }
 
-        // For suggestions
+        // For suggestions (quick search results)
         if (isSuggestion) {
-            const products = await Product.find(searchCriteria)
+            const suggestions = await Product.find(searchCriteria)
                 .sort(sortOptions)
                 .limit(5)
                 .populate('category')
                 .lean();
-            return res.json({ products, category });
+
+            return res.json({ 
+                suggestions,
+                category 
+            });
         }
 
         // For full search with pagination
@@ -979,69 +1103,64 @@ const userSearch = async (req, res) => {
             .skip((page - 1) * productsPerPage)
             .limit(productsPerPage)
             .populate('category')
-            .lean()
             .populate('productOffer')
             .populate({
                 path: 'category',
                 populate: {
                     path: 'categoryOffer'
                 }
-            });
+            })
+            .lean();
 
+        const productsWithOffers = products.map(product => {
+            const now = new Date();
+            let bestDiscount = 0;
+            let originalPrice = 0;
+            let finalPrice = 0;
+            let offerName = '';
 
-            const productsWithOffers = products.map(product => {
-                const now = new Date();
-                let bestDiscount = 0;
-                let originalPrice = 0;
-                let finalPrice = 0;
-                let offerName = '';
-    
-                // Ensure variants exist and have at least one variant
-                if (product.variants && product.variants.length > 0) {
-                    originalPrice = product.variants[0].price;
-                    finalPrice = originalPrice;
-    
-                    // Check product offer
-                    if (product.productOffer && 
-                        now >= new Date(product.productOffer.startDate) && 
-                        now <= new Date(product.productOffer.expiryDate)) {
-                        const productDiscount = product.productOffer.discount;
-                        if (productDiscount > bestDiscount) {
-                            bestDiscount = productDiscount;
-                            finalPrice = originalPrice - (originalPrice * (productDiscount / 100));
-                            offerName = product.productOffer.offerName;
-                        }
-                    }
-    
-                    // Check category offer
-                    if (product.category?.categoryOffer && 
-                        now >= new Date(product.category.categoryOffer.startDate) && 
-                        now <= new Date(product.category.categoryOffer.expiryDate)) {
-                        const categoryDiscount = product.category.categoryOffer.discount;
-                        if (categoryDiscount > bestDiscount) {
-                            bestDiscount = categoryDiscount;
-                            finalPrice = originalPrice - (originalPrice * (categoryDiscount / 100));
-                            offerName = product.category.categoryOffer.offerName;
-                        }
+            if (product.variants && product.variants.length > 0) {
+                originalPrice = product.variants[0].price;
+                finalPrice = originalPrice;
+
+                // Check product offer
+                if (product.productOffer && 
+                    now >= new Date(product.productOffer.startDate) && 
+                    now <= new Date(product.productOffer.expiryDate)) {
+                    const productDiscount = product.productOffer.discount;
+                    if (productDiscount > bestDiscount) {
+                        bestDiscount = productDiscount;
+                        finalPrice = originalPrice - (originalPrice * (productDiscount / 100));
+                        offerName = product.productOffer.offerName;
                     }
                 }
-    
-                return {
-                    ...product,
-                    originalPrice: originalPrice || 0,
-                    finalPrice: finalPrice ? Math.round(finalPrice) : (originalPrice || 0),
-                    discount: bestDiscount,
-                    offerName: offerName || '',
-                    // Add a flag to indicate if the product has an active offer
-                    hasActiveOffer: bestDiscount > 0
-                };
-            });
 
-        // Determine template based on context
-        let template;
-        if (page_context === 'shop') {
-            template = 'user/shop';
-        } else if (category) {
+                // Check category offer
+                if (product.category?.categoryOffer && 
+                    now >= new Date(product.category.categoryOffer.startDate) && 
+                    now <= new Date(product.category.categoryOffer.expiryDate)) {
+                    const categoryDiscount = product.category.categoryOffer.discount;
+                    if (categoryDiscount > bestDiscount) {
+                        bestDiscount = categoryDiscount;
+                        finalPrice = originalPrice - (originalPrice * (categoryDiscount / 100));
+                        offerName = product.category.categoryOffer.offerName;
+                    }
+                }
+            }
+
+            return {
+                ...product,
+                originalPrice: originalPrice || 0,
+                finalPrice: finalPrice ? Math.round(finalPrice) : originalPrice || 0,
+                discount: bestDiscount,
+                offerName: offerName || '',
+                hasActiveOffer: bestDiscount > 0
+            };
+        });
+
+        // Determine template based on category
+        let template = 'user/userlandingpage';
+        if (category) {
             switch (category.toLowerCase()) {
                 case 'men':
                     template = 'user/userlandingpage';
@@ -1052,35 +1171,115 @@ const userSearch = async (req, res) => {
                 case 'kids':
                     template = 'user/kids';
                     break;
-                default:
-                    template = 'user/userlandingpage';
+                case 'shop':
+                    template = 'user/shop';
+                    break;
             }
-        } else {
-            template = 'user/userlandingpage';
         }
 
-        res.render(template, {
+        const response = {
             products: productsWithOffers,
             currentPage: page,
             totalPages,
             hasNextPage: page < totalPages,
             hasPrevPage: page > 1,
             currentSort: sort,
-            searchQuery: query,
+            search: query || "",
             currentCategory: category,
             nextPage: page + 1,
-            prevPage: page - 1,
-            search: query,
-        }); 
+            prevPage: page - 1
+        };
+
+        // Handle AJAX requests
+        if (req.xhr || req.headers['x-requested-with'] === 'XMLHttpRequest') {
+            return res.json(response);
+        }
+
+        // Regular page render
+        res.render(template, response);
 
     } catch (error) {
-        console.error('Search API error:', error);
-        res.status(500).render('error', { 
-            message: 'An error occurred while searching products' 
-        });
+        next(error);
     }
-};
+};  
+// const searchSuggestions = async (req, res) => {
+//     try {
+//         const query = req.query.q;
+//         const regex = new RegExp(query, 'i');
 
+//         // Find products matching the search query
+//         const products = await Product.find({
+//             isBlocked: false,
+//             $or: [
+//                 { productName: regex },
+//                 { 'variants.color': regex },
+//                 { 'variants.size': regex }
+//             ]
+//         })
+//         .lean()
+//         .populate('productOffer')
+//         .populate({
+//             path: 'category',
+//             populate: {
+//                 path: 'categoryOffer'
+//             }
+//         })
+//         .limit(5); // Limit suggestions to 5 items
+
+//         // Calculate offers and prices
+//         const suggestions = products.map(product => {
+//             const now = new Date();
+//             let bestDiscount = 0;
+//             let originalPrice = 0;
+//             let finalPrice = 0;
+//             let offerName = '';
+
+//             if (product.variants && product.variants.length > 0) {
+//                 originalPrice = product.variants[0].price;
+//                 finalPrice = originalPrice;
+
+//                 // Check product offer
+//                 if (product.productOffer && 
+//                     now >= new Date(product.productOffer.startDate) && 
+//                     now <= new Date(product.productOffer.expiryDate)) {
+//                     const productDiscount = product.productOffer.discount;
+//                     if (productDiscount > bestDiscount) {
+//                         bestDiscount = productDiscount;
+//                         finalPrice = originalPrice - (originalPrice * (productDiscount / 100));
+//                         offerName = product.productOffer.offerName;
+//                     }
+//                 }
+
+//                 // Check category offer
+//                 if (product.category?.categoryOffer && 
+//                     now >= new Date(product.category.categoryOffer.startDate) && 
+//                     now <= new Date(product.category.categoryOffer.expiryDate)) {
+//                     const categoryDiscount = product.category.categoryOffer.discount;
+//                     if (categoryDiscount > bestDiscount) {
+//                         bestDiscount = categoryDiscount;
+//                         finalPrice = originalPrice - (originalPrice * (categoryDiscount / 100));
+//                         offerName = product.category.categoryOffer.offerName;
+//                     }
+//                 }
+//             }
+
+//             return {
+//                 _id: product._id,
+//                 productName: product.productName,
+//                 variants: product.variants,
+//                 originalPrice,
+//                 finalPrice: Math.round(finalPrice),
+//                 discount: bestDiscount,
+//                 offerName
+//             };
+//         });
+
+//         res.json({ suggestions });
+//     } catch (error) {
+//         console.error('Error in search suggestions:', error);
+//         res.status(500).json({ error: 'Internal server error' });
+//     }
+// };
 
 otp_verification =  (req,res)=>{
     return res.render('user/otp-verification');
@@ -1099,49 +1298,49 @@ const managePassword = async(req,res)=>{
     return res.render('user/managePassword')
 }
 
- const updatePassword = async (req, res) => {
-    try {
-        const { oldPassword, newPassword } = req.body;
-        const userId = req.session.user
+    const updatePassword = async (req, res,next) => {
+        try {
+            const { oldPassword, newPassword } = req.body;
+            const userId = req.session.user || req.session?.passport?.user
 
-        const user = await Users.findById(userId);
-        if (!user) {
-            return res.status(404).json({ message: "User not found" });
-        }
-
-        console.log("usr in update password via google",user)
-        // Compare with user's current hashed password
-        const isValidPassword = await bcrypt.compare(oldPassword, user.password);
-        
-        if (!isValidPassword) {
-            return res.status(400).json({ message: "Current password is incorrect" });
-        }
-
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(newPassword, salt);
-
-        user.password = hashedPassword;
-        await user.save();
-
-        req.session.destroy(err => {
-            if (err) {
-                console.error("Error destroying session:", err);
-                return res.status(500).json({ message: "Internal server error" });
+            const user = await Users.findById(userId);
+            if (!user) {
+                return res.status(404).json({ message: "User not found" });
             }
 
             
-            return res.status(200).json({ message: "Password updated successfully", redirectUrl: "/user/login" });
-        });
+            // Compare with user's current hashed password
+            const isValidPassword = await bcrypt.compare(oldPassword, user.password);
+            
+            if (!isValidPassword) {
+                return res.status(400).json({ message: "Current password is incorrect" });
+            }
 
-    } catch (error) {
-        console.log("Error in update password:", error.message);
-        return res.status(500).json({ message: "Internal server error" });
+            const salt = await bcrypt.genSalt(10);
+            const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+            user.password = hashedPassword;
+            await user.save();
+
+            req.session.destroy(err => {
+                if (err) {
+                    console.error("Error destroying session:", err);
+                    return res.status(500).json({ message: "Internal server error" });
+                }
+
+                
+                return res.status(200).json({ message: "Password updated successfully", redirectUrl: "/user/login" });
+            });
+
+        } catch (error) {
+            console.log("Error in update password:", error.message);
+            next(error)
+        }
     }
-}
 
 const otpStore = {};
 
-const otpForPassword = async (req, res) => {
+const otpForPassword = async (req, res,next) => {
     const { email } = req.body;
 
 
@@ -1176,7 +1375,7 @@ const otpForPassword = async (req, res) => {
         return res.status(200).json({ message: "OTP sent successfully" });
     } catch (err) {
         console.error("Error sending OTP:", err);
-        return res.status(500).json({ message: "Internal server error" });
+        next(err)
     }
 };
 
@@ -1208,16 +1407,16 @@ const verifyResetPasswordOtp = async (req, res) => {
 
    
     if (expiresAt < Date.now()) {
-        delete otpStore[email]; // Cleanup expired OTP
+        delete otpStore[email];
         return res.status(400).json({ message: "OTP has expired" });
     }
 
-    // Successful verification
+    
     delete otpStore[email]; // Cleanup after successful verification
     return res.status(200).json({ok:true, message: "OTP verified successfully" });
 };
 
-const resetPassword = async (req,res) => {
+const resetPassword = async (req,res,next) => {
     console.log(req.body);
         
     const {newPassword,email} = req.body;
@@ -1240,10 +1439,12 @@ const resetPassword = async (req,res) => {
         await user.save();
         return res.status(200).json({ok:true,message:"password reset successfully"})
     } catch (error) {   
-        console.log("error in reset password",error.message);
+        next(error)
         
     }
 }
+
+
 
    const emailverification = (req,res)=>{
     return res.render('user/resetPassword')
@@ -1278,6 +1479,7 @@ module.exports={
     setNewPassword,
     resetPassword,
     loadShop,
+    // searchSuggestions
 
    
 

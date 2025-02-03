@@ -2,13 +2,13 @@ const Cart = require("../../models/cartSchema");
 const Product = require("../../models/productSchema");
 const users = require('../../models/userSchema')
 const Address = require("../../models/adressSchema");
-const Coupons = require('../../models/couponSchema');
+const Coupon = require('../../models/couponSchema');
 const { availableCoupons } = require("../admin/couponController");
 
 
 
 
-const addtoCart = async(req,res) => { 
+const addtoCart = async(req,res,next) => { 
     try {
         const userId = req.session.user || req.session?.passport?.user;
         if(!userId) {
@@ -144,11 +144,7 @@ const addtoCart = async(req,res) => {
 
     } catch (error) {
         console.log("error in add to cart", error);
-        return res.status(500).json({
-            success: false,
-            message: "Failed to add product to cart",
-            error: error.message
-        });
+        next(error)
     }
 };
 
@@ -511,11 +507,11 @@ const updateAddress = async(req,res)=>{
         res.status(500).json({ error: 'Failed to update address' });
     }
 }
-const checkout = async (req,res)=>{
+const checkout = async (req,res,next)=>{
     
     try {
         const userId = req.session?.user || req.session?.passport?.user;
-        const selectedAddressId = req.session.req.session?.selectedAddressId
+        const selectedAddressId = req.session?.selectedAddressId
         const cart = await Cart.findOne({user:userId})
         .populate({
         path:"items.product",
@@ -528,16 +524,37 @@ const checkout = async (req,res)=>{
         const address  = selectedAddressId?
         await Address.findById(selectedAddressId):
         await Address.findOne({userId:userId});
-     
+        
+        const currentDate = new Date();
+
+        const allCoupons = await Coupon.find({});
+
+      console.log("All coupons in DB:", allCoupons);
+
+
+
+        const coupon = await Coupon.find({
+            isActive:true,
+            startDate:{$lte:currentDate},
+            endDate:{$gte:currentDate},
+            minimumOrderAmount:{$lte:cart.totalAmount},
+            $expr: { $lt: ["$currentUsageCount", "$usageLimit"] }
+        });
+
+
+
+        console.log("cooupoon find",coupon)
+        console.log("cart amount",cart.totalAmount);
+        
         
         res.render("user/checkOutPage",{
             cart,
            address,
-          
+           coupons:coupon,
             pageTitle:"checkout"
         });
     } catch (error) {
-        console.log("error in checkout page",error.message);
+        next(error)
     }
 }
 

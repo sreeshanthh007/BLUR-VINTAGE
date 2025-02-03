@@ -7,6 +7,8 @@ const path = require('path');
 const bodyparser = require('body-parser')
 const passport = require('./config/passport.js')
 const env = require('dotenv').config();
+const override  = require("method-override")
+
 
 const mongodb = require('./config/mongodb');
 const userRouter = require('./routes/userRoutes')
@@ -35,13 +37,16 @@ app.use(nocache());
 app.use(passport.initialize())
 app.use(passport.session());
 app.use(flash());
-
 app.use((req, res, next) => {
     res.locals.messages = req.flash();  // This makes the flash messages available in templates
     next();
 });
 app.use(bodyparser.urlencoded({extended:true}))
+app.use(override('_method'))
+
 app.use(express.json({limit:'50mb'}));
+
+
 
 
 
@@ -64,6 +69,17 @@ app.use("/user",adminAccess.userAuth)
 
 // for google authenication
 app.use('/',authRoutes)
+
+// to handle the errors
+app.use((err,req,res,next)=>{
+
+    console.log("this is the error stack",err.stack);
+
+    res.status(err.status || 500).render("error", { 
+        message: err.message || "Internal Server Error"
+    });
+
+})
 
 app.listen(process.env.PORT,()=>{
     console.log("server started")

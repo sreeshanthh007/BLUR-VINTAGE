@@ -148,8 +148,18 @@
                         </div>
             
                         <div class="mb-3">
-                            <label class="form-label">Discount:</label>
-                            <input type="text" class="form-control" value="₹<%= order.pricing.coupon?.discount || 0 %>" readonly>
+                            <label class="form-label">Discounts Applied:</label>
+                            <div class="form-control">
+                                <% if (order.pricing.coupon && order.pricing.coupon.code) { %>
+                                    <div>Coupon (<%= order.pricing.coupon.code %>): ₹<%= order.pricing.coupon.discount %></div>
+                                <% } %>
+                                <% if (order.pricing.productOffersTotal > 0) { %>
+                                    <div>Product/Category Offers: ₹<%= order.pricing.productOffersTotal %></div>
+                                <% } %>
+                                <% if (!order.pricing.coupon?.code && order.pricing.productOffersTotal === 0) { %>
+                                    No discounts applied
+                                <% } %>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -178,6 +188,9 @@
                             <p class="h5 mb-0">₹<%= item.price.discountedPrice %></p>
                             <% if(item.price.originalPrice > item.price.discountedPrice) { %>
                                 <small class="text-muted text-decoration-line-through">₹<%= item.price.originalPrice %></small>
+                                <% if(item.price.offerType !== 'No Offer') { %>
+                                    <small class="text-success">(<%= item.price.offerType %>)</small>
+                                <% } %>
                             <% } %>
                         </div>
                     </div>

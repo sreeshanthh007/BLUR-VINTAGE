@@ -5,7 +5,10 @@ const bcrypt = require("bcrypt");
 const Order = require("../../models/orderSchema");
 const Product = require("../../models/productSchema");
 const Coupon = require("../../models/couponSchema");
-const moment = require('moment')
+const moment = require('moment');
+const pdfDocument = require('pdfkit')
+const fs = require('fs');
+const path = require('path');
 
 
 const login = async (req,res)=>{
@@ -53,10 +56,11 @@ const logOut = async (req,res)=>{
 
 const blockUser = async (req,res)=>{
     try {
-        let id = req.query.id;
-      await user.updateOne({_id:id},{$set:{isBlocked:true}});
+        let {userId} = req.body
+      await user.updateOne({_id:userId},{$set:{isBlocked:true}});
 
-        res.redirect("/admin/userManage");
+       res.json({success:true})
+
     } catch (error) {
         console.log("error in block user",error);
     }
@@ -64,9 +68,11 @@ const blockUser = async (req,res)=>{
 
 const unblockUser = async (req,res)=>{
     try {
-        let id = req.query.id;
-        await user.updateOne({_id:id},{$set:{isBlocked:false}});
-        res.redirect('/admin/userManage');
+        let {userId} = req.body;
+        
+        await user.updateOne({_id:userId},{$set:{isBlocked:false}});
+       
+        res.json({success:true})
 
     } catch (error) {
         console.log("error in unblock user",error)
@@ -107,7 +113,7 @@ const orderList = async(req,res)=>{
         const limit = 5;
         const skip = (pages-1)*limit;
 
-        const totalOrders = await Order.countDocuments();
+        const totalOrders = await Order.countDocuments();   
         const totalPages = Math.ceil(totalOrders/limit);
 
         const orders = await Order.find()
@@ -119,13 +125,17 @@ const orderList = async(req,res)=>{
        
         
         const formattedOrders = orders.map(order => {
-            // Format multiple items
+           
             const itemsDisplay = order.orderItems.map(item => {
                 return `${item.variant.colorName} (${item.quantity})`;
             }).join(', ');
 
             // Calculate total quantity
             const totalQuantity = order.orderItems.reduce((sum, item) => sum + item.quantity, 0);
+
+            const finalAmount = order.pricing.finalAmount
+
+            console.log("final amt",finalAmount)
             
             return {
                 id: order.orderNumber,
@@ -141,12 +151,11 @@ const orderList = async(req,res)=>{
                 // Show all items with their quantities
                 item: `${itemsDisplay} (Total: ${totalQuantity} items)`,
                 status: order.orderStatus,
-                // Include total amount for reference
-                amount: order.pricing.finalAmount
+
+                amount:finalAmount
             };
         });
 
-        console.log("formatted",formattedOrders)
 
         const pagination = {
             currentPage: pages,
@@ -213,6 +222,10 @@ const updateOrderStatus = async(req,res)=>{
         }
         const order = await Order.findOne({orderNumber:id})
 
+        if(!order){
+            return res.status(400).json({success:false,message:"order not found"})
+        }
+
         if (status === 'Cancelled') {
             for (const orderItem of order.orderItems) {
                 await Product.findOneAndUpdate(
@@ -237,7 +250,12 @@ const updateOrderStatus = async(req,res)=>{
 
         if(status==="Delivered" && order.payment.method==="COD"){
             order.payment.status = "Completed"
+            order.deliveryDate = new Date();
+        }else if(status==="Delivered" && order.payment.method==="Razorpay"){
+            order.deliveryDate = new Date();
         }
+
+
         
         await order.save()
 
@@ -253,7 +271,7 @@ const updateOrderStatus = async(req,res)=>{
     }
 }
 
-// controllers/adminController.js
+
 
 
 
@@ -287,13 +305,13 @@ const getSalesReport = async (req, res) => {
                 endDateTime = moment().endOf('day');
         }
 
-        // Updated match stage to only include delivered orders
+        
         const matchStage = {
-            createdAt: {
+            deliveryDate: {
                 $gte: startDateTime.toDate(),
                 $lte: endDateTime.toDate()
             },
-            orderStatus: 'Delivered' // Only count delivered orders
+            orderStatus: 'Delivered' 
         };
 
         const salesReport = await Order.aggregate([
@@ -384,7 +402,7 @@ const getSalesReport = async (req, res) => {
             }
         ]);
 
-        report.paymentMethods = paymentMethodStats;
+        report.paymentMethods = paymentMethodStats; 
 
         // Render the sales report page with all metrics
         res.render('admin/salesreport', {

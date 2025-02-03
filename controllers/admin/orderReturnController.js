@@ -79,8 +79,10 @@ const initiateReturn = async(req,res)=>{
 const approvedReturn = async(req,res)=>{
     try {
         const {orderId,itemId} = req.params;
-        console.log("order and item id",orderId,itemId)
+       
         const order = await Order.findById(orderId);
+
+        console.log("ordesr id",order)
 
         if(!order){
             return res.status(404).json({success:false,message:"order not found"})
@@ -88,11 +90,20 @@ const approvedReturn = async(req,res)=>{
         
         const orderItem = order.orderItems.id(itemId);
 
+        console.log("order item id",orderItem)
+
         if(!orderItem){
             return res.status(404).json({success:false,message:"order item not found"})
         }
 
-        const refundedAmount = orderItem.price.discountedPrice * orderItem.quantity
+        const itemPrice = orderItem.price.discountedPrice * orderItem.quantity;
+        const totalOrderAmount = order.pricing.finalAmount;
+
+        // Calculate proportional refund amount
+        const refundAmount = (itemPrice * (totalOrderAmount / order.orderItems.reduce((total, item) => 
+            total + (item.price.discountedPrice * item.quantity), 0)
+        ));
+        
 
         const product = await Product.findById(orderItem.product);
 
@@ -121,14 +132,14 @@ const approvedReturn = async(req,res)=>{
         if(!wallet){
            wallet = new Wallet({
             userId:order.userId,
-            balance:refundedAmount
+            balance:refundAmount
            }); 
         }else{
-            wallet.balance += refundedAmount
+            wallet.balance += refundAmount
         }
         wallet.transactions.push({
             type:'Refund',
-            amount:refundedAmount,
+            amount:refundAmount,
             orderId:orderId,
             status:'Completed',
             description:`Partial refund for order ${order.orderNumber} - Item: ${product.productName}`,
@@ -140,9 +151,8 @@ const approvedReturn = async(req,res)=>{
         return res.status(200).json({
             success: true, 
             message: "Partial return request approved and wallet credited",
-            refundAmount: refundedAmount
+            refundAmount: refundAmount
         });
-        return res.status(200).json({success:true,message:"return request approved successfully"})
     } catch (error) {
         console.log("error in approvedreturns",error.message)
     }

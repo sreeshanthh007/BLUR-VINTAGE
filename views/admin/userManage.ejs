@@ -191,7 +191,7 @@
         <h1 class="page-title">Users</h1>
 
         <!-- Filter Section -->
-        <div class="filter-section d-flex align-items-center gap-3">
+        <!-- <div class="filter-section d-flex align-items-center gap-3">
             <div class="d-flex align-items-center gap-2">
                 <i class="bi bi-funnel"></i>
                 <span>Filter By</span>
@@ -201,7 +201,7 @@
                 <option value="unblocked">unblocked</option>
                 <option value="all">all</option>
             </select>
-        </div>
+        </div> -->
 
         <!-- Users Table -->
         <div class="table-container">
@@ -227,13 +227,11 @@
                             <td>
                                 <%if(users[i].isBlocked===false){%>
                                 <div class="d-flex gap-2">
-                                    <a href="javascript:void(0)" onclick="confirmBlock('<%=users[i]._id%>')">
 
-                                    <button class="btn btn-block">BLOCK</button>
+                                    <button class="btn btn-block" onclick="confirmBlock('<%=users[i]._id%>')">BLOCK</button>
                                 </a>
                                     <%}else{%>
-                                    <a href="javascript:void" onclick="confirmUnblock('<%=users[i]._id%>')">
-                                    <button class="btn btn-unblock">UNBLOCK</button>
+                                    <button class="btn btn-unblock" onclick="confirmUnblock('<%=users[i]._id%>')">UNBLOCK</button>
                                     </a>
                                     <%}%>
 
@@ -274,7 +272,9 @@
     <script>
       // function to block the user using sweet alert
 
-      function confirmBlock(productId){
+       function confirmBlock(userId){
+       
+        
         Swal.fire({
             icon:"warning",
             title:"are you sure",
@@ -285,12 +285,39 @@
             confirmButtonText:"yes block the user"
         }).then(result =>{
             if(result.isConfirmed){
-                window.location.href = `/admin/blockUser?id=${productId}`
+                const response =    fetch('/admin/blockUser',{
+                    method:"PATCH",
+                        headers:{
+                            "Content-Type":"application/json"
+                        },
+                        body:JSON.stringify({userId})
+                })
+                .then((response)=>response.json())
+               
+                .then((data)=>{
+                    if(data.success){
+                        Swal.fire({
+                            icon:"success",
+                            title:"user blocked successfully",
+                            timer:1500
+                        }).then(()=>{
+                            location.reload();
+                        })
+                    }else{
+                        Swal.fire({
+                            icon:"error",
+                            title:"failed to block user"
+                        })
+                    }
+                })
+                .catch(err =>{
+                    console.log("error in confirm block",err.message)
+                })
             }
         });
       }
 
-      function confirmUnblock(productId){
+      function confirmUnblock(userId){
         Swal.fire({
             icon:"warning",
             title:"are you sure",
@@ -301,7 +328,33 @@
             confirmButtonText:"yes unblock the user"
         }).then(result =>{
             if(result.isConfirmed){
-                window.location.href = `/admin/unblockUser?id=${productId}`
+                const response = fetch('/admin/unblockUser',{
+                    method:"PATCH",
+                    headers:{
+                        "Content-Type":"application/json"
+                    },
+                    body:JSON.stringify({userId})
+                })
+                .then((result)=>result.json())
+                .then((data)=>{
+                    if(data.success){
+                        Swal.fire({
+                            icon:"success",
+                            title:"unblocked user successfully",
+                            timer:1500
+                        }).then(()=>{
+                            location.reload();
+                        })
+                    }else{
+                        Swal.fire({
+                            icon:"error",
+                            title:"failed to unblock user"
+                        });
+                    }
+                })
+                .catch(err =>{
+                    console.log("error in unblock userr frondend",err.message)
+                })
             }
         });
       }

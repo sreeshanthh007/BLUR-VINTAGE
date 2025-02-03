@@ -26,7 +26,7 @@
             position: fixed;
             width: 250px;
         }
-
+ 
         .sidebar .nav-link {
             color: var(--text-dark);
             padding: 0.5rem 2rem;
@@ -174,7 +174,6 @@
                 <table class="table">
                     <thead>
                         <tr>
-                            <th>Code</th>
                             <th>Coupon Code</th>
                             <th>Coupon Amount</th>
                             <th>Description</th>
@@ -186,16 +185,20 @@
                     <tbody>
                         <% coupons.forEach(function(coupon) { %>
                         <tr>
-                            <td><%= coupon.description %></td>
+                          
                             <td><%= coupon.code %></td>
                             <td><%= coupon.discountValue %></td>
                             <td><%= coupon.description %></td>
                             <td><%= coupon.usageLimit %></td>
-                            <td><%= coupon.endDate.toLocaleDateString() %></td>
+                            <td><%= new Date(coupon.endDate).toLocaleDateString() %></td>
                             <td>
-                                <button class="btn-remove" onclick="removeCoupon('<%= coupon._id %>')">
+                                <button class="btn-remove m-2" onclick="removeCoupon('<%= coupon._id %>')">
                                     <i class="bi bi-trash"></i>
                                 </button>
+                                <a style="color: black;" href="/admin/edit-coupon/<%=coupon._id%>">
+                                    <i class="bi bi-pencil-square"></i>
+                                </a>
+                                    
                             </td>
                         </tr>
                         <% }); %>
@@ -216,10 +219,137 @@
 <script>
         document.addEventListener("DOMContentLoaded",function(){
             const couponForm = document.querySelector('form');
+            const inputs = couponForm.querySelectorAll('input');
 
+
+            inputs.forEach(input => {
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'invalid-feedback text-danger mt-1';
+        errorDiv.style.display = 'none';
+        input.parentNode.appendChild(errorDiv);
+        
+        // Add blur event listener for real-time validation
+        input.addEventListener('blur', () => validateField(input));
+        // Add input event listener to clear errors when user starts typing
+        input.addEventListener('input', () => {
+            const errorDiv = input.parentNode.querySelector('.invalid-feedback');
+            input.classList.remove('is-invalid');
+            errorDiv.style.display = 'none';
+        });
+    });     
+
+
+
+
+    function validateField(input) {
+        const errorDiv = input.parentNode.querySelector('.invalid-feedback');
+        let isValid = true;
+        let errorMessage = '';
+
+        switch(input.placeholder) {
+            case 'Coupon code':
+                if (!input.value) {
+                    errorMessage = 'Coupon code is required';
+                    isValid = false;
+                } else if (input.value.length < 3) {
+                    errorMessage = 'Coupon code must be at least 3 characters';
+                    isValid = false;
+                } else if (!/^[A-Za-z0-9-_]+$/.test(input.value)) {
+                    errorMessage = 'Only letters, numbers, hyphens and underscores are allowed';
+                    isValid = false;
+                }
+                break;
+
+            case 'Limit':
+                if (!input.value) {
+                    errorMessage = 'Usage limit is required';
+                    isValid = false;
+                } else if (parseInt(input.value) < 1) {
+                    errorMessage = 'Limit must be at least 1';
+                    isValid = false;
+                }
+                break;
+
+            case 'Coupon amount':
+                if (!input.value) {
+                    errorMessage = 'Coupon amount is required';
+                    isValid = false;
+                } else {
+                    const amount = parseFloat(input.value);
+                    if (isNaN(amount) || amount <= 0) {
+                        errorMessage = 'Please enter a valid amount greater than 0';
+                        isValid = false;
+                    } else if (input.value.includes('%') && amount > 100) {
+                        errorMessage = 'Percentage discount cannot exceed 100%';
+                        isValid = false;
+                    }
+                }
+                break;
+
+            case 'Minimum Order amount':
+                if (!input.value) {
+                    errorMessage = 'Minimum order amount is required';
+                    isValid = false;
+                } else if (parseFloat(input.value) < 0) {
+                    errorMessage = 'Minimum order amount cannot be negative';
+                    isValid = false;
+                }
+                break;
+
+            case 'Description':
+                if (!input.value) {
+                    errorMessage = 'Description is required';
+                    isValid = false;
+                } else if (input.value.length < 10) {
+                    errorMessage = 'Description must be at least 10 characters';
+                    isValid = false;
+                }
+                break;
+        }
+
+        // Handle date inputs
+        if (input.type === 'date') {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const inputDate = new Date(input.value);
+            
+            if (!input.value) {
+                errorMessage = `${input.placeholder === 'first-of-type' ? 'Start' : 'End'} date is required`;
+                isValid = false;
+            } else if (input.placeholder === 'first-of-type' && inputDate < today) {
+                errorMessage = 'Start date cannot be in the past';
+                isValid = false;
+            } else if (input.placeholder === 'last-of-type') {
+                const startDate = new Date(document.querySelector('input[type="date"]:first-of-type').value);
+                if (inputDate < startDate) {
+                    errorMessage = 'End date must be after start date';
+                    isValid = false;
+                }
+            }
+        }
+
+        // Update UI based on validation
+        if (!isValid) {
+            input.classList.add('is-invalid');
+            errorDiv.textContent = errorMessage;
+            errorDiv.style.display = 'block';
+        } else {
+            input.classList.remove('is-invalid');
+            errorDiv.style.display = 'none';
+        }
+
+        return isValid;
+    }
             couponForm.addEventListener("submit",async function(e){
                 e.preventDefault();
 
+
+                let isFormValid = true;
+        inputs.forEach(input => {
+            if (!validateField(input)) {
+                isFormValid = false;
+            }
+        });
                 const amount = document.querySelector('input[placeholder="Coupon amount"]').value;
                const discountPercentage = amount.endsWith('%') 
             ? parseFloat(amount) 
@@ -233,6 +363,8 @@
             endDate: document.querySelector('input[type="date"]:last-of-type').value,
             minOrder : document.querySelector('input[placeholder="Minimum Order amount"]').value
            };
+
+           
 
 
            try {
