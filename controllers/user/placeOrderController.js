@@ -22,11 +22,20 @@
                     .populate('productOffer')
                     .populate({
                         path: 'category',
+                        select:"name isListed",
                         populate: { path: 'categoryOffer' }
                     });
     
                 if (!product) {
                     throw new Error(`Product not found: ${item.product._id}`);
+                }
+
+                if(product.isBlocked){
+                    return res.status(400).json({success:false,message:`product is blocked by admin ${product.productName}`})
+                }
+
+                if(!product.category.isListed){
+                    return res.status(400).json({success:false,message:`the category in currently unavailable`})
                 }
     
                 const variant = product.variants.find(v =>
@@ -44,7 +53,7 @@
                 let discountedPrice = originalPrice;
                 let offerType = 'No Offer';
     
-                // Check product offer
+                
                 if (product.productOffer &&
                     now >= product.productOffer.startDate &&
                     now <= product.productOffer.expiryDate) {
@@ -53,7 +62,7 @@
                     offerType = 'Product Offer';
                 }
     
-                // Check category offer
+                
                 if (product.category?.categoryOffer &&
                     now >= product.category.categoryOffer.startDate &&
                     now <= product.category.categoryOffer.expiryDate) {
@@ -73,11 +82,11 @@
                     totalProductOffersDiscount += (originalPrice - discountedPrice) * item.quantity;
                 }
     
-                // Update stock
+                
                 variant.stock -= item.quantity;
                 await product.save();
     
-                // Create order item
+                
                 orderItems.push({
                     product: item.product._id,
                     quantity: item.quantity,
@@ -99,7 +108,7 @@
                 });
             }
     
-            // Calculate coupon discount after product discounts
+          
             if (coupon && coupon.code) {
                 const validCoupon = await Coupon.findOne({
                     code: coupon.code.toUpperCase(),
@@ -147,6 +156,28 @@
                     amount: razorPayOrder.amount,
                     razorpayKeyId: process.env.RAZORPAY_KEY_ID
                 });
+
+            }else if(paymentMethod === "WALLET"){
+                const wallet  = await Wallet.findOne({userId});
+
+                if(!wallet){
+                    throw new Error("Wallet not found")
+                }
+                if(wallet.balance < finalAmount){
+                    throw new Error("insufficiant wallet balance")
+                }
+
+
+                wallet.balance-=finalAmount
+
+                wallet.transactions.push({
+                    type:"Purchase",
+                    description: `Purchase - Order #${orderNumber}`,
+                    amount:finalAmount,
+                    orderId:orderNumber,
+                    status:"Completed"
+                });
+                await wallet.save()
             }
     
             const order = new Order({

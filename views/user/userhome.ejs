@@ -1,113 +1,211 @@
-  <!-- header starts  -->
-  <head>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BLUR VINTAGE ★</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css">
     <link rel="stylesheet" href="/styles/spinner.css" />
+    <link rel="stylesheet" href="/styles/landingpage.css">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f8f9fa;
+        }
+        .image-container {
+            position: relative;
+            width: 100%;
+            padding-top: 56.25%;
+            margin: 40px 0;
+            overflow: hidden;
+            border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .image-container:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.2);
+        }
+        .image-container img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+        .image-container:hover img {
+            transform: scale(1.05);
+        }
+        .image-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.6));
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 20px;
+            color: white;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .image-container:hover .image-overlay {
+            opacity: 1;
+        }
+        .image-title {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        .image-description {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+        }
+        .image-link {
+            align-self: flex-start;
+            padding: 10px 20px;
+            background-color: #ffffff;
+            color: #000000;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: bold;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        .image-link:hover {
+            background-color: #000000;
+            color: #ffffff;
+        }
+        .brand-logo {
+            font-family: 'Joan', serif;
+            font-size: 3rem;
+            margin: 60px 0;
+            text-align: center;
+        }
+        @media (max-width: 768px) {
+            .image-container {
+                padding-top: 75%;
+            }
+            .image-title {
+                font-size: 1.5rem;
+            }
+            .image-description {
+                font-size: 1rem;
+            }
+        }
+    </style>
 </head>
-
-<div id="preloader-active">
-    <div class="preloader">
-      <div class="preloader-inner">
-        <div class="preloader-img pere-text">
-          <strong>Loading</strong>
+<body>
+    <div id="preloader-active">
+        <div class="preloader">
+            <div class="preloader-inner">
+                <div class="preloader-img pere-text">
+                    <strong>Loading</strong>
+                </div>
+            </div>
         </div>
-      </div>
     </div>
-  </div> 
-  <%-include ("../../views/partials/user/header")%>
+
+    <%- include("../../views/partials/user/header") %>
 
     <main class="container mt-4">
         <section class="mb-5">
-            <h2 class="text-center mt-3 fw-bold  home-image">DRESS LIKE NEVER BEFORE</h2
             <div class="image-container">
-                <a href="/user/men">
-                <img src="/images/mens.jpg"   alt="Street style fashion" class="img-fluid">
-            </a>
+                <img src="/images/mens.jpg" alt="Street style fashion" class="img-fluid">
+                <div class="image-overlay">
+                    <h2 class="image-title">DRESS LIKE NEVER BEFORE</h2>
+                    <p class="image-description">Explore our men's collection for the latest in street style fashion.</p>
+                    <a href="/user/men" class="image-link">Shop Men's Collection</a>
+                </div>
             </div>
-          
         </section>
 
         <section class="mb-5">
-            <h2 class="text-center mt-3 fw-bold home-image">UNLOCK THE POTENTIAL OF FASHION</h2>
             <div class="image-container">
-                <a href="/user/Women">
                 <img src="/images/girls.jpeg" alt="Vintage sportswear" class="img-fluid">
-               </a>
-                <div class="text position-absolute top-0 end-0 p-2 text-white fs-5 me-3 mt-5" style="font-family: joan;">
-                    <a href="/user/Women" style="text-decoration: none; color: white;">GIFT FOR HER →</a>
-             </div>
-             </div>
-        </section>
-
-        <section class="mb-5">
-            <h2 class="text-center mt-3 fw-bold home-image" >LET THEM GLOW</h2>
-            <div class="image-container">
-                <a href="/user/kids">
-                <img src="/images/kid.jpeg" alt="Kids fashion" class="img-fluid">
-            </a>
-                <div class="text position-absolute top-0 end-0 p-2 text-white fs-5 me-3 mt-5" style="font-family: joan;">
-                  <a href="/user/kids" style="text-decoration: none; color: white;">MAKE THEM HAPPY →</a>
+                <div class="image-overlay">
+                    <h2 class="image-title">UNLOCK THE POTENTIAL OF FASHION</h2>
+                    <p class="image-description">Discover our women's collection featuring vintage-inspired sportswear.</p>
+                    <a href="/user/Women" class="image-link">Shop Women's Collection</a>
+                </div>
             </div>
         </section>
 
-        <div class="text-center my-5">
-            <h1 class="brand-logo">BLUR VINTAGE ★</h1>
-        </div>
-        <script src="/js/spinner.js"></script>  
+        <section class="mb-5">
+            <div class="image-container">
+                <img src="/images/kid.jpeg" alt="Kids fashion" class="img-fluid">
+                <div class="image-overlay">
+                    <h2 class="image-title">LET THEM GLOW</h2>
+                    <p class="image-description">Explore our kids' collection for adorable and stylish outfits.</p>
+                    <a href="/user/kids" class="image-link">Shop Kids' Collection</a>
+                </div>
+            </div>
+        </section>
+
+        <div class="brand-logo">BLUR VINTAGE ★</div>
     </main>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 
-    <!-- footer starts -->
-    <%-include ("../../views/partials/user/footer")%>
+    <%- include("../../views/partials/user/footer") %>
 
+    <script src="/js/spinner.js"></script>
     <script>
-       document.addEventListener('DOMContentLoaded',function(){
-            const newUser =  <%= isNewUser %>
+         document.addEventListener('DOMContentLoaded',function(){
+        const newUser =   <%- JSON.stringify(isNewUser) %>;
+        let  refferalSuccess = <%= referalSuccess %>
 
-            console.log("hy",newUser)
+        console.log("hy",newUser)
 
-            if (newUser) {
-          Swal.fire({
-            title: 'Welcome to \nBLUR VINTAGE ★',
-            text: 'Please login or register to start shopping!',
-            icon: 'info',
-            showCancelButton: true,
-            confirmButtonText: 'already our member? login',
-            cancelButtonText: 'new member ? register',
-            confirmButtonColor: '#3085d6',
-            cancelButtonColor: '#28a745',
-            allowOutsideClick: true,
-          }).then((result) => {
-            if (result.isConfirmed) {
-                // Redirect to login page
-                window.location.href = '/user/login';
-            } else if (result.dismiss === Swal.DismissReason.cancel) {
-                // Redirect to register page
-                window.location.href = '/user/register';
-            }
-          });
+        if (newUser) {
+      Swal.fire({
+        title: 'Welcome to \nBLUR VINTAGE ★',
+        text: 'Please login or register to start shopping!',
+        icon: 'info',
+        showCancelButton: true,
+        confirmButtonText: 'already our member? login',
+        cancelButtonText: 'new member ? register',
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#28a745',
+        allowOutsideClick: true,
+      }).then((result) => {
+        if (result.isConfirmed) {
+           
+            window.location.href = '/user/login';
+        } else if (result.dismiss === Swal.DismissReason.cancel) {
+            
+            window.location.href = '/user/register';
+        }
+      });
     }
 
-        let refferalSuccess = <%= referalSuccess %>
-        
+     
+    if(refferalSuccess){
+        Swal.fire({
 
-        if(refferalSuccess){
-            Swal.fire({
-
-                toast:true,
-                position:"top-end",
-                icon:"success",
-                title:"Welcome 🤍",
-                text: 'You received ₹500 as referral bonus in your wallet!',
-              showConfirmButton: false,
-             timer: 5000,
-            timerProgressBar: true,
-            didOpen: (toast) => {
-                toast.addEventListener('mouseenter', Swal.stopTimer)
-                toast.addEventListener('mouseleave', Swal.resumeTimer)
-            }
-            });
+            toast:true,
+            position:"top-end",
+            icon:"success",
+            title:"Welcome 🤍",
+            text: 'You received ₹1000 as referral bonus in your wallet!',
+          showConfirmButton: false,
+         timer: 5000,
+        timerProgressBar: true,
+        didOpen: (toast) => {
+            toast.addEventListener('mouseenter', Swal.stopTimer)
+            toast.addEventListener('mouseleave', Swal.resumeTimer)
         }
+        });
+    }
 
-      })
-       
+  })
     </script>
+</body>
+</html>
+

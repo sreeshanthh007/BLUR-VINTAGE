@@ -87,7 +87,7 @@ const addToWishlist = async (req, res) => {
                 price: Math.round(finalPrice), 
                 originalPrice: variant.price,  
                 discount: bestDiscount,        // Save the applied discount
-                offerName: offerName,         // Save the offer name
+                offerName: offerName,         
                 productImage: variant.productImage,
                 status: variant.status
             }
@@ -256,10 +256,10 @@ const wishlistToCart = async(req,res,next)=>{
         });
 
 
-        await Wishlist.updateOne(
-            {userId:userId},
-            {$pull:{items:{product:productId}}}
-        );
+        await Wishlist.findOneAndDelete({
+            userId: userId,
+            product: productId,
+        });
         
     } catch (error) {
         next(error)

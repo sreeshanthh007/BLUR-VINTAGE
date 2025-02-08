@@ -386,9 +386,14 @@ const loadShop = async (req, res) => {
         const query = req.query.search
         const categoryFilter = req.query.category
 
+        const listedCategories = await Category.find({ isListed: true });
+      
+
         const baseQuery={
             isBlocked:false,
+            category:{$in:listedCategories}
         }
+
         if(categoryFilter){
           
             const categoryDoc = await Category.findOne({
@@ -407,7 +412,7 @@ const loadShop = async (req, res) => {
         if (query) {
             baseQuery.$or = [
                 { productName: { $regex: query, $options: 'i' } },
-                { 'variants.sku': { $regex: query, $options: 'i' } }
+               
             ];
         }
         let sortConfig={};
@@ -459,6 +464,7 @@ const loadShop = async (req, res) => {
         let originalPrice = 0;
         let finalPrice = 0;
         let offerName = '';
+
 
         // Get the first variant's price as base price
         if (product.variants && product.variants.length > 0) {
@@ -580,7 +586,13 @@ const loadmen = async (req,res,next)=>{
                 products: [],
                 currentSort: sortOption,
                 search:"",
-            });
+                currentPage: page,
+                totalPages,
+                hasNextPage: page < totalPages,
+                hasPrevPage: page > 1,
+                nextPage: page + 1,
+                prevPage: page - 1,
+            }); 
         }
 
         const baseQuery = {
@@ -591,7 +603,6 @@ const loadmen = async (req,res,next)=>{
         if (query) {
             baseQuery.$or = [
                 { productName: { $regex: query, $options: 'i' } },
-                { 'variants.sku': { $regex: query, $options: 'i' } }
             ];
         }
 
@@ -683,6 +694,7 @@ const loadmen = async (req,res,next)=>{
             };
         });
 
+        console.log("product with offer",productsWithOffers)
         const renderOptions = {
             products: productsWithOffers,
             currentSort: sortOption,
@@ -693,7 +705,7 @@ const loadmen = async (req,res,next)=>{
             hasNextPage: page < totalPages,
             hasPrevPage: page > 1,
             nextPage: page + 1,
-            prevPage: page - 1
+            prevPage: page - 1,
         };
 
         if (req.xhr || req.headers['x-requested-with'] === 'XMLHttpRequest') {
@@ -701,15 +713,13 @@ const loadmen = async (req,res,next)=>{
         }
         
         if(!user){
-            return res.render('user/userlandingpage',
-                renderOptions,
-            )
+            return res.render('user/userlandingpage', renderOptions)
         }else{
             return res.render('user/userlandingpage',renderOptions)
         }
 
     } catch (error) {
-        next(error)
+       console.log
     }
 }
 // women page
@@ -726,7 +736,8 @@ const loadWomen = async (req, res,next) => {
         if (!womenCategory) {
             return res.render("user/women", { 
                 products: [],
-                currentSort: sortOption 
+                currentSort: sortOption,
+                categoryNotListed:true
             });
         }
 
@@ -739,7 +750,6 @@ const loadWomen = async (req, res,next) => {
         if (query) {
             baseQuery.$or = [
                 { productName: { $regex: query, $options: 'i' } },
-                { 'variants.sku': { $regex: query, $options: 'i' } }
             ];
         }
 
@@ -827,6 +837,8 @@ const loadWomen = async (req, res,next) => {
                 offerName
             };
         });
+
+        console.log("product with offer",productsWithOffers)
             
 
         // Render the page with products and current sort option
@@ -881,7 +893,8 @@ const loadKids =async (req,res,next)=>{
     if(!kidsCategory){
         return res.render("user/kids",{
             products:[],
-            currentSort:sortOption
+            currentSort:sortOption,
+            categoryNotListed:true
         });
     }
 
@@ -893,7 +906,6 @@ const loadKids =async (req,res,next)=>{
     if (query) {
         baseQuery.$or = [
             { productName: { $regex: query, $options: 'i' } },
-            { 'variants.sku': { $regex: query, $options: 'i' } }
         ];
     }
     let sortConfig={};
@@ -1454,6 +1466,10 @@ const resetPassword = async (req,res,next) => {
    const setNewPassword = (req,res)=>{
     return res.render("user/resetForgotPassword")
    }
+
+   const loadAboutUs = (req,res)=>{
+    return res.render('user/Aboutuspage')
+   }
 module.exports={
     loadRegister,
     loadLogin,
@@ -1479,7 +1495,8 @@ module.exports={
     setNewPassword,
     resetPassword,
     loadShop,
-    // searchSuggestions
+    loadAboutUs
+   
 
    
 

@@ -120,6 +120,12 @@
                 padding: 0.4rem 0.6rem;
                 border-radius: 4px;
             }
+            .no-products-message {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: #6c757d;
+            font-size: 1.2rem;
+        }
         </style>
     </head>
     <body>
@@ -133,11 +139,10 @@
             </div>
         </div>
         <main class="container-fluid px-2 px-sm-3 px-md-4 py-3 py-md-5">
-        
             <!-- Products Grid -->
             <div class="row g-2 g-sm-3 g-md-4">
                 <% for (const product of products) { %>
-                    <% if (product.variants && product.variants.length > 0 && product.variants[0].stock > 0) { %>
+                    <% if (product.variants && product.variants.length > 0) { %>
                         <div class="col-6 col-sm-4 col-lg-3">
                             <div class="product-card">
                                 <div class="product-image-container">
@@ -153,7 +158,7 @@
                                             <img src="/images/default-product.jpg" 
                                                  alt="No image available" 
                                                  class="img-fluid">
-                                        <% } %>
+                                        <% } %> 
                                     </a>
                                 </div>
                                 <h3 class="product-title"><%= product.productName %></h3>
@@ -183,7 +188,6 @@
                     <% } %>
                 <% } %>
             </div>
-        
             <!-- Pagination Section -->
             <% if (totalPages > 1) { %>
                 <div class="pagination-container d-flex justify-content-center">
@@ -224,6 +228,7 @@
 </html>
 
 <script>
+    
         document.addEventListener("DOMContentLoaded",()=>{
             const productLinks = document.querySelectorAll('.product-link');
 
@@ -250,7 +255,31 @@
 
 
                 
-
+            async function checkWishlistStatus() {
+                try {
+               const response = await fetch('/user/wishlist/check-status');
+                 const data = await response.json();
+            
+                   if (data.wishlistProductIds) {
+                   heartBtn.forEach(button => {
+                    const productId = button.dataset.productId;
+                    const heartIcon = button.querySelector('i');
+                    
+                    if (data.wishlistProductIds.includes(productId)) {
+                        heartIcon.classList.remove('fa-regular');
+                    heartIcon.classList.add('fa-solid');
+                    heartIcon.style.color = "#ff0000";
+                    }else{
+                        heartIcon.classList.remove('fa-solid');
+                    heartIcon.classList.add('fa-regular');
+                    heartIcon.style.color = ""; 
+                    }
+                });
+               }
+        } catch (error) {
+            console.error("Error checking wishlist status:", error);
+        }
+    }   
 
 
             const heartBtn = document.querySelectorAll('.heart-btn');
@@ -275,8 +304,7 @@
 
                             body:JSON.stringify({
                                 productId,
-                                variantColor:"blue",
-                                variantSize:"M"
+
                             })
                         });
                         
@@ -320,13 +348,13 @@
    
            document.body.appendChild(notification);
     
-    // Remove notification after 3 seconds
+  
       setTimeout(() => {
         notification.remove();
        }, 3000);
 }
 
-// Add these CSS animations to your stylesheet
+
        const style = document.createElement('style');
         style.textContent = `
       @keyframes fadeIn {

@@ -475,16 +475,47 @@ document.querySelectorAll('.quantity-controls').forEach(control => {
 
 
     // REDIRECTING TO CHECKOUT
-    document.querySelector('.place-order-btn').addEventListener('click', async function() {
+document.querySelector('.place-order-btn').addEventListener('click', async function(e) {
+    e.preventDefault();
+    
     try {
-        // Navigate to checkout page
-        window.location.href = '/user/checkout';
+        // First check if there are any blocked products
+        const response = await fetch('/user/checkout', {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'  // Marks the request as AJAX
+            }
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            // If there are blocked products or other errors
+            Swal.fire({
+                icon: 'error',
+                title: 'Unable to Proceed',
+                text: data.message || 'Some products in your cart are no longer available',
+                confirmButtonText: 'View Cart',
+                showCancelButton: true,
+                cancelButtonText: 'Close'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = '/user/cart';
+                }
+            });
+            return;
+        }
+
+        // If everything is okay, proceed to checkout page
+        window.location.href = data.redirectUrl
+
     } catch (error) {
-        console.error('Error navigating to checkout:', error);
+        console.error('Error checking checkout status:', error);
         Swal.fire({
             icon: 'error',
             title: 'Error',
-            text: 'Failed to proceed to checkout'
+            text: 'Failed to proceed to checkout. Please try again.',
+            confirmButtonText: 'Okay'
         });
     }
 });

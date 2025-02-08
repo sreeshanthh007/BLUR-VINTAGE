@@ -1,0 +1,306 @@
+<!-- views/admin/analytics/dashboard.ejs -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics Dashboard - BLUR VINTAGE ★</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Inherit your existing styles */
+        body {
+            min-height: 100vh;
+            background-color: #f8f9fa;
+            margin: 0;
+            padding: 0;
+        }
+
+        .main-content {
+            margin-left: 250px;
+            padding: 2rem;
+            transition: margin-left 0.3s ease;
+        }
+
+        .sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 100vh;
+        width: 250px;
+        background-color: #2c3e50;
+        color: #ecf0f1;
+        transition: transform 0.3s ease;
+        z-index: 1000;
+        overflow-y: auto;
+    }
+
+    .sidebar-logo {
+        padding: 20px;
+        text-align: center;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .sidebar-logo h2 {
+        color: #fff;
+        margin: 0;
+        font-weight: 600;
+    }
+
+    .sidebar-menu {
+        padding: 20px 0;
+    }
+
+    .sidebar-menu a {
+        display: flex;
+        align-items: center;
+        padding: 12px 20px;
+        color: #bdc3c7;
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+
+    .sidebar-menu a:hover {
+        background-color: rgba(255,255,255,0.1);
+        color: #fff;
+    }
+
+    .sidebar-menu a.active {
+        background-color: rgba(255,255,255,0.2);
+        color: #fff;
+    }
+
+    .sidebar-menu a i {
+        margin-right: 10px;
+        font-size: 18px;
+    }
+
+    .sidebar-footer {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        padding: 15px;
+        text-align: center;
+        background-color: rgba(0,0,0,0.2);
+    }
+
+    .mobile-menu-toggle {
+        display: none;
+        position: fixed;
+        top: 15px;
+        left: 15px;
+        z-index: 1100;
+        background: #2c3e50;
+        color: #fff;
+        padding: 10px;
+        border-radius: 4px;
+    }
+
+    @media (max-width: 991.98px) {
+        .sidebar {
+            transform: translateX(-100%);
+        }
+
+        .sidebar.show {
+            transform: translateX(0);
+        }
+
+        .mobile-menu-toggle {
+            display: block;
+        }
+    }
+
+        /* Additional Analytics Styles */
+        .chart-container {
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stats-card {
+            background: #fff;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+
+        .stats-card:hover {
+            transform: translateY(-5px);
+        }
+
+        @media (max-width: 991.98px) {
+            .main-content {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+
+
+    <aside class="sidebar">
+        <%-include('../../views/partials/admin/sidebar.ejs')%>
+    </aside>
+
+    
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container-fluid"
+            <!-- Page Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="mb-0">Sales Analytics Dashboard</h2>
+                <div class="filter-group d-flex align-items-center">
+                    <select id="timeframeFilter" class="form-select me-3" onchange="updateDashboard(this.value)">
+                        <option value="weekly" <%= timeframe === 'weekly' ? 'selected' : '' %>>Weekly</option>
+                        <option value="monthly" <%= timeframe === 'monthly' ? 'selected' : '' %>>Monthly</option>
+                        <option value="yearly" <%= timeframe === 'yearly' ? 'selected' : '' %>>Yearly</option>
+                    </select>
+                    <span class="text-muted">
+                        <%= dateRange.start %> - <%= dateRange.end %>
+                    </span>
+                </div>
+            </div>
+
+            <!-- Summary Cards -->
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <div class="stats-card text-center">
+                        <h3 class="text-primary mb-3">Top Product</h3>
+                        <h4><%= topProducts[0]?.productName || 'No data' %></h4>
+                        <p class="mb-0">Quantity: <%= topProducts[0]?.totalQuantity || 0 %></p>
+                        <p class="text-muted">Revenue: ₹<%= topProducts[0]?.totalRevenue?.toFixed(2) || 0 %></p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stats-card text-center">
+                        <h3 class="text-success mb-3">Top Category</h3>
+                        <h4><%= topCategories[0]?.categoryName || 'No data' %></h4>
+                        <p class="mb-0">Quantity: <%= topCategories[0]?.totalQuantity || 0 %></p>
+                        <p class="text-muted">Revenue: ₹<%= topCategories[0]?.totalRevenue?.toFixed(2) || 0 %></p>
+                    </div>
+                </div>
+               
+            </div>
+
+            <!-- Charts -->
+            <div class="row">
+                <!-- Products Chart -->
+                <div class="col-12 mb-4">
+                    <div class="chart-container">
+                        <h3 class="mb-4">Top 10 Products</h3>
+                        <canvas id="productsChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Categories and Variants Charts -->
+                <div class="col-md-6 mb-4">
+                    <div class="chart-container">
+                        <h3 class="mb-4">Top 10 Categories</h3>
+                        <canvas id="categoriesChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        // Initialize charts with the data
+        const productsData = <%- JSON.stringify(topProducts) %>;
+        const categoriesData = <%- JSON.stringify(topCategories) %>;
+     
+
+        // Chart configuration
+        const chartConfig = {
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            },
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return value.toLocaleString();
+                        }
+                    }
+                }
+            }
+        };
+
+        // Function to create charts with consistent styling
+        function createChart(elementId, label, labels, data) {
+            const ctx = document.getElementById(elementId).getContext('2d');
+            return new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: label,
+                        data: data,
+                        backgroundColor: [
+                            'rgba(54, 162, 235, 0.6)',
+                            'rgba(255, 99, 132, 0.6)',
+                            'rgba(75, 192, 192, 0.6)',
+                            'rgba(255, 206, 86, 0.6)',
+                            'rgba(153, 102, 255, 0.6)',
+                            'rgba(255, 159, 64, 0.6)',
+                            'rgba(199, 199, 199, 0.6)',
+                            'rgba(83, 102, 255, 0.6)',
+                            'rgba(40, 159, 64, 0.6)',
+                            'rgba(210, 199, 199, 0.6)'
+                        ],
+                        borderColor: [
+                            'rgba(54, 162, 235, 1)',
+                            'rgba(255, 99, 132, 1)',
+                            'rgba(75, 192, 192, 1)',
+                            'rgba(255, 206, 86, 1)',
+                            'rgba(153, 102, 255, 1)',
+                            'rgba(255, 159, 64, 1)',
+                            'rgba(199, 199, 199, 1)',
+                            'rgba(83, 102, 255, 1)',
+                            'rgba(40, 159, 64, 1)',
+                            'rgba(210, 199, 199, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: chartConfig
+            });
+        }
+
+        // Create all charts
+        window.addEventListener('load', () => {
+            createChart(
+                'productsChart',
+                'Total Quantity Sold',
+                productsData.map(item => item.productName),
+                productsData.map(item => item.totalQuantity)
+            );
+
+            createChart(
+                'categoriesChart',
+                'Total Quantity Sold',
+                categoriesData.map(item => item.categoryName),
+                categoriesData.map(item => item.totalQuantity)
+            );  
+        });
+
+        // Function to update dashboard
+        function updateDashboard(timeframe) {
+            window.location.href = `/admin/analytics-dashboard?timeframe=${timeframe}`;
+        }
+    </script>
+</body>
+</html>

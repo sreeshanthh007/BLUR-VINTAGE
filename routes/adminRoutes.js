@@ -123,7 +123,9 @@ router.post("/offers/add",OfferController.addOffer)
 router.put("/returns/:orderId/:itemId/approve",returnController.approvedReturn);
 
 
-router.get("/sales-report",adminAuth,admincontroller.getSalesReport)
+router.get("/sales-report",adminAuth,admincontroller.getSalesReport);
+
+router.get('/analytics-dashboard',adminAuth,admincontroller.getAnalyticsDashboard)
 
 
 

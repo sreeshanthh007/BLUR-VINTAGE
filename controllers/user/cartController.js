@@ -3,7 +3,9 @@ const Product = require("../../models/productSchema");
 const users = require('../../models/userSchema')
 const Address = require("../../models/adressSchema");
 const Coupon = require('../../models/couponSchema');
+const Wallet = require('../../models/walletSchema')
 const { availableCoupons } = require("../admin/couponController");
+const product = require("../../models/productSchema");
 
 
 
@@ -29,6 +31,10 @@ const addtoCart = async(req,res,next) => {
 
         if(!product) {
             return res.status(400).json({success: false, message: "product not found"});
+        }
+
+        if(product.isBlocked){
+            return res.status(400).json({success:false,message:"product is blocked by admin"})
         }
 
         // Find the specific variant
@@ -361,7 +367,7 @@ const updateQuantity = async (req, res) => {
 
         return res.status(200).json({
             success: true,
-            message: "Quantity and price updated successfully",
+            message: "Quantity updated uccessfully",
             newTotal: (discountedPrice || originalPrice) * quantity,
             cartTotal: cart.totalAmount,
             itemPrice: discountedPrice || originalPrice,
@@ -482,7 +488,7 @@ const addNewAddress = async(req,res)=>{
 const updateAddress = async(req,res)=>{
     try {
         const {addressId} = req.body;
-        console.log("addrses id",addressId);
+       
         
         const address = await Address.findById(addressId);
         console.log("address update",address);
@@ -512,14 +518,50 @@ const checkout = async (req,res,next)=>{
     try {
         const userId = req.session?.user || req.session?.passport?.user;
         const selectedAddressId = req.session?.selectedAddressId
+        const wallet = await Wallet.findOne({userId});
+        const appliedCouponData = req.session?.appliedCoupon;
+
+        const walletBalance = wallet ? wallet.balance : 0;
         const cart = await Cart.findOne({user:userId})
         .populate({
         path:"items.product",
-        select:"productName variants"
+        select:"productName variants isBlocked category",
+        populate: {
+            path: "category",
+            select: "name isListed"
+        }
         });
+
         if(!cart || cart.items.length===0){
             return res.redirect("/user/cart");
         }
+
+        
+
+        const blockedItems = cart.items.filter(item => item.product.isBlocked || !item.product?.category?.isListed);
+
+        console.log("blocked products",blockedItems)
+
+
+        if(blockedItems.length > 0){
+            const blockedItemDetails = blockedItems.map(item =>{
+                const reason = item.product?.isBlocked ? "product is blocked" : "category is blocked";
+
+                return `${item.product.productName} (${reason})`
+            })
+
+            if (req.xhr) {
+                return res.status(400).json({
+                    success: false,
+                    message: `The following items are no longer available: ${blockedItemDetails.join(', ')}`
+
+                });
+            }
+        }
+
+       
+
+    
 
         const address  = selectedAddressId?
         await Address.findById(selectedAddressId):
@@ -542,21 +584,37 @@ const checkout = async (req,res,next)=>{
         });
 
 
+        
+
+
+        if (req.xhr) {
+            return res.json({
+                success: true,
+                redirectUrl: '/user/checkout',
+                coupons:coupon
+            });
+        }
+
 
         console.log("cooupoon find",coupon)
         console.log("cart amount",cart.totalAmount);
         
-        
+       
         res.render("user/checkOutPage",{
             cart,
            address,
            coupons:coupon,
-            pageTitle:"checkout"
+            pageTitle:"checkout",
+            walletBalance
         });
     } catch (error) {
         next(error)
+        console.log("error in load checkout",error.message)
     }
 }
+
+
+
 
 
 

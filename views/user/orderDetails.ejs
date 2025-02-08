@@ -192,10 +192,7 @@
               text-align: center;
             }
           }
-
-
-
-
+          
           body {
               display: flex;
               min-height: 100vh;
@@ -258,6 +255,56 @@
               border: none;
               padding: 10px;
               cursor: pointer;
+          }
+          
+          .invoice-button {
+          display: inline-flex;
+         align-items: center;
+          gap: 8px;
+         padding: 8px 16px;
+         border-radius: 6px;
+           font-weight: 500;
+         transition: all 0.2s;
+           border: none;
+        cursor: pointer;
+         background: #4F46E5;
+       color: white;
+        }
+
+        .invoice-button:hover:not(.disabled) {
+          background: #4338CA;
+          transform: translateY(-1px);
+          box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .invoice-button.disabled {
+          background: #E5E7EB;
+          color: #9CA3AF;
+          cursor: not-allowed;
+        }
+
+        .invoice-button i {
+          font-size: 1.1em;
+        }
+
+
+           .invoice-section {
+            margin: 15px 0;
+            padding: 15px;
+            border-radius: 8px;
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+          }
+
+          .invoice-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.875rem;
+            background: #fff;
+            border: 1px solid #dee2e6;
           }
           @media (max-width: 768px) {
               .sidebar {
@@ -323,53 +370,53 @@
                     </button>
                   <% } %>
                 </div>
-
-
-            
-                  <div class="invoice-section">
-                    <% if (order.orderStatus === 'Delivered' && 
-                        (order.payment.status === 'Successful' || 
-                        (order.payment.method === 'COD' && order.payment.status === 'Completed' || order.payment.method === "Razorpay" && order.payment.status === "Completed"))) { %>
-                        
-                        <div style="display: flex; align-items: center; justify-content: space-between;">
-                            <div>
-                                <h4 style="margin: 0 0 5px 0;">Invoice</h4>
-                                <span class="invoice-badge">
-                                    <i class="fas fa-check-circle" style="color: #28a745;"></i> 
-                                    Available for download
-                                </span>
-                            </div>
-                            <button 
-                                onclick="downloadInvoice('<%= order._id %>')" 
-                                class="invoice-button">
-                                <i class="fas fa-file-download"></i>
-                                Download Invoice
-                            </button>
-                        </div>
-                        
-                    <% } else { %>
-                        <div style="display: flex; align-items: center; justify-content: space-between;">
-                            <div>
-                                <h4 style="margin: 0 0 5px 0;">Invoice</h4>
-                                <span class="invoice-badge">
-                                    <i class="fas fa-clock" style="color: #6c757d;"></i>
-                                    <% if (order.orderStatus !== 'Delivered') { %>
-                                        Available after delivery
-                                    <% } else { %>
-                                        Waiting for payment confirmation
-                                    <% } %>
-                                </span>
-                            </div>
-                            <button 
-                                class="invoice-button disabled" 
-                                disabled>
-                                <i class="fas fa-file-download"></i>
-                                Download Invoice
-                            </button>
-                        </div>
-                    <% } %>
-                  </div>
-
+                <div class="invoice-section">
+                  <% if ((order.payment.method === "Razorpay" && order.payment.status === "Completed") || 
+                         (order.payment.method === 'COD' && order.orderStatus === 'Delivered') || 
+                         (order.payment.method === "Wallet" && order.payment.status === "Completed")) { %>
+                      
+                      <div style="display: flex; align-items: center; justify-content: space-between;">
+                          <div>
+                              <h4 style="margin: 0 0 5px 0;">Invoice</h4>
+                              <span class="invoice-badge">
+                                  <i class="fas fa-check-circle" style="color: #28a745;"></i> 
+                                  Available for download
+                              </span>
+                          </div>
+                          <button 
+                              onclick="downloadInvoice('<%= order._id %>')" 
+                              class="invoice-button">
+                              <i class="fas fa-file-download"></i>
+                              Download Invoice
+                          </button>
+                      </div>
+                      
+                  <% } else { %>
+                      <div style="display: flex; align-items: center; justify-content: space-between;">
+                          <div>
+                              <h4 style="margin: 0 0 5px 0;">Invoice</h4>
+                              <span class="invoice-badge">
+                                  <i class="fas fa-clock" style="color: #6c757d;"></i>
+                                  <% if (order.payment.method === 'Razorpay' && order.payment.status !== 'Completed') { %>
+                                      Waiting for payment confirmation
+                                  <% } else if (order.payment.method === 'COD' && order.orderStatus !== 'Delivered') { %>
+                                      Available after delivery
+                                  <% } else if (order.orderStatus === 'Returned') { %>
+                                      Cannot download invoice for returned order
+                                  <% } else { %>
+                                      Waiting for confirmation
+                                  <% } %>
+                              </span>
+                          </div>
+                          <button 
+                              class="invoice-button disabled" 
+                              disabled>
+                              <i class="fas fa-file-download"></i>
+                              Download Invoice
+                          </button>
+                      </div>
+                  <% } %>
+              </div>
                 <% if (order.orderStatus !== 'Cancelled') { %>
                   <div class="payment-status-section" style="margin: 15px 0;">
                     <% if (order.payment.status === 'Failed') { %>
@@ -903,11 +950,15 @@
 
   function downloadInvoice(orderId) {
     Swal.fire({
-        title: 'Downloading Invoice...',
-        text: 'Please wait while we generate your invoice',
+        title: 'Preparing Invoice',
+        html: '<div class="flex flex-col items-center"><i class="fas fa-file-invoice fa-3x mb-4 text-blue-500"></i><p>Generating your invoice...</p></div>',
         allowOutsideClick: false,
+        showConfirmButton: false,
         didOpen: () => {
             Swal.showLoading();
+        },
+        customClass: {
+            popup: 'animated bounceIn'
         }
     });
     const iframe = document.createElement('iframe');
@@ -920,10 +971,16 @@
         document.body.removeChild(iframe);
         Swal.fire({
             icon: 'success',
-            title: 'Invoice Downloaded',
-            text: 'Your invoice has been downloaded successfully',
-            timer: 2000,
-            showConfirmButton: false
+            title: 'Download Complete!',
+            html: '<div class="flex flex-col items-center"><i class="fas fa-check-circle fa-3x mb-4 text-green-500"></i><p>Your invoice has been downloaded successfully</p></div>',
+            timer: 2500,
+            position: 'center-end',
+            width: '24em',
+            timerProgressBar: true,
+            showConfirmButton: false,
+            customClass: {
+                popup: 'animated fadeInUp'
+            }
         });
     };
 

@@ -78,6 +78,13 @@
             color: #fff;
         }
 
+        .category-not-listed-message {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: #6c757d;
+            font-size: 1.2rem;
+         }
+
         .page-item.disabled .page-link {
             color: #6c757d;
             pointer-events: none;
@@ -109,7 +116,12 @@
       </div>
     <!-- Header -->
     <%-include ("../../views/partials/user/landingpageHeader")%>
-    
+    <% if (locals.categoryNotListed) { %>
+        <div class="category-not-listed-message">
+            <h2>Men's Collection</h2>
+            <p>Products will be available soon. We are currently updating our collection.</p>
+        </div>
+       <%}else{%>
         <main class="container-fluid px-2 px-sm-3 px-md-4 py-3 py-md-5">
             <div class="row g-2 g-sm-3 g-md-4">
                 <% for (const product of products) { %>
@@ -157,6 +169,7 @@
                             </div>
                         </div>
                     <% } %>
+                <% } %>
                 <% } %>
             </div>
 

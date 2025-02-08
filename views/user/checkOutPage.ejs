@@ -169,7 +169,17 @@
                         <div class="payment-option">
                             <div class="form-check">
                                 <input class="form-check-input" type="radio" name="payment" id="wallet">
-                                <label class="form-check-label" for="wallet">Wallet</label>
+                                <label class="form-check-label" for="wallet">
+                                    Pay with Wallet
+                                    <% if (typeof walletBalance !== 'undefined') { %>
+                                        <small class="d-block text-muted">
+                                            Available Balance: ₹<span id="wallet-balance"><%= walletBalance.toFixed(2) %></span>
+                                            <% if (walletBalance < cart.totalAmount) { %>
+                                                <span class="text-danger">(Insufficient Balance)</span>
+                                            <% } %>
+                                        </small>
+                                    <% } %>
+                                </label>
                             </div>
                         </div>
                     </div>
@@ -744,5 +754,158 @@
         })
         
     });
+
+
+
+    // Add these functions after your existing script
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Wallet-specific initialization
+    const walletRadio = document.getElementById('wallet');
+    const walletBalance = parseFloat(document.getElementById('wallet-balance')?.textContent || '0');
+    const cartTotalElement = document.querySelector('.order-summary-total');
+    const cartTotal = parseFloat(cartTotalElement.textContent.replace('Rs. ', ''));
+
+    // Disable wallet radio if balance is insufficient
+    if (walletRadio && walletBalance < cartTotal) {
+        walletRadio.disabled = true;
+        walletRadio.closest('.payment-option').style.opacity = '0.7';
+    }
+
+    // Update your existing confirm button click handler
+    const confirmBtn = document.querySelector(".confirm-btn");
+    confirmBtn.addEventListener('click', async () => {
+        const selectedPayment = document.querySelector('input[name="payment"]:checked');
+
+        if (!selectedPayment) {
+            Swal.fire({
+                icon: "error",
+                title: "Please select a payment method"
+            });
+            return;
+        }
+
+        const addressElement = document.getElementById("address");
+        if (!addressElement || !addressElement.value.trim()) {
+            Swal.fire({
+                icon: "error",
+                title: "Please select a delivery address"
+            });
+            return;
+        }
+
+        // Check wallet balance if wallet payment is selected
+        if (selectedPayment.id === 'wallet') {
+            const currentTotal = parseFloat(document.querySelector('.order-summary-total').textContent.replace('Rs. ', ''));
+            if (walletBalance < currentTotal) {
+                Swal.fire({
+                    icon: "error",
+                    title: "Insufficient Balance",
+                    text: `Your wallet balance (Rs. ${walletBalance.toFixed(2)}) is insufficient for this purchase (Rs. ${currentTotal.toFixed(2)})`
+                });
+                return;
+            }
+        }
+
+        const orderData = {
+            cart: {
+                items: <%- JSON.stringify(cart.items) %>,
+                totalAmount: parseFloat(document.querySelector('.order-summary-total').textContent.replace('Rs. ', ''))
+            },
+            address: <%- JSON.stringify(address) %>,
+            paymentMethod: selectedPayment.id === 'wallet' ? 'Wallet' : selectedPayment.id.toUpperCase(),
+            coupon: {
+                code: document.querySelector('input[placeholder="Coupon code"]').value.trim()
+            }
+        };
+
+        try {
+            const response = await fetch("/user/order/place", {
+                method: "post",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(orderData)
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                if (selectedPayment.id === 'razorpay') {
+                    // Your existing Razorpay handling code remains unchanged
+                    // ...
+                } else if (selectedPayment.id === 'wallet') {
+                    // Handle successful wallet payment
+                    Swal.fire({
+                        icon: "success",
+                        title: "Payment Successful",
+                        html: `
+                            <div>
+                                <p>Order placed successfully</p>
+                                <p>Order number: ${result.orderNumber}</p>
+                                <p>Amount paid: Rs. ${orderData.cart.totalAmount.toFixed(2)}</p>
+                                <p>New wallet balance: Rs. ${(walletBalance - orderData.cart.totalAmount).toFixed(2)}</p>
+                            </div>
+                        `,
+                        confirmButtonText: "Continue"
+                    }).then(() => {
+                        window.location.href = "/user/thankYou";
+                    });
+                } else {
+                    // Handle COD payment success
+                    Swal.fire({
+                        icon: "success",
+                        title: "Order placed successfully",
+                        text: `Order number: ${result.orderNumber}`,
+                        confirmButtonText: "Continue"
+                    }).then(() => {
+                        window.location.href = "/user/thankYou";
+                    });
+                }
+            } else {
+                throw new Error(result.message);
+            }
+        } catch (error) {
+            console.error("Failed to place order:", error);
+            Swal.fire({
+                icon: "error",
+                title: "Failed to place order",
+                text: error.message || "An error occurred while processing your order"
+            });
+        }
+    });
+
+    // Update wallet balance check when coupon is applied or removed
+    function updateWalletPaymentAvailability() {
+        const currentTotal = parseFloat(document.querySelector('.order-summary-total').textContent.replace('Rs. ', ''));
+        const walletRadio = document.getElementById('wallet');
+        
+        if (walletRadio) {
+            if (walletBalance < currentTotal) {
+                walletRadio.disabled = true;
+                walletRadio.checked = false;
+                walletRadio.closest('.payment-option').style.opacity = '0.7';
+                if (document.getElementById('wallet-balance')) {
+                    document.getElementById('wallet-balance').parentElement.innerHTML = 
+                        `Available Balance: ₹${walletBalance.toFixed(2)} <span class="text-danger">(Insufficient Balance)</span>`;
+                }
+            } else {
+                walletRadio.disabled = false;
+                walletRadio.closest('.payment-option').style.opacity = '1';
+                if (document.getElementById('wallet-balance')) {
+                    document.getElementById('wallet-balance').parentElement.innerHTML = 
+                        `Available Balance: ₹${walletBalance.toFixed(2)}`;
+                }
+            }
+        }
+    }
+
+    // Add observer for price changes
+    const orderSummaryTotal = document.querySelector('.order-summary-total');
+    if (orderSummaryTotal) {
+        const observer = new MutationObserver(updateWalletPaymentAvailability);
+        observer.observe(orderSummaryTotal, { childList: true, characterData: true, subtree: true });
+    }
+});
 
     </script>

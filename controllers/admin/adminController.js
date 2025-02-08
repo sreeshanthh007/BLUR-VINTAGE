@@ -424,6 +424,146 @@ const getSalesReport = async (req, res) => {
 };
 
 
+
+
+const getAnalyticsDashboard = async (req, res) => {
+    try {
+        const timeframe = req.query.timeframe || 'monthly';
+        let startDate, endDate;
+        switch (timeframe) {
+            case 'weekly':
+                startDate = new Date();
+                startDate.setHours(0, 0, 0, 0); // Start of day
+                startDate.setDate(startDate.getDate() - startDate.getDay()); // Start of week (Sunday)
+                endDate = new Date(startDate);
+                endDate.setDate(startDate.getDate() + 6); // End of week (Saturday)
+                endDate.setHours(23, 59, 59, 999); // End of day
+                break;
+                
+            case 'monthly':
+                startDate = new Date();
+                startDate.setDate(1); // Start of current month
+                startDate.setHours(0, 0, 0, 0);
+                endDate = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 0); 
+                endDate.setHours(23, 59, 59, 999);
+                break;
+                
+            case 'yearly':
+                startDate = new Date();
+                startDate.setMonth(0, 1); // January 1st of current year
+                startDate.setHours(0, 0, 0, 0);
+                endDate = new Date(startDate.getFullYear(), 11, 31); // December 31st
+                endDate.setHours(23, 59, 59, 999);
+                break;
+                
+            default:
+                startDate = new Date();
+                startDate.setMonth(startDate.getMonth() - 1);
+                startDate.setHours(0, 0, 0, 0);
+                endDate = new Date();
+                endDate.setHours(23, 59, 59, 999);
+        }
+
+      
+        const topProducts = await Order.aggregate([
+            {
+                $match: {
+                    createdAt: { $gte: startDate, $lte: endDate },
+                    orderStatus: { $nin: ['Cancelled', 'Failed'] }
+                }
+            },
+            { $unwind: '$orderItems' },
+            {
+                $lookup: {
+                    from: 'products',
+                    localField: 'orderItems.product',
+                    foreignField: '_id',
+                    as: 'productInfo'
+                }
+            },
+            { $unwind: '$productInfo' },
+            {
+                $group: {
+                    _id: '$orderItems.product',
+                    productName: { $first: '$productInfo.productName' },
+                    totalQuantity: { $sum: '$orderItems.quantity' },
+                    totalRevenue: {
+                        $sum: {
+                            $multiply: ['$orderItems.quantity', '$orderItems.price.discountedPrice']
+                        }
+                    }
+                }
+            },
+            { $sort: { totalQuantity: -1 } },
+            { $limit: 10 }
+        ]);
+
+        
+        const topCategories = await Order.aggregate([
+            {
+                $match: {
+                    createdAt: { $gte: startDate, $lte: endDate },
+                    orderStatus: { $nin: ['Cancelled', 'Failed'] }
+                }
+            },
+            { $unwind: '$orderItems' },
+            {
+                $lookup: {
+                    from: 'products',
+                    localField: 'orderItems.product',
+                    foreignField: '_id',
+                    as: 'productInfo'
+                }
+            },
+            { $unwind: '$productInfo' },
+            {
+                $lookup: {
+                    from: 'categories',
+                    localField: 'productInfo.category',
+                    foreignField: '_id',
+                    as: 'categoryInfo'
+                }
+            },
+            { $unwind: '$categoryInfo' },
+            {
+                $group: {
+                    _id: '$categoryInfo._id',
+                    categoryName: { $first: '$categoryInfo.name' },
+                    totalQuantity: { $sum: '$orderItems.quantity' },
+                    totalRevenue: {
+                        $sum: {
+                            $multiply: ['$orderItems.quantity', '$orderItems.price.discountedPrice']
+                        }
+                    }
+                }
+            },
+            { $sort: { totalQuantity: -1 } },
+            { $limit: 10 }
+        ]);
+
+        res.render('admin/analyticDashboard', {
+            topProducts,
+            topCategories,
+            timeframe,
+            dateRange: {
+                start: startDate.toLocaleDateString(),
+                end: endDate.toLocaleDateString()
+            }
+        });
+
+    } catch (error) {
+        console.error('Analytics Error:', error);
+        res.status(500).send('Error generating analytics');
+    }
+};
+
+module.exports = { getAnalyticsDashboard };
+
+
+
+
+
+
 module.exports ={
     loadlogin,
     dashboard,
@@ -435,5 +575,6 @@ module.exports ={
     orderList,
     orderDetails,
     updateOrderStatus,
-    getSalesReport
+    getSalesReport,
+    getAnalyticsDashboard
 }

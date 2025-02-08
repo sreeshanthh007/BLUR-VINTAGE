@@ -91,7 +91,7 @@
         <div class="row g-4 mt-2">
            
             <% wishlistItems.forEach(item => { %>
-                <div class="col-12 col-md-6 col-lg-4" data-product-id="<'%=item.product._id%'>">
+                <div class="col-12 col-md-6 col-lg-4" data-product-id="<%=item.product._id%>">
                     <div class="card product-card">
                         <a href="/user/buy?id=<%=item.product._id%>">
                         <img src="<%= item.variant.productImage[0] %>" class="card-img-top" alt="<%= item.product.productName %>">
@@ -230,7 +230,7 @@
         // Show variant selection modal
         const modal = new bootstrap.Modal(document.getElementById('variantModal'));
         
-        // Fetch product variants
+       
         const response = await fetch(`/user/wishlist-products/${productId}`, {
             method: 'GET',
             headers: {
@@ -248,7 +248,7 @@
             throw new Error(productData.message);
         }
 
-        // Populate modal with variants
+       
         populateVariantModal(productData.data, productId);
         modal.show();
 
@@ -383,13 +383,30 @@ async function handleAddToCart(product, productId) {
 
             if (result.success) {
                 bootstrap.Modal.getInstance(document.getElementById('variantModal')).hide();
+                const productCard = document.querySelector(`[data-product-id="${productId}"]`);
+
+                if(productCard){
+                    productCard.remove();
+                }
+
+                 await  updateCartCounter()
+
+                const wishlistContainer = document.querySelector('.row.g-4.mt-2');
+                if (wishlistContainer && wishlistContainer.children.length === 0) {
+                    wishlistContainer.innerHTML = `
+                        <div class="col-12 text-center py-5">
+                            <h3>Your wishlist is empty</h3>
+                            <p class="text-muted">Add items to your wishlist to save them for later!</p>
+                            <a href="/user/shop" class="btn btn-primary mt-3">Continue Shopping</a>
+                        </div>
+                    `;
+                }
                 Swal.fire({
                     icon: 'success',
                     title: 'Added to cart successfully!',
                     timer: 1500
                 }).then(() => {
-                    // Optionally refresh the cart counter if you have one
-                    updateCartCount();
+                  
                 });
             } else {
                 throw new Error(result.message);
@@ -402,6 +419,33 @@ async function handleAddToCart(product, productId) {
             });
         }
     };
+
+
+    async function updateCartCounter(){
+        try {
+            const response  = await fetch('/user/cart/count');
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch cart count');
+            }
+
+            const data = await response.json();
+            console.log("cart counter",data )
+            const counter = document.getElementById('cartCounter');
+
+            if(counter){
+                counter.textContent = data.count || '0';
+
+                counter.style.display = data.count >0 ? "block" : "none";
+            }
+
+
+        } catch (error) {
+            console.log("error in cart counter",error.message);
+            
+        }
+    }
+
 
 function updateSelectedVariant(product) {
     const selectedColor = document.querySelector('input[name="color"]:checked')?.value;

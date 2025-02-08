@@ -209,18 +209,43 @@ const downloadInvoice = async (req, res) => {
         if (!order) {
             return res.status(404).json({ success: false, message: 'Order not found' });
         }
+
+
+        console.log('Order status:', order.orderStatus);
+        console.log('Payment method:', order.payment.method);
+        console.log('Payment status:', order.payment.status);
         
         
-        if (order.orderStatus !== 'Delivered' || 
-            (order.payment.method === 'Razorpay' && order.payment.status !== 'Completed') || 
-            (order.payment.method === 'COD' && order.payment.status !== 'Completed')) {
+        const canGenerateInvoice = 
+        order.orderStatus === 'Delivered' || 
+        (order.payment.method === 'COD' && order.orderStatus !== 'Cancelled') ||
+        (order.payment.method === 'Razorpay' && order.payment.status === 'Completed') ||
+        (order.payment.method === 'Wallet' && order.payment.status === 'Completed');
+
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename=invoice-${order.orderNumber}.pdf`);
+
+        if (!canGenerateInvoice) {
             return res.status(400).json({ 
-                success: false, 
-                message: 'Invoice is only available for delivered orders with completed payment' 
+                success: false,     
+                message: 'Invoice not available for this order',
+                details: {
+                    orderStatus: order.orderStatus,
+                    paymentMethod: order.payment.method,
+                    paymentStatus: order.payment.status
+                }
             });
         }
         
+       
+        const doc = new PDFDocument({ margin: 50, size: 'A4' });
+       
+        doc.pipe(res)
+        
+       
+        
         await generateInvoicePDF(order, res);
+        
         
     } catch (error) {
         console.error('Error in downloadInvoice:', error);

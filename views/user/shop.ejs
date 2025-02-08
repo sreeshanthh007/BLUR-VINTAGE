@@ -340,8 +340,12 @@
                     
                     if (data.wishlistProductIds.includes(productId)) {
                         heartIcon.classList.remove('fa-regular');
-                        heartIcon.classList.add('fa-solid');
-                        heartIcon.style.color = "#ff0000";
+                    heartIcon.classList.add('fa-solid');
+                    heartIcon.style.color = "#ff0000";
+                    }else{
+                        heartIcon.classList.remove('fa-solid');
+                    heartIcon.classList.add('fa-regular');
+                    heartIcon.style.color = ""; 
                     }
                 });
                }
@@ -351,13 +355,14 @@
     }
            
     
-                checkWishlistStatus();
+               checkWishlistStatus();
 
 
 
             const heartBtn = document.querySelectorAll('.heart-btn');
 
             heartBtn.forEach((button)=>{
+                
                 button.addEventListener("click",async function(e){
                     e.preventDefault();
 
@@ -377,8 +382,6 @@
 
                             body:JSON.stringify({
                                 productId,
-                                variantColor:"blue",
-                                variantSize:"M"
                             })
                         });
                         
@@ -422,13 +425,13 @@
    
            document.body.appendChild(notification);
     
-    // Remove notification after 3 seconds
+    
       setTimeout(() => {
         notification.remove();
        }, 3000);
 }
 
-// Add these CSS animations to your stylesheet
+
        const style = document.createElement('style');
         style.textContent = `
       @keyframes fadeIn {
@@ -443,7 +446,7 @@
       `
    document.head.appendChild(style);
 
-
+    
 
 
    document.addEventListener('DOMContentLoaded', () => {
@@ -453,7 +456,7 @@
         const selectedCategory = e.target.value;
         const currentSort = new URLSearchParams(window.location.search).get('sort') || 'default';
         
-        // Construct URL with both category and sort parameters
+        
         const url = `/user/shop?category=${encodeURIComponent(selectedCategory)}&sort=${currentSort}`;
         
         fetch(url, {
@@ -463,11 +466,11 @@
         })
         .then(response => response.json())
         .then(data => {
-            // Update products display
+           
             const productsContainer = document.querySelector('.row.g-2');
             productsContainer.innerHTML = '';
 
-            // Render new products
+            
             data.products.forEach(product => {
                 const productCardHtml = `
                     <div class="col-6 col-sm-4 col-lg-3">
@@ -511,7 +514,6 @@
 
                 
             updatePagination(data);
-            attachHeartButtonListeners();
             checkWishlistStatus();
         })
         .catch(error => {

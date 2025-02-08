@@ -48,9 +48,10 @@
 
 .remove-image {
     position: absolute;
-    top: -8px;
-    right: -8px;
-    background: red;
+   
+    display: flex;
+    justify-content: end;
+    background: rgba(220, 53, 69, 0.9); 
     color: white;
     border: none;
     border-radius: 50%;
@@ -59,6 +60,12 @@
     line-height: 20px;
     text-align: center;
     cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+.remove-image:hover {
+    background: rgb(220, 53, 69); 
+    transform: scale(1.1);
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
 }
 
 .error-message {
@@ -218,11 +225,11 @@ document.addEventListener('DOMContentLoaded', function() {
     let removedImages = new Set(); // Track removed images
  
 
-    // Initialize cropper modal
+   
     const cropperModal = new bootstrap.Modal(document.getElementById('cropperModal'));
     const cropperImage = document.getElementById('cropperImage');
     
-    // Handle drag and drop for each variant
+    
     function initializeVariantImageUpload(variantSection) {
         const dropZone = variantSection.querySelector('.image-upload-container');
         const fileInput = variantSection.querySelector('.file-input');
@@ -245,7 +252,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
        
-    // Modify the image removal handler
+   
     previewContainer.addEventListener('click', e => {
     if (e.target.classList.contains('remove-image')) {
         e.preventDefault();
@@ -269,18 +276,65 @@ document.addEventListener('DOMContentLoaded', function() {
         e.stopPropagation();
     }
 
+
+    function validateImageFile(file) {
+    const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    const maxSize = 5 * 1024 * 1024; // 5MB
+
+    // Check file type
+    if (!validTypes.includes(file.type)) {
+        return {
+            isValid: false,
+            error: 'Invalid file type. Please upload JPG, PNG, or WebP images only.'
+        };
+    }
+
+    // Check file size
+    if (file.size > maxSize) {
+        return {
+            isValid: false,
+            error: 'File size too large. Maximum size is 5MB.'
+        };
+    }
+
+    return { isValid: true };
+}
+
     function handleFiles(files, input, variantIndex) {
         const previewContainer = input.closest('.variant-section').querySelector('.image-preview-container');
         const currentImages = previewContainer.querySelectorAll('.image-preview').length;
+        const errorDiv = getOrCreateErrorDiv(input.closest('.variant-section'));
 
-        if (currentImages + files.length > maxImages) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Too many images',
-                text: `Maximum ${maxImages} images allowed per variant`
+        errorDiv.textContent = '';
+
+// Check total number of images
+            if (currentImages + files.length > maxImages) {
+                errorDiv.textContent = `Maximum ${maxImages} images allowed per variant`;
+                return;
+            }
+
+            let hasError = false;
+            [...files].forEach(file => {
+                const validation = validateImageFile(file);
+                if (!validation.isValid) {
+                    errorDiv.textContent = validation.error;
+                    hasError = true;
+                    return;
+                }
+
+                if (file.type.startsWith('image/')) {
+                    currentVariantIndex = variantIndex;
+                    currentFileInput = input;
+                    const reader = new FileReader();
+                    reader.onload = e => showCropper(e.target.result);
+                    reader.readAsDataURL(file);
+                }
             });
-            return;
-        }
+
+            if (!hasError && errorDiv.textContent === '') {
+                errorDiv.style.display = 'none';
+            }
+
 
         [...files].forEach(file => {
             if (file.type.startsWith('image/')) {
@@ -292,6 +346,18 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+
+    function getOrCreateErrorDiv(variantSection) {
+    let errorDiv = variantSection.querySelector('.image-error-message');
+    if (!errorDiv) {
+        errorDiv = document.createElement('div');
+        errorDiv.className = 'error-message image-error-message';
+        variantSection.querySelector('.image-upload-container').after(errorDiv);
+    }
+    return errorDiv;
+}
+
+
 
     function showCropper(imageSrc) {
         cropperImage.src = imageSrc;
@@ -325,6 +391,16 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     function addImagePreview(url, container) {
+    const currentImages = container.querySelectorAll('.image-preview').length;
+    const variantSection = container.closest('.variant-section');
+    const errorDiv = getOrCreateErrorDiv(variantSection);
+
+    if (currentImages >= maxImages) {
+        errorDiv.textContent = `Maximum ${maxImages} images allowed per variant`;
+        errorDiv.style.display = 'block';
+        return;
+    }
+
     const div = document.createElement('div');
     div.className = 'image-preview';
     div.innerHTML = `
@@ -332,21 +408,27 @@ document.addEventListener('DOMContentLoaded', function() {
         <button type="button" class="remove-image">&times;</button>
     `;
 
-    // Add click handler for remove button
     div.querySelector('.remove-image').addEventListener('click', function() {
         const imgUrl = div.querySelector('img').src;
-        // Only add to removedImages if it's an existing image (not a blob URL)
         if (!imgUrl.startsWith('blob:')) {
             removedImages.add(imgUrl);
-            console.log('Added to removedImages:', imgUrl); // For debugging
-            console.log('Current removedImages:', removedImages); // For debugging
         }
         div.remove();
+        
+        // Update error message when image is removed
+        const remainingImages = container.querySelectorAll('.image-preview').length;
+        if (remainingImages === 0) {
+            errorDiv.textContent = 'Please upload at least one image';
+            errorDiv.style.display = 'block';
+        } else {
+            errorDiv.style.display = 'none';
+        }
     });
     
     container.appendChild(div);
+    errorDiv.style.display = 'none';
 }
-    // Form validation
+    
    form.addEventListener('submit', async (e) => {
     e.preventDefault();
     if (validateForm()) {
@@ -431,38 +513,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 });
-
-
-document.getElementById('cropButton').addEventListener('click', () => {
-    const canvas = cropper.getCroppedCanvas({
-        width: 440,
-        height: 440
-    });
-
-    const previewContainer = document.querySelector(
-        `.variant-section:nth-child(${parseInt(currentVariantIndex) + 1}) .image-preview-container`
-    );
-
-    // Add cropped image to preview
-    const div = document.createElement('div');
-    div.className = 'image-preview';
-    const img = document.createElement('img');
-    img.className = 'cropped-image';
-    img.src = canvas.toDataURL('image/jpeg', 0.95);
-    div.appendChild(img);
-    
-    const removeButton = document.createElement('button');
-    removeButton.type = 'button';
-    removeButton.className = 'remove-image';
-    removeButton.innerHTML = '&times;';
-    div.appendChild(removeButton);
-    
-    previewContainer.appendChild(div);
-    
-    cropperModal.hide();
-    cropper.destroy();
-});
-
 
 
      // adding the remove button
@@ -660,6 +710,23 @@ document.getElementById('cropButton').addEventListener('click', () => {
         //     addError(variantDiv, `variant-${index}-images`, 'Please upload at least one image');
         //     isValid = false;
         // }
+    });
+
+    document.querySelectorAll('.variant-section').forEach((variant, index) => {
+        const images = variant.querySelectorAll('.image-preview').length;
+        const errorDiv = getOrCreateErrorDiv(variant);
+        
+        if (images === 0) {
+            errorDiv.textContent = 'Please upload at least one image';
+            errorDiv.style.display = 'block';
+            isValid = false;
+        } else if (images > maxImages) {
+            errorDiv.textContent = `Maximum ${maxImages} images allowed per variant`;
+            errorDiv.style.display = 'block';
+            isValid = false;
+        } else {
+            errorDiv.style.display = 'none';
+        }
     });
 
     return isValid;

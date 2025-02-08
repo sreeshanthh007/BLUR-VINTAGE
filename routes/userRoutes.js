@@ -10,6 +10,9 @@ const orderDetailsController = require("../controllers/user/placeOrderController
 const wishlistController = require('../controllers/user/wishlilstController')
 const {userAuth,adminAuth} = require('../middlewares/auth');
 
+
+router.get("/aboutUs",userController.loadAboutUs)
+
 router.get('/register',userController.loadRegister);
 
 router.post('/register',userController.signUp);
