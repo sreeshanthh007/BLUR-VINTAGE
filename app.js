@@ -58,6 +58,8 @@ app.set('views',[path.join(__dirname,"views")]);
 
 app.use(express.static(path.join(__dirname,"public")));
 
+
+
 // for user needs
 app.use('/user',userRouter)
 // for admin
