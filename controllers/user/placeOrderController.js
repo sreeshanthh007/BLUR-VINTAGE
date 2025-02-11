@@ -167,59 +167,147 @@
                     throw new Error("insufficiant wallet balance")
                 }
 
+                
+                try {
+                    const order = new Order({
+                        userId,
+                        orderItems,
+                        shippingAddress: address,
+                        payment: {
+                            method: "Wallet",
+                            status: "Completed"
+                        },
+                        pricing: {
+                            subtotal,
+                            coupon: coupon ? {
+                                code: coupon.code,
+                                discount: finalDiscount
+                            } : undefined,
+                            productOffersTotal: Math.round(totalProductOffersDiscount),
+                            finalAmount
+                        },
+                        orderStatus: "Processing",
+                        orderNumber
+                    });
+                    await order.save();
 
-                wallet.balance-=finalAmount
+                    wallet.balance-=finalAmount
 
-                wallet.transactions.push({
-                    type:"Purchase",
-                    description: `Purchase - Order #${orderNumber}`,
-                    amount:finalAmount,
-                    orderId:orderNumber,
-                    status:"Completed"
-                });
-                await wallet.save()
+                    wallet.transactions.push({
+                        type:"Purchase",
+                        description: `Purchase - Order #${orderNumber}`,
+                        amount:finalAmount,
+                        orderId:orderNumber,
+                        status:"Completed"
+                    });
+                    await wallet.save()
+
+                    await Cart.findOneAndUpdate(
+                        {user:userId},
+                        {
+                            $set:{
+                                items:[],
+                                totalAmount:0
+                            }
+                        }
+                    );
+
+                    return res.status(200).json({
+                        success: true,
+                        message: 'Order placed successfully',
+                        orderId: order._id,
+                        orderNumber
+                    });
+                } catch (error) {
+                    throw new Error(`Wallet transaction failed: ${error.message}`);
+                }
+              
+            } else if(paymentMethod === "COD"){
+                try {
+                    const order = new Order({
+                        userId,
+                        orderItems,
+                        shippingAddress: address,
+                        payment: {
+                            method: "COD",
+                            status: "Pending"  
+                        },
+                        pricing: {
+                            subtotal,
+                            coupon: coupon ? {
+                                code: coupon.code,
+                                discount: finalDiscount
+                            } : undefined,
+                            productOffersTotal: Math.round(totalProductOffersDiscount),
+                            finalAmount
+                        },
+                        orderStatus: "Processing",
+                        orderNumber
+                    });
+                    await order.save();
+            
+                    // Clear cart after successful order creation
+                    await Cart.findOneAndUpdate(
+                        { user: userId },
+                        {
+                            $set: {
+                                items: [],
+                                totalAmount: 0
+                            }
+                        }
+                    );
+            
+                    return res.status(200).json({
+                        success: true,
+                        message: 'Order placed successfully',
+                        orderId: order._id,
+                        orderNumber
+                    });
+                } catch (error) {
+                    throw new Error(`COD order creation failed: ${error.message}`);
+                }
             }
     
-            const order = new Order({
-                userId,
-                orderItems,
-                shippingAddress: address,
-                payment: {
-                    method: paymentMethod,
-                    status: paymentMethod === "COD" ? 'Pending' : "Completed"
-                },
-                pricing: {
-                    subtotal,                
-                    coupon: coupon ? {
-                        code: coupon.code,
-                        discount: finalDiscount
-                    } : undefined,
-                    productOffersTotal: Math.round(totalProductOffersDiscount),
-                    finalAmount        
-                },
-                orderStatus: "Processing",
-                orderNumber
-            });
+            // const order = new Order({
+            //     userId,
+            //     orderItems,
+            //     shippingAddress: address,
+            //     payment: {
+            //         method: paymentMethod,
+            //         status: paymentMethod === "COD" ? 'Pending' : "Completed"
+            //     },
+            //     pricing: {
+            //         subtotal,                
+            //         coupon: coupon ? {
+            //             code: coupon.code,
+            //             discount: finalDiscount
+            //         } : undefined,
+            //         productOffersTotal: Math.round(totalProductOffersDiscount),
+            //         finalAmount        
+            //     },
+            //     orderStatus: "Processing",
+            //     orderNumber
+            // });
     
-            await order.save();
+            // await order.save();
     
-            // Clear cart
-            await Cart.findOneAndUpdate(
-                { user: userId },
-                {
-                    $set: {
-                        items: [],
-                        totalAmount: 0
-                    }
-                }
-            );
-    
-            res.status(200).json({
-                success: true,
-                message: 'Order placed successfully',
-                orderId: order._id,
-                orderNumber
-            });
+            // // Clear cart
+            // await Cart.findOneAndUpdate(
+            //     { user: userId },
+            //     {
+            //         $set: {
+            //             items: [],
+            //             totalAmount: 0
+            //         }
+            //     }
+            // );
+
+            // res.status(200).json({
+            //     success: true,
+            //     message: 'Order placed successfully',
+            //     orderId: order._id,
+            //     orderNumber
+            // });
     
         } catch (error) {
             console.error('Order placement error:', error);

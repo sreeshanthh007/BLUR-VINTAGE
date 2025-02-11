@@ -11,15 +11,17 @@ const getReturnRequests = async(req,res)=>{
         'orderItems.status.return.status':"Pending"
        }).populate({
         path:"orderItems.product",
-        model:"Product"
-       })
+        model:"Product",
+        select:"productName"
+       });
 
        const approvedReturns = await Order.find({
         'orderItems.status.return.requested':true,
         'orderItems.status.return.status':"Approved"
        }).populate({
         path:"orderItems.product",
-        model:"Product"
+        model:"Product",
+        select:"productNamw"
        })
 
        res.render('admin/returnManagement',{

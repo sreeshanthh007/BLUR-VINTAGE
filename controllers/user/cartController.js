@@ -75,7 +75,7 @@ const addtoCart = async(req,res,next) => {
         }
 
         // Check if total quantity exceeds limits
-        if (totalQuantity > 6) {
+        if (totalQuantity >=5) {
             return res.status(400).json({ 
                 success: false, 
                 message: 'Cannot add more than 5 items of the same product' 
@@ -259,7 +259,7 @@ const updateQuantity = async (req, res) => {
         const userId = req.session.user || req.session?.passport?.user;
         const { itemId, quantity } = req.body;
 
-        if (quantity > 5) {
+        if (quantity >5) {
             return res.status(400).json({
                 success: false,
                 message: "Cannot add more than 5 items"
@@ -519,7 +519,6 @@ const checkout = async (req,res,next)=>{
         const userId = req.session?.user || req.session?.passport?.user;
         const selectedAddressId = req.session?.selectedAddressId
         const wallet = await Wallet.findOne({userId});
-        const appliedCouponData = req.session?.appliedCoupon;
 
         const walletBalance = wallet ? wallet.balance : 0;
         const cart = await Cart.findOne({user:userId})

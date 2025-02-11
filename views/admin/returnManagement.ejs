@@ -156,9 +156,9 @@
                                             <tr>
                                                 <td><%= order.orderNumber %></td>
                                                 <td>
-                                                    <%= item.product.productName %><br>
-                                                    Size: <%= item.variant.size %><br>
-                                                    Color: <%= item.variant.colorName %>
+                                                    <%= item.product ? item.product.productName : 'Product Removed' %><br>
+                                                    Size: <%= item.variant ? item.variant.size : 'N/A' %><br>
+                                                    Color: <%= item.variant ? item.variant.colorName : 'N/A' %>
                                                 </td>
                                                 <td>
                                                     <span class="reason-tag"><%= item.status.return.reason %></span>
@@ -199,9 +199,9 @@
                                             <tr>
                                                 <td><%= order.orderNumber %></td>
                                                 <td>
-                                                    <%= item.product.productName %><br>
-                                                    Size: <%= item.variant.size %><br>
-                                                    Color: <%= item.variant.colorName %>
+                                                    <%= item.product ? item.product.productName : 'Product Removed' %><br>
+                                                    Size: <%= item.variant ? item.variant.size : 'N/A' %><br>
+                                                    Color: <%= item.variant ? item.variant.colorName : 'N/A' %>
                                                 </td>
                                                 <td>
                                                     <span class="reason-tag"><%= item.status.return.reason %></span>

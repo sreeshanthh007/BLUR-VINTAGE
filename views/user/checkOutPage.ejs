@@ -149,7 +149,7 @@
                         <h3 class="h5 mb-4">Payment Options</h3>
                         <div class="payment-option active">
                             <div class="form-check">
-                                <%if(cart.totalAmount>2000){%>
+                                <%if(cart.totalAmount<1000){%>
                                 <input class="form-check-input" type="radio" name="payment" id="cod" checked>
                                 <label class="form-check-label" for="cod">Cash on delivery</label>
                                 <%}else{%>
@@ -572,6 +572,9 @@
                 return;
             }
 
+
+            
+
             const addressElement = document.getElementById("address");
 
             if(!addressElement || !addressElement.value.trim()){
@@ -581,6 +584,21 @@
                 });
                 return;
             }
+
+
+             if (selectedPayment.id === 'wallet') {
+           const walletBalance = parseFloat(document.getElementById('wallet-balance')?.textContent || '0');
+           const cartTotal = parseFloat(document.querySelector('.order-summary-total').textContent.replace('Rs. ', ''));
+        
+           if (walletBalance < cartTotal) {
+            Swal.fire({
+                icon: "error",
+                title: "Insufficient Balance",
+                text: `Your wallet balance (Rs. ${walletBalance.toFixed(2)}) is insufficient for this purchase (Rs. ${cartTotal.toFixed(2)})`
+             });
+             return;
+        }
+    }
             const orderData = {
             cart: {
                 items: <%- JSON.stringify(cart.items) %>,
@@ -634,7 +652,6 @@
                                 });
 
                                 const verifyResult = await verifyResponse.json();
-                                
                                 if (verifyResult.success) {
                                     Swal.fire({
                                         icon: "success",
@@ -730,8 +747,29 @@
                         });
                         }
                     })
+                } else if (selectedPayment.id === 'wallet') {
+
+                    const walletBalance = parseFloat(document.getElementById('wallet-balance').textContent);
+                    const orderTotal = parseFloat(document.querySelector('.order-summary-total').textContent.replace('Rs. ', ''));
+                    const newBalance = walletBalance - orderTotal;
+
+                    Swal.fire({
+                        icon: "success",
+                        title: "Payment Successful",
+                        html: `
+                            <div>
+                                <p>Order placed successfully</p>
+                                <p>Order number: ${result.orderNumber}</p>
+                                <p>Amount paid: Rs. ${orderTotal.toFixed(2)}</p>
+                                <p>New wallet balance: Rs. ${newBalance.toFixed(2)}</p>
+                            </div>
+                        `,
+                        confirmButtonText: "Continue"
+                    }).then(() => {
+                        window.location.href = "/user/thankYou";
+                    });
                 } else {
-                    // Handle COD or wallet payment success 
+                    // Handle COD payment success
                     Swal.fire({
                         icon: "success",
                         title: "Order placed successfully",
@@ -758,152 +796,152 @@
 
 
 
-document.addEventListener('DOMContentLoaded', function() {
-    const walletRadio = document.getElementById('wallet');
-    const walletBalance = parseFloat(document.getElementById('wallet-balance')?.textContent || '0');
-    const cartTotalElement = document.querySelector('.order-summary-total');
-    const cartTotal = parseFloat(cartTotalElement.textContent.replace('Rs. ', ''));
+// document.addEventListener('DOMContentLoaded', function() {
+//     const walletRadio = document.getElementById('wallet');
+//     const walletBalance = parseFloat(document.getElementById('wallet-balance')?.textContent || '0');
+//     const cartTotalElement = document.querySelector('.order-summary-total');
+//     const cartTotal = parseFloat(cartTotalElement.textContent.replace('Rs. ', ''));
 
-    // Disable wallet radio if balance is insufficient
-    if (walletRadio && walletBalance < cartTotal) {
-        walletRadio.disabled = true;
-        walletRadio.closest('.payment-option').style.opacity = '0.7';
-    }
+//     // Disable wallet radio if balance is insufficient
+//     if (walletRadio && walletBalance < cartTotal) {
+//         walletRadio.disabled = true;
+//         walletRadio.closest('.payment-option').style.opacity = '0.7';
+//     }
 
-    // Update your existing confirm button click handler
-    const confirmBtn = document.querySelector(".confirm-btn");
-    confirmBtn.addEventListener('click', async () => {
-        const selectedPayment = document.querySelector('input[name="payment"]:checked');
+//     // Update your existing confirm button click handler
+//     const confirmBtn = document.querySelector(".confirm-btn");
+//     confirmBtn.addEventListener('click', async () => {
+//         const selectedPayment = document.querySelector('input[name="payment"]:checked');
 
-        if (!selectedPayment) {
-            Swal.fire({
-                icon: "error",
-                title: "Please select a payment method"
-            });
-            return;
-        }
+//         if (!selectedPayment) {
+//             Swal.fire({
+//                 icon: "error",
+//                 title: "Please select a payment method"
+//             });
+//             return;
+//         }
 
-        const addressElement = document.getElementById("address");
-        if (!addressElement || !addressElement.value.trim()) {
-            Swal.fire({
-                icon: "error",
-                title: "Please select a delivery address"
-            });
-            return;
-        }
+//         const addressElement = document.getElementById("address");
+//         if (!addressElement || !addressElement.value.trim()) {
+//             Swal.fire({
+//                 icon: "error",
+//                 title: "Please select a delivery address"
+//             });
+//             return;
+//         }
 
-        // Check wallet balance if wallet payment is selected
-        if (selectedPayment.id === 'wallet') {
-            const currentTotal = parseFloat(document.querySelector('.order-summary-total').textContent.replace('Rs. ', ''));
-            if (walletBalance < currentTotal) {
-                Swal.fire({
-                    icon: "error",
-                    title: "Insufficient Balance",
-                    text: `Your wallet balance (Rs. ${walletBalance.toFixed(2)}) is insufficient for this purchase (Rs. ${currentTotal.toFixed(2)})`
-                });
-                return;
-            }
-        }
+//         // Check wallet balance if wallet payment is selected
+//         if (selectedPayment.id === 'wallet') {
+//             const currentTotal = parseFloat(document.querySelector('.order-summary-total').textContent.replace('Rs. ', ''));
+//             if (walletBalance < currentTotal) {
+//                 Swal.fire({
+//                     icon: "error",
+//                     title: "Insufficient Balance",
+//                     text: `Your wallet balance (Rs. ${walletBalance.toFixed(2)}) is insufficient for this purchase (Rs. ${currentTotal.toFixed(2)})`
+//                 });
+//                 return;
+//             }
+//         }
 
-        const orderData = {
-            cart: {
-                items: <%- JSON.stringify(cart.items) %>,
-                totalAmount: parseFloat(document.querySelector('.order-summary-total').textContent.replace('Rs. ', ''))
-            },
-            address: <%- JSON.stringify(address) %>,
-            paymentMethod: selectedPayment.id === 'wallet' ? 'Wallet' : selectedPayment.id.toUpperCase(),
-            coupon: {
-                code: document.querySelector('input[placeholder="Coupon code"]').value.trim()
-            }
-        };
+//         const orderData = {
+//             cart: {
+//                 items: <%- JSON.stringify(cart.items) %>,
+//                 totalAmount: parseFloat(document.querySelector('.order-summary-total').textContent.replace('Rs. ', ''))
+//             },
+//             address: <%- JSON.stringify(address) %>,
+//             paymentMethod: selectedPayment.id === 'wallet' ? 'Wallet' : selectedPayment.id.toUpperCase(),
+//             coupon: {
+//                 code: document.querySelector('input[placeholder="Coupon code"]').value.trim()
+//             }
+//         };
 
-        try {
-            const response = await fetch("/user/order/place", {
-                method: "post",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify(orderData)
-            });
+//         try {
+//             const response = await fetch("/user/order/place", {
+//                 method: "post",
+//                 headers: {
+//                     "Content-Type": "application/json"
+//                 },
+//                 body: JSON.stringify(orderData)
+//             });
 
-            const result = await response.json();
+//             const result = await response.json();
 
-            if (result.success) {
-                if (selectedPayment.id === 'razorpay') {
-                    // Your existing Razorpay handling code remains unchanged
-                    // ...
-                } else if (selectedPayment.id === 'wallet') {
-                    // Handle successful wallet payment
-                    Swal.fire({
-                        icon: "success",
-                        title: "Payment Successful",
-                        html: `
-                            <div>
-                                <p>Order placed successfully</p>
-                                <p>Order number: ${result.orderNumber}</p>
-                                <p>Amount paid: Rs. ${orderData.cart.totalAmount.toFixed(2)}</p>
-                                <p>New wallet balance: Rs. ${(walletBalance - orderData.cart.totalAmount).toFixed(2)}</p>
-                            </div>
-                        `,
-                        confirmButtonText: "Continue"
-                    }).then(() => {
-                        window.location.href = "/user/thankYou";
-                    });
-                } else if(selectedPayment.id === "COD"){
-                           Swal.fire({
-                        icon: "success",
-                        title: "Order placed successfully",
-                        text: `Order number: ${result.orderNumber}`,
-                        confirmButtonText: "Continue"
-                    }).then(() => {
-                        window.location.href = "/user/thankYou";
-                    });
-                }
+//             if (result.success) {
+//                 if (selectedPayment.id === 'razorpay') {
+//                     // Your existing Razorpay handling code remains unchanged
+//                     // ...
+//                 } else if (selectedPayment.id === 'wallet') {
+//                     // Handle successful wallet payment
+//                     Swal.fire({
+//                         icon: "success",
+//                         title: "Payment Successful",
+//                         html: `
+//                             <div>
+//                                 <p>Order placed successfully</p>
+//                                 <p>Order number: ${result.orderNumber}</p>
+//                                 <p>Amount paid: Rs. ${orderData.cart.totalAmount.toFixed(2)}</p>
+//                                 <p>New wallet balance: Rs. ${(walletBalance - orderData.cart.totalAmount).toFixed(2)}</p>
+//                             </div>
+//                         `,
+//                         confirmButtonText: "Continue"
+//                     }).then(() => {
+//                         window.location.href = "/user/thankYou";
+//                     });
+//                 } else if(selectedPayment.id === "COD"){
+//                            Swal.fire({
+//                         icon: "success",
+//                         title: "Order placed successfully",
+//                         text: `Order number: ${result.orderNumber}`,
+//                         confirmButtonText: "Continue"
+//                     }).then(() => {
+//                         window.location.href = "/user/thankYou";
+//                     });
+//                 }
            
-            }else {
-                throw new Error(result.message);
-            }
-        } catch (error) {
-            console.error("Failed to place order:", error);
-            Swal.fire({
-                icon: "error",
-                title: "Failed to place order",
-                text: error.message || "An error occurred while processing your order"
-            });
-        }
-    });
+//             }else {
+//                 throw new Error(result.message);
+//             }
+//         } catch (error) {
+//             console.error("Failed to place order:", error);
+//             Swal.fire({
+//                 icon: "error",
+//                 title: "Failed to place order",
+//                 text: error.message || "An error occurred while processing your order"
+//             });
+//         }
+//     });
 
-    // Update wallet balance check when coupon is applied or removed
-    function updateWalletPaymentAvailability() {
-        const currentTotal = parseFloat(document.querySelector('.order-summary-total').textContent.replace('Rs. ', ''));
-        const walletRadio = document.getElementById('wallet');
+//     // Update wallet balance check when coupon is applied or removed
+//     function updateWalletPaymentAvailability() {
+//         const currentTotal = parseFloat(document.querySelector('.order-summary-total').textContent.replace('Rs. ', ''));
+//         const walletRadio = document.getElementById('wallet');
         
-        if (walletRadio) {
-            if (walletBalance < currentTotal) {
-                walletRadio.disabled = true;
-                walletRadio.checked = false;
-                walletRadio.closest('.payment-option').style.opacity = '0.7';
-                if (document.getElementById('wallet-balance')) {
-                    document.getElementById('wallet-balance').parentElement.innerHTML = 
-                        `Available Balance: ₹${walletBalance.toFixed(2)} <span class="text-danger">(Insufficient Balance)</span>`;
-                }
-            } else {
-                walletRadio.disabled = false;
-                walletRadio.closest('.payment-option').style.opacity = '1';
-                if (document.getElementById('wallet-balance')) {
-                    document.getElementById('wallet-balance').parentElement.innerHTML = 
-                        `Available Balance: ₹${walletBalance.toFixed(2)}`;
-                }
-            }
-        }
-    }
+//         if (walletRadio) {
+//             if (walletBalance < currentTotal) {
+//                 walletRadio.disabled = true;
+//                 walletRadio.checked = false;
+//                 walletRadio.closest('.payment-option').style.opacity = '0.7';
+//                 if (document.getElementById('wallet-balance')) {
+//                     document.getElementById('wallet-balance').parentElement.innerHTML = 
+//                         `Available Balance: ₹${walletBalance.toFixed(2)} <span class="text-danger">(Insufficient Balance)</span>`;
+//                 }
+//             } else {
+//                 walletRadio.disabled = false;
+//                 walletRadio.closest('.payment-option').style.opacity = '1';
+//                 if (document.getElementById('wallet-balance')) {
+//                     document.getElementById('wallet-balance').parentElement.innerHTML = 
+//                         `Available Balance: ₹${walletBalance.toFixed(2)}`;
+//                 }
+//             }
+//         }
+//     }
 
 
-    const orderSummaryTotal = document.querySelector('.order-summary-total');
-    if (orderSummaryTotal) {
-        const observer = new MutationObserver(updateWalletPaymentAvailability);
-        observer.observe(orderSummaryTotal, { childList: true, characterData: true, subtree: true });
-    }
-});
+//     const orderSummaryTotal = document.querySelector('.order-summary-total');
+//     if (orderSummaryTotal) {
+//         const observer = new MutationObserver(updateWalletPaymentAvailability);
+//         observer.observe(orderSummaryTotal, { childList: true, characterData: true, subtree: true });
+//     }
+// });
 
     </script>
