@@ -259,7 +259,7 @@ const updateQuantity = async (req, res) => {
         const userId = req.session.user || req.session?.passport?.user;
         const { itemId, quantity } = req.body;
 
-        if (quantity > 6) {
+        if (quantity > 5) {
             return res.status(400).json({
                 success: false,
                 message: "Cannot add more than 5 items"
@@ -283,7 +283,7 @@ const updateQuantity = async (req, res) => {
             });
         }
 
-        // Fetch the current product data to get updated price and offers
+        
         const product = await Product.findById(cartItem.product)
             .populate('productOffer')
             .populate({

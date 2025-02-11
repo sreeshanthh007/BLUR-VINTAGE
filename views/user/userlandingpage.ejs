@@ -281,53 +281,62 @@
         }
     }   
 
+    checkWishlistStatus();
 
-            const heartBtn = document.querySelectorAll('.heart-btn');
-
-            heartBtn.forEach((button)=>{
-                button.addEventListener("click",async function(e){
-                    e.preventDefault();
-
-                    const productId = this.dataset.productId;
-                 
-                    console.log("heart button clicked");
+ const heartBtn = document.querySelectorAll('.heart-btn');
+    
+    heartBtn.forEach((button) => {
+        // Remove any existing click listeners
+        button.replaceWith(button.cloneNode(true));
+    });
+    
+    // Re-select the buttons after replacement
+    const newHeartBtns = document.querySelectorAll('.heart-btn');
+    
+    newHeartBtns.forEach((button) => {
+        button.addEventListener("click", async function(e) {
+            e.preventDefault();
+            e.stopPropagation(); // Prevent event bubbling
+            
+            if(!button.dataset.processing) { // Add a processing flag
+                button.dataset.processing = 'true';
+                
+                const productId = this.dataset.productId;
+                const heartIcon = this.querySelector('i');
+                
+                try {
+                    const response = await fetch('/user/wishlist/add', {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({
+                            productId
+                        })
+                    });
                     
-                    const heartIcon = this.querySelector('i');
-
-
-                    try {
-                        const response = await fetch('/user/wishlist/add',{
-                            method:"POST",
-                            headers:{
-                                "Content-Type":"application/json"
-                            },
-
-                            body:JSON.stringify({
-                                productId,
-
-                            })
-                        });
-                        
-                        const data = await response.json();
-                        console.log("response in wishlist",data)
-                        if(data.success){
-                            heartIcon.classList.remove('fa-regular');
-                            heartIcon.classList.add('fa-solid');
-                            heartIcon.style.color="#ff0000"
-
-                            showNotification("added to wishlist","success")
-
-                        }else{
-                            if(data.message === "Product already in wishlist"){
-                                showNotification('Product is already in your wishlist', 'info');
-                            }else{
-                                showNotification('Failed to add to wishlist', 'error');
-                            }
+                    const data = await response.json();
+                    
+                    if(data.success) {
+                        heartIcon.classList.remove('fa-regular');
+                        heartIcon.classList.add('fa-solid');
+                        heartIcon.style.color = "#ff0000";
+                        showNotification("Added to wishlist", "success");
+                    } else {
+                        if(data.message === "Product already in wishlist") {
+                            showNotification('Product is already in your wishlist', 'info');
+                        } else {
+                            showNotification('Failed to add to wishlist', 'error');
                         }
-                    } catch (error) {
-                        console.log("error in adding to wishlist in the fetch wishlist add",error.message)
                     }
-                })
+                } catch (error) {
+                    console.log("Error in adding to wishlist:", error.message);
+                    showNotification('Failed to add to wishlist', 'error');
+                } finally {
+                    delete button.dataset.processing; // Remove the processing flag
+                }
+            }
+        });
             })
 
                   function showNotification(message, type) {
