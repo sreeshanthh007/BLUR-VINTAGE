@@ -6,87 +6,134 @@
     <title>BLUR VINTAGE ★ AAA</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="/styles/landingpage.css">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
     <style>
-     .search-result-item {
-        padding: 10px 15px;
-        border-bottom: 1px solid #eee;
-        cursor: pointer;
-    }
-
-    .input-group {
-        position: relative;
-        width: 400px;
-    }
-
-
-    .input-group .form-control:focus {
-        border-color: #212529;
-        box-shadow: none;
-    }
-
-    .input-group .btn-outline-dark:hover {
-        background-color: #212529;
-        color: white;
-    }
-
-.search-result-item:hover {
-    background-color: #f8f9fa;
-}
-
-.search-result-item img {
-    width: 50px; 
-    height: 50px;
-    object-fit: cover;
-}
-
-.search-result-info {
-    flex: 1;
-}
-
-.search-result-name {
-    font-weight: 600; 
-    margin-bottom: 5px; 
-    font-size: 1rem; 
-}
-
-.search-result-price {
-    color: #666;
-    font-size: 0.95rem; 
-}
-
-.form-select-sm {
-    padding-right: 2rem;
-    background-color: white;
-    border: 1px solid #dee2e6;
-    border-radius: 4px;
-    font-size: 1rem; /* Increased font size for dropdown */
-    padding: 10px; /* Increased padding inside select box */
-}
-
-.form-select-sm:focus {
-    border-color: black;
-    box-shadow: none;
-}
-
-@media (max-width: 768px) {
-        .col-lg-4 {
-            margin-top: 1rem;
+        .search-result-item {
+            padding: 10px 15px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
         }
-        
+
         .input-group {
-            max-width: 100%;
+            position: relative;
+            width: 400px;
         }
 
-        .d-flex.align-items-center.gap-3 {
-            margin-left: 1rem;
+        .input-group .form-control:focus {
+            border-color: #212529;
+            box-shadow: none;
         }
-    }
 
+        .input-group .btn-outline-dark:hover {
+            background-color: #212529;
+            color: white;
+        }
 
-    @media (max-width: 991px) {
+        .search-result-item:hover {
+            background-color: #f8f9fa;
+        }
+
+        .search-result-item img {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+        }
+
+        .search-result-info {
+            flex: 1;
+        }
+
+        .search-result-name {
+            font-weight: 600;
+            margin-bottom: 5px;
+            font-size: 1rem;
+        }
+
+        .search-result-price {
+            color: #666;
+            font-size: 0.95rem;
+        }
+
+        .form-select-sm {
+            padding-right: 2rem;
+            background-color: white;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            font-size: 1rem;
+            padding: 10px;
+        }
+
+        .form-select-sm:focus {
+            border-color: black;
+            box-shadow: none;
+        }
+
+        .navbar-brand {
+            font-family: 'Joan', serif;
+            font-size: 25px;
+        }
+
+        .search-container {
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .search-input {
+            border-radius: 20px;
+            padding-right: 40px;
+        }
+
+        .search-button {
+            position: absolute;
+            right: 5px;
+            top: 50%;
+            transform: translateY(-50%);
+            border: none;
+            background: none;
+        }
+
+        .nav-link {
+            font-size: 1.1rem;
+            padding: 0.5rem 1rem;
+        }
+
+        #searchSuggestions {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 0 0 20px 20px;
+            z-index: 1000;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        /* Icons and badge styles */
+        .icon-link {
+            text-decoration: none;
+            color: #212529;
+            position: relative;
+            padding: 0.5rem;
+        }
+
+        .icon-link:hover {
+            color: #0d6efd;
+        }
+
+        .badge-counter {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            font-size: 0.75rem;
+            padding: 0.25em 0.6em;
+        }
+
+        /* Responsive styles */
+        @media (max-width: 991px) {
             .navbar-collapse {
                 position: fixed;
                 top: 0;
@@ -113,154 +160,103 @@
                 padding: 0.5rem 0;
             }
 
-            .input-group {
-                width: 100%;
-                margin-bottom: 1rem;
-            }
-
-            .d-flex.align-items-center.justify-content-end {
-                justify-content: flex-start !important;
-            }
-        }   
-
-
-        body {
-            font-family: Arial, sans-serif;
-        }
-        .navbar-brand {
-            font-family: 'Joan', serif;
-            font-size: 25px;
-        }
-        .search-container {
-            position: relative;
-            width: 100%;
-            max-width: 400px;
-        }
-        .search-input {
-            border-radius: 20px;
-            padding-right: 40px;
-        }
-        .search-button {
-            position: absolute;
-            right: 5px;
-            top: 50%;
-            transform: translateY(-50%);
-            border: none;
-            background: none;
-        }
-        .nav-link {
-            font-size: 1.1rem;
-            padding: 0.5rem 1rem;
-        }
-        #searchSuggestions {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background-color: white;
-            border: 1px solid #ddd;
-            border-radius: 0 0 20px 20px;
-            z-index: 1000;
-            max-height: 300px;
-            overflow-y: auto;
-        }
-        .search-result-item {
-            padding: 10px;
-            border-bottom: 1px solid #eee;
-            cursor: pointer;
-        }
-        .search-result-item:hover {
-            background-color: #f8f9fa;
-        }
-        @media (max-width: 991px) {
-            .navbar-collapse {
-                position: fixed;
-                top: 0;
-                left: -100%;
-                width: 80%;
-                max-width: 300px;
-                height: 100vh;
-                background-color: #f8f9fa;
-                transition: left 0.3s ease;
-                z-index: 1050;
-                padding: 1rem;
-                overflow-y: auto;
-            }
-            .navbar-collapse.show {
-                left: 0;
-            }
             .search-container {
                 margin-bottom: 1rem;
+                width: 100%;
+            }
+
+            .icon-group {
+                margin-top: 1rem;
+                justify-content: center;
             }
         }
-
-
-        </style>
-    </head>
-
-    <!-- header starts -->
-    <body>
-        <header>
-            <nav class="navbar navbar-expand-lg navbar-light bg-light">
-                <div class="container">
-                    <a class="navbar-brand" href="/user/home">BLUR VINTAGE ★</a>
-                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent" aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
-                        <span class="navbar-toggler-icon"></span>
-                    </button>
+    </style>
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-light bg-light">
+            <div class="container">
+                <a class="navbar-brand" href="/user/home">BLUR VINTAGE ★</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                
+                <div class="collapse navbar-collapse" id="navbarContent">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                        <li class="nav-item">
+                            <a class="nav-link" href="/user/aboutus">About Us</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/user/shop">Shop</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/user/men">Men</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/user/women">Women</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/user/kids">Kids</a>
+                        </li>
+                    </ul>
                     
-                    <div class="collapse navbar-collapse" id="navbarContent">
-                        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                            <li class="nav-item">
-                                <a class="nav-link" href="#">Contact Us</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="/user/shop">Shop</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="/user/men">Men</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="/user/women">Women</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="/user/kids">Kids</a>
-                            </li>
-                        </ul>
-                        
-                        <div class="search-container mb-3 mb-lg-0 me-lg-3">
-                            <form id="searchForm" role="search" method="GET">
-                                <input class="form-control search-input" type="search" placeholder="Search products..." aria-label="Search" name="search" id="searchInput">
-                                <button class="search-button" type="submit">
-                                    <i class="bi bi-search"></i>
-                                </button>
-                            </form>
-                            <div id="searchSuggestions" class="d-none"></div>
-                        </div>
-                        
-                        <div class="d-flex align-items-center">
-                            <!-- Placeholder for user actions (login/signup or profile/cart/wishlist) -->
+                    <div class="search-container mb-3 mb-lg-0 me-lg-3">
+                        <form id="searchForm" role="search" method="GET">
+                            <input class="form-control search-input" type="search" placeholder="Search products..." aria-label="Search" name="search" id="searchInput">
+                            <button class="search-button" type="submit">
+                                <i class="bi bi-search"></i>
+                            </button>
+                        </form>
+                        <div id="searchSuggestions" class="d-none"></div>
+                    </div>
+                    
+                    <div class="d-flex align-items-center">
+                        <% if (typeof user !== 'undefined' && user) { %>
+                            <div class="d-flex align-items-center gap-3">
+                                <a href="/user/wishlist" class="icon-link">
+                                    <i class="bi bi-heart fs-5"></i>
+                                    <span id="wishlist-counter" class="badge bg-danger badge-counter" style="display: none;">0</span>
+                                </a>
+                                <a href="/user/cart" class="icon-link">
+                                    <i class="bi bi-cart fs-5"></i>
+                                    <span id="cartCounter" class="badge bg-danger badge-counter" style="display: none;">0</span>
+                                </a>
+                                <div class="dropdown">
+                                    <a href="#" class="icon-link" role="button" id="userDropdown" data-bs-toggle="dropdown">
+                                        <i class="bi bi-person-circle fs-5"></i>
+                                    </a>
+                                    <ul class="dropdown-menu dropdown-menu-end">
+                                        <li><a class="dropdown-item" href="/user/profile">Profile</a></li>
+                                        <li><a class="dropdown-item" href="/user/orders">Orders</a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><a class="dropdown-item" href="#" onclick="handleLogout(event)">Logout</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        <% } else { %>
                             <a class="btn btn-outline-dark me-2" href="/user/login">Login</a>
                             <a class="btn btn-dark" href="/user/register">Signup</a>
-                        </div>
-                    </div>
-                </div>
-            </nav>
-            
-            <div class="container mt-3">
-                <div class="row">
-                    <div class="col-12 d-flex justify-content-end">
-                        <select id="sortSelect" class="form-select form-select-sm" style="width: auto;">
-                            <option value="default" disabled selected>Sort By</option>
-                            <option value="price-high-low">Price: High to Low</option>
-                            <option value="price-low-high">Price: Low to High</option>
-                            <option value="name-a-z">Name: A to Z</option>
-                            <option value="name-z-a">Name: Z to A</option>
-                            <option value="new-arrivals">New Arrivals</option>
-                        </select>
+                        <% } %>
                     </div>
                 </div>
             </div>
-        </header>
+        </nav>
+        
+        <div class="container mt-3">
+            <div class="row">
+                <div class="col-12 d-flex justify-content-end">
+                    <select id="sortSelect" class="form-select form-select-sm" style="width: auto;">
+                        <option value="default" disabled selected>Sort By</option>
+                        <option value="price-high-low">Price: High to Low</option>
+                        <option value="price-low-high">Price: Low to High</option>
+                        <option value="name-a-z">Name: A to Z</option>
+                        <option value="name-z-a">Name: Z to A</option>
+                        <option value="new-arrivals">New Arrivals</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </header>
     </body>
         <!-- header ends -->
         <script>
