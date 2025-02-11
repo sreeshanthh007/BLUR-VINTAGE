@@ -775,6 +775,9 @@
 
             const totalPages = Math.ceil(totalOrders/limit);
 
+            console.log('Fetching orders for user:', userId);
+            console.log('Page:', page, 'Limit:', limit, 'Skip:', skip);
+
             
 
             const orders = await Order.find({userId:userId})
@@ -983,7 +986,5 @@
         verifyPaymentFailure,
         retryPayment,
         retryPaymentVerification
-
-
         
     }

@@ -634,6 +634,7 @@
                                 });
 
                                 const verifyResult = await verifyResponse.json();
+                                
                                 if (verifyResult.success) {
                                     Swal.fire({
                                         icon: "success",
@@ -757,10 +758,7 @@
 
 
 
-    // Add these functions after your existing script
-
 document.addEventListener('DOMContentLoaded', function() {
-    // Wallet-specific initialization
     const walletRadio = document.getElementById('wallet');
     const walletBalance = parseFloat(document.getElementById('wallet-balance')?.textContent || '0');
     const cartTotalElement = document.querySelector('.order-summary-total');
@@ -851,9 +849,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     }).then(() => {
                         window.location.href = "/user/thankYou";
                     });
-                } else {
-                    // Handle COD payment success
-                    Swal.fire({
+                } else if(selectedPayment.id === "COD"){
+                           Swal.fire({
                         icon: "success",
                         title: "Order placed successfully",
                         text: `Order number: ${result.orderNumber}`,
@@ -862,7 +859,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         window.location.href = "/user/thankYou";
                     });
                 }
-            } else {
+           
+            }else {
                 throw new Error(result.message);
             }
         } catch (error) {
@@ -900,7 +898,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Add observer for price changes
+
     const orderSummaryTotal = document.querySelector('.order-summary-total');
     if (orderSummaryTotal) {
         const observer = new MutationObserver(updateWalletPaymentAvailability);
