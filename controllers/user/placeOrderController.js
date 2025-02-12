@@ -928,7 +928,8 @@
                 const refundAmount = orderItem.price.discountedPrice * orderItem.quantity;
 
       
-                if(order.payment.method==="Razorpay" && order.payment.status=="Completed"){
+                if((order.payment.method === "Razorpay" && order.payment.status === "Completed") || 
+                order.payment.method === "Wallet") {
 
                     const wallet = await Wallet.findOne({userId:order.userId});
 
@@ -1027,8 +1028,9 @@
                     orderitems.status.itemStatus="Cancelled"
                 }
 
-
-                if(ordered.payment.method==="Razorpay" && ordered.payment.status==="Completed"){
+             
+                    if((ordered.payment.method === "Razorpay" && ordered.payment.status === "Completed") || 
+                    ordered.payment.method === "Wallet") {
                     const wallet = await Wallet.findOne({userId:ordered.userId});
 
                     

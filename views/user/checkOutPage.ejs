@@ -730,6 +730,8 @@ async function submitAddress(addressData) {
     
         //======= PAYMENT METHODS FETCH FUNCTIONS //=================
 
+        let orderCreated = false;
+
         const confirmBtn = document.querySelector(".confirm-btn");
 
         confirmBtn.addEventListener('click',async()=>{
@@ -853,34 +855,37 @@ async function submitAddress(addressData) {
                             color: "#212529"
                         },
                         modal: {
-                        ondismiss: async function() {
-                            // Handle modal dismissal
-                            try {
-                                await fetch('/user/order/payment-failed', {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json'
-                                    },
-                                    body: JSON.stringify({
-                                        razorpayOrderId: result.razorpayOrderId,
-                                        cart: orderData.cart,
-                                        address: orderData.address,
-                                        coupon: orderData.coupon
-                                    })
-                                });
-                            } catch (error) {
-                                console.error('Error handling payment dismissal:', error);
-                            }
-                        }
-                    }   
-                 };  
+            ondismiss: async function() {
+                  if (!orderCreated) {  // Now this flag is properly defined
+                try {
+                    await fetch('/user/order/payment-failed', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            razorpayOrderId: result.razorpayOrderId,
+                            cart: orderData.cart,
+                            address: orderData.address,
+                            coupon: orderData.coupon
+                        })
+                    });
+                    orderCreated = true;  // Set flag after successful order creation
+                } catch (error) {
+                    console.error('Error handling payment dismissal:', error);
+                }
+            }
+        }
+    }  
+};  
                  
                     const rzp = new Razorpay(options);
                     rzp.open();
-                    
                     // Handle payment failure
                     rzp.on('payment.failed',async function(response){
-                        try {
+                        if(!orderCreated){
+
+                            try {
                             const failureResponse = await fetch('/user/order/payment-failed',{
                                 method:"post",
                                 headers:{
@@ -898,6 +903,7 @@ async function submitAddress(addressData) {
                             const failureResult = await failureResponse.json();
 
                             if(failureResult.success){
+                                orderCreated = true;
                                 Swal.fire({
                                 icon: "warning",
                                 title: "Payment Failed",
@@ -918,6 +924,9 @@ async function submitAddress(addressData) {
                             text: "Failed to process payment failure. Please contact support."
                         });
                         }
+
+                        }
+                     
                     })
                 } else if (selectedPayment.id === 'wallet') {
 

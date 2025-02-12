@@ -219,14 +219,13 @@
                             </div>
 
                             <!-- Cancel Order Section -->
-                            <% if (order.orderStatus !== 'Cancelled' && order.orderStatus !== 'Delivered' && order.orderStatus !== 'Returned') { %>
-                                <div class="d-flex justify-content-end mb-3">
-                                    <button class="btn btn-danger" onclick="cancelAllOrders('<%=order._id%>')">
-                                        Cancel Order
-                                    </button>
-                                </div>
-                            <% } %>
-
+                            <% if ((order.orderStatus !== 'Cancelled' && order.orderStatus !== 'Delivered' && order.orderStatus !== 'Returned') && order.payment.status === "Completed") { %>
+                              <div class="d-flex justify-content-end mb-3">
+                                  <button class="btn btn-danger" onclick="cancelAllOrders('<%=order._id%>')">
+                                      Cancel Order
+                                  </button>
+                              </div>
+                          <% } %>
                             <!-- Invoice Section -->
                             <div class="invoice-section">
                                 <% if ((order.payment.method === "Razorpay" && order.payment.status === "Completed") || 
