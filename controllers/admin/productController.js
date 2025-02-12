@@ -234,106 +234,90 @@ const editProduct = async (req, res) => {
     try {
         const id = req.params.id;
         const productData = req.body;
-        const uploadedFiles = req.files || [];
+        const files = req.files || [];
         
-        console.log('Received removedImages:', productData.removedImages);
-                   // Parse removedImages
-        const removedImages = JSON.parse(productData.removedImages || '[]');
-        console.log('Parsed removedImages:', removedImages);
-   
-
-        // Parse variants data
+        // Parse variants and removedImages data
         const variants = JSON.parse(productData.variants);
-
-        // Process variants and their images
-        const processedVariants = await Promise.all(variants.map(async (variantData, index) => {
-            let variantImages = [];
-
-            // Handle existing images
-            if (Array.isArray(variantData.productImage)) {
-                variantImages = variantData.productImage.filter(img => 
-                    img && 
-                    !removedImages.includes(img)  // Only filter if removedImages exists
-                );
-            }
-
-            // Handle new uploaded files
-            const variantFiles = uploadedFiles.filter(file => 
-                file.fieldname === `productImage[${index}]`
+        const removedImages = JSON.parse(productData.removedImages || '[]');
+        
+        
+        const processedVariants = await Promise.all(variants.map(async (variant, variantIndex) => {
+           
+            let variantImages = variant.productImage.filter(img => !removedImages.includes(img));
+            
+           
+            const variantFiles = files.filter(file => 
+                file.fieldname === `productImage_${variantIndex}`
             );
-
+            
             // Process new images
             for (const file of variantFiles) {
                 try {
-                    const filename = `${uuidv4()}.jpg`;
-                    const filepath = path.join('public/uploads/product-images', filename);
+                    const filename = `${Date.now()}-${variantIndex}-${Math.random().toString(36).substring(7)}.jpg`;
+                    const uploadPath = path.join('public', 'uploads', 'product-images', filename);
                     
-                    fs.mkdir(path.dirname(filepath), { recursive: true });
+                    // Ensure directory exists
+                    await fs.promises.mkdir(path.dirname(uploadPath), { recursive: true });
                     
+                    // Process and save image
                     await sharp(file.buffer)
                         .resize(440, 440, { fit: 'cover' })
                         .jpeg({ quality: 95 })
-                        .toFile(filepath);
+                        .toFile(uploadPath);
                     
-                    const imagePath = `/uploads/product-images/${filename}`;
-                    variantImages.push(imagePath);
+                    variantImages.push(`/uploads/product-images/${filename}`);
                 } catch (error) {
-                    console.error('Error saving image:', error);
+                    console.error('Error processing image:', error);
+                    throw new Error('Error processing uploaded image');
                 }
             }
-
+            
             return {
-               ...variantData,
-               productImage : variantImages,
+                ...variant,
+                productImage: variantImages
             };
         }));
 
-          // Update the product with new variants array
-          const updatedProduct = await Product.findByIdAndUpdate(
+        // Update product in database
+        const updatedProduct = await Product.findByIdAndUpdate(
             id,
             {
                 $set: {
                     productName: productData.productName,
                     description: productData.description,
                     category: productData.category,
-                    variants: variants,
-                    status: variants.some(v => v.stock > 0) ? "Available" : "out of stock"
+                    variants: processedVariants,
+                    status: processedVariants.some(v => v.stock > 0) ? "Available" : "out of stock"
                 }
             },
             { new: true }
         );
-          // Clean up removed images from storage
-          for (const removedImage of removedImages) {
+
+       
+        for (const imagePath of removedImages) {
             try {
-                const imagePath = path.join('public', removedImage);
-                if (fs.existsSync(imagePath)) {
-                    await fs.promises.unlink(imagePath);
+                const fullPath = path.join('public', imagePath);
+                if (fs.existsSync(fullPath)) {
+                    await fs.promises.unlink(fullPath);
                 }
             } catch (error) {
-                console.error('Error removing image file:', error);
+                console.error('Error removing image:', error);
             }
         }
 
-        if (!updatedProduct) {
-            return res.status(404).json({
-                success: false,
-                message: "Failed to update product"
-            });
-        }
-
-        return res.json({
+        return res.status(200).json({
             success: true,
-            message: "Product updated successfully"
+            message: 'Product updated successfully'
         });
 
     } catch (error) {
-        console.error("Error updating product:", error);
+        console.error('Error updating product:', error);
         return res.status(500).json({
             success: false,
-            message: "Internal server error"
+            message: error.message || 'Error updating product'
         });
     }
-}; 
+};
 
 
 

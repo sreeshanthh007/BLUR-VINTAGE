@@ -254,12 +254,14 @@
             });
 
 
-                
+            const heartBtn = document.querySelectorAll('.heart-btn');
             async function checkWishlistStatus() {
                 try {
                const response = await fetch('/user/wishlist/check-status');
                  const data = await response.json();
-            
+                 
+                 const heartBtn = document.querySelectorAll('.heart-btn');
+
                    if (data.wishlistProductIds) {
                    heartBtn.forEach(button => {
                     const productId = button.dataset.productId;
@@ -283,7 +285,7 @@
 
     checkWishlistStatus();
 
- const heartBtn = document.querySelectorAll('.heart-btn');
+
     
     heartBtn.forEach((button) => {
         // Remove any existing click listeners

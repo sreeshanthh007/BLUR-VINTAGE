@@ -48,7 +48,7 @@ async (accessToken, refreshToken, profile, done) => {
 
  passport.serializeUser((user,done)=>{
 
-    console.log("serialixe",user)
+   
    return done(null,user.id);
 })
 

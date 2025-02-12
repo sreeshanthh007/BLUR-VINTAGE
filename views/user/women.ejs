@@ -218,13 +218,13 @@
 <script>
     document.addEventListener("DOMContentLoaded",function(){
 
-
+        checkWishlistStatus();
 
         async function checkWishlistStatus() {
                 try {
                const response = await fetch('/user/wishlist/check-status');
                  const data = await response.json();
-            
+                 const heartBtn = document.querySelectorAll('.heart-btn')
                    if (data.wishlistProductIds) {
                    heartBtn.forEach(button => {
                     const productId = button.dataset.productId;
@@ -242,7 +242,7 @@
         }
     }
      
-        checkWishlistStatus();
+      
 
 
         const productLinks = document.querySelectorAll(".product-link");
@@ -273,8 +273,6 @@
     newHeartBtns.forEach((button) => {
         button.addEventListener("click", async function(e) {
             e.preventDefault();
-            e.stopPropagation(); // Prevent event bubbling
-            
             if(!button.dataset.processing) { // Add a processing flag
                 button.dataset.processing = 'true';
                 

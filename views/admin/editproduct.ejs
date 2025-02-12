@@ -395,7 +395,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const variantSection = container.closest('.variant-section');
     const errorDiv = getOrCreateErrorDiv(variantSection);
 
-    if (currentImages >= maxImages) {
+    if (currentImages > maxImages) {
         errorDiv.textContent = `Maximum ${maxImages} images allowed per variant`;
         errorDiv.style.display = 'block';
         return;
@@ -429,88 +429,84 @@ document.addEventListener('DOMContentLoaded', function() {
     errorDiv.style.display = 'none';
 }
     
-   form.addEventListener('submit', async (e) => {
+form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    if (validateForm()) {
-        const formData = new FormData();
+    
+    if (!validateForm()) return;
+
+    const formData = new FormData();
+    
+    // Add basic product data
+    formData.append('productName', document.getElementById('product_name').value.trim());
+    formData.append('description', document.querySelector('textarea[name="description"]').value.trim());
+    formData.append('category', document.querySelector('select[name="category"]').value);
+
+    // Process variants
+    const variants = Array.from(document.querySelectorAll('.variant-section')).map((variant, index) => {
+        // Get existing images that weren't removed
+        const existingImages = Array.from(variant.querySelectorAll('.image-preview img'))
+            .map(img => img.src)
+            .filter(src => !src.startsWith('blob:') && !removedImages.has(src));
+
+        return {
+            color: variant.querySelector(`input[name="variants[${index}][color]"]`).value,
+            colorName: variant.querySelector(`input[name="variants[${index}][colorName]"]`).value,
+            size: variant.querySelector(`input[name="variants[${index}][size]"]`).value,
+            stock: parseInt(variant.querySelector(`input[name="variants[${index}][stock]"]`).value),
+            price: parseFloat(variant.querySelector(`input[name="variants[${index}][price]"]`).value),
+            productImage: existingImages
+        };
+    });
+
+    formData.append('variants', JSON.stringify(variants));
+    formData.append('removedImages', JSON.stringify(Array.from(removedImages)));
+
+    // Handle new images
+    const imagePromises = [];
+    document.querySelectorAll('.variant-section').forEach((variant, variantIndex) => {
+        const newImages = variant.querySelectorAll('.image-preview img[src^="blob:"]');
+        newImages.forEach((img, imageIndex) => {
+            imagePromises.push(
+                fetch(img.src)
+                    .then(res => res.blob())
+                    .then(blob => {
+                        const file = new File([blob], `image-${variantIndex}-${imageIndex}.jpg`, { type: 'image/jpeg' });
+                        formData.append(`productImage_${variantIndex}`, file);
+                    })
+            );
+        });
+    });
+
+    try {
+        // Wait for all image processing to complete
+        await Promise.all(imagePromises);
+
+        const response = await fetch(form.action, {
+            method: 'POST',
+            body: formData
+        });
+
+        const data = await response.json();
         
-        formData.append('productName', document.getElementById('product_name').value.trim());
-        formData.append('description', document.querySelector('textarea[name="description"]').value.trim());
-        formData.append('category', document.querySelector('select[name="category"]').value);
-
-
-        const variants = Array.from(document.querySelectorAll('.variant-section')).map((variant, index) => {
-            // Get all current images (both existing and new)
-            const currentImages = Array.from(variant.querySelectorAll('.image-preview img'))
-                .map(img => img.src)
-                .filter(url => {
-                    // Keep only existing images that weren't removed
-                    if (url.startsWith('blob:')) {
-                        // This is a new image, we'll handle it separately
-                        return false;
-                    }
-                    return !removedImages.has(url);
-                });
-            return {
-                color: variant.querySelector(`input[name="variants[${index}][color]"]`).value,
-                colorName: variant.querySelector(`input[name="variants[${index}][colorName]"]`).value,
-                size: variant.querySelector(`input[name="variants[${index}][size]"]`).value,
-                stock: parseInt(variant.querySelector(`input[name="variants[${index}][stock]"]`).value),
-                price: parseFloat(variant.querySelector(`input[name="variants[${index}][price]"]`).value),
-                productImage: currentImages
-            };
-        });
-        console.log('Removed images before submit:', Array.from(removedImages));
-        formData.append('variants', JSON.stringify(variants));
-        formData.append('removedImage', JSON.stringify(Array.from(removedImages)));
-
-        // Append new image files
-        const uploadPromises = []
-        document.querySelectorAll('.variant-section').forEach((variant, variantIndex) => {
-            const newImages = variant.querySelectorAll('.image-preview img[src^="blob:"]');
-            newImages.forEach(img => {
-                uploadPromises.push(
-                    fetch(img.src)
-                        .then(res => res.blob())
-                        .then(blob => {
-                            const file = new File([blob], `image-${variantIndex}-${Date.now()}.jpg`, { type: 'image/jpeg' });
-                            formData.append(`productImages_${variantIndex}`, file);
-                        })
-                );
-            });
-        });
-
-        try {
-            const response = await fetch(form.action, {
-                method: 'POST',
-                body: formData
-            });
-
-            const data = await response.json();
-            if (data.success) {
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Success',
-                    text: 'Product updated successfully',
-                    timer: 1500,
-                }).then(() => {
-                    window.location.href = '/admin/productpage';
-                });
-            } else {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: data.message
-                });
-            }
-        } catch (error) {
-            console.error('Error:', error);
+        if (data.success) {
             Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: 'Failed to update product'
+                icon: 'success',
+                title: 'Success',
+                text: 'Product updated successfully',
+                timer: 1500
+            }).then(() => {
+                window.location.href = '/admin/productpage';
             });
+        } else {
+            throw new Error(data.message || 'Failed to update product');
         }
+    } catch (error) {
+        console.error('Error:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: error.message || 'Failed to update product'
+        });
     }
 });
 

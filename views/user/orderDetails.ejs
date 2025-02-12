@@ -1,123 +1,77 @@
-    <!-- views/user/orderDetails.ejs -->
-    <!DOCTYPE html>
-    <html lang="en">
-      <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Order Details</title>
-        <link
-          href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap"
-          rel="stylesheet"
-        />
-        <link
-          rel="stylesheet"
-          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-        />
-        <style>
-          * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-          }
-          .pagination {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin-top: 20px;
-            gap: 15px;
-          }
-
-          .pagination a {
-            text-decoration: none;
-            padding: 8px 16px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            color: #007bff;
-          }
-
-          .pagination a:hover {
-            background-color: #f1f1f1;
-          }
-          body {
-            font-family: "Roboto", sans-serif;
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Order Details - BLUR VINTAGE ★</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css">
+    
+    <style>
+        /* Main content styles */
+        .main-content {
+            padding: 20px;
             background-color: #f5f5f5;
-            color: #333;
-          }
+            min-height: 100vh;
+        }
 
-          .container {
-            max-width: 1200px;
-            margin: 20px auto;
-            padding: 0 20px;
-          }
-
-          .order-card {
+        /* Order card styles */
+        .order-card {
             background: white;
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             margin-bottom: 20px;
             padding: 20px;
-          }
+        }
 
-          .order-header {
+        .order-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             border-bottom: 1px solid #eee;
             padding-bottom: 15px;
             margin-bottom: 20px;
-          }
+        }
 
-          .order-number {
+        .order-number {
             font-size: 1.2rem;
             font-weight: bold;
-          }
+        }
 
-          .order-status {
+        /* Status badges */
+        .order-status {
             padding: 5px 10px;
             border-radius: 4px;
             font-weight: 500;
-          }
+        }
 
-          .status-Processing {
-            background: #fff3cd;
-            color: #856404;
-          }
-          .status-Shipped {
-            background: #cce5ff;
-            color: #004085;
-          }
-          .status-Delivered {
-            background: #d4edda;
-            color: #155724;
-          }
-          .status-Cancelled {
-            background: #f8d7da;
-            color: #721c24;
-          }
+        .status-Processing { background: #fff3cd; color: #856404; }
+        .status-Shipped { background: #cce5ff; color: #004085; }
+        .status-Delivered { background: #d4edda; color: #155724; }
+        .status-Cancelled { background: #f8d7da; color: #721c24; }
 
-          .order-info-grid {
+        /* Product grid */
+        .order-info-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 20px;
             margin-bottom: 20px;
-          }
+        }
 
-          .info-section {
+        .info-section {
             background: #f8f9fa;
             padding: 15px;
             border-radius: 4px;
-          }
+        }
 
-          .info-section h3 {
-            margin-bottom: 10px;
-            color: #333;
-          }
-
-          .product-list {
+        /* Product list */
+        .product-list {
             margin-top: 20px;
-          }
+        }
 
-          .product-item {
+        .product-item {
             display: grid;
             grid-template-columns: auto 1fr auto;
             gap: 20px;
@@ -125,389 +79,267 @@
             border: 1px solid #eee;
             border-radius: 4px;
             margin-bottom: 10px;
-          }
+        }
 
-          .product-image {
+        .product-image {
             width: 100px;
             height: 100px;
             object-fit: cover;
             border-radius: 4px;
-          }
+        }
 
-          .product-details {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-          }
-
-          .price-details {
+        /* Price details */
+        .price-details {
             text-align: right;
             display: flex;
             flex-direction: column;
             justify-content: center;
-          }
+        }
 
-          .original-price {
+        .original-price {
             text-decoration: line-through;
             color: #666;
-          }
+        }
 
-          .discounted-price {
+        .discounted-price {
             font-weight: bold;
             font-size: 1.1rem;
-          }
-
-          .product-offer {
-            color: #28a745;
-            font-size: 0.9rem;
-          }
-
-          .order-summary {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 4px;
-            margin-top: 20px;
-          }
-
-          .total-amount {
-            font-size: 1.2rem;
-            font-weight: bold;
-            text-align: right;
-            margin-top: 10px;
-            padding-top: 10px;
-            border-top: 1px solid #ddd;
-          }
-
-          @media (max-width: 768px) {
-            .product-item {
-              grid-template-columns: 1fr;
-              text-align: center;
-            }
-
-            .product-image {
-              margin: 0 auto;
-            }
-
-            .price-details {
-              text-align: center;
-            }
-          }
-          
-          body {
-              display: flex;
-              min-height: 100vh;
-              margin: 0;
-          }
-          .sidebar {
-              width: 250px;
-              background-color: #2c3e50;
-              color: #ecf0f1;
-              padding: 20px;
-              transition: all 0.3s;
-          }
-          .sidebar-header {
-              text-align: center;
-              padding-bottom: 20px;
-              border-bottom: 1px solid #34495e;
-          }
-          .sidebar-header img {
-              width: 80px;
-              height: 80px;
-              border-radius: 50%;
-              margin-bottom: 10px;
-          }
-          .sidebar-menu {
-              list-style-type: none;
-              padding: 0;
-              margin-top: 20px;
-          }
-          .sidebar-menu li {
-              margin-bottom: 10px;
-          }
-          .sidebar-menu a {
-              color: #ecf0f1;
-              text-decoration: none;
-              display: flex;
-              align-items: center;
-              padding: 10px;
-              border-radius: 5px;
-              transition: background-color 0.3s;
-          }
-          .sidebar-menu a:hover, .sidebar-menu a.active {
-              background-color: #34495e;
-          }
-          .sidebar-menu i {
-              margin-right: 10px;
-          }
-          .main-content {
-              flex-grow: 1;
-              padding: 20px;
-              transition: margin-left 0.3s;
-          }
-          .menu-toggle {
-              display: none;
-              position: fixed;
-              top: 20px;
-              left: 20px;
-              z-index: 1000;
-              background-color: #2c3e50;
-              color: #ecf0f1;
-              border: none;
-              padding: 10px;
-              cursor: pointer;
-          }
-          
-          .invoice-button {
-          display: inline-flex;
-         align-items: center;
-          gap: 8px;
-         padding: 8px 16px;
-         border-radius: 6px;
-           font-weight: 500;
-         transition: all 0.2s;
-           border: none;
-        cursor: pointer;
-         background: #4F46E5;
-       color: white;
         }
 
-        .invoice-button:hover:not(.disabled) {
-          background: #4338CA;
-          transform: translateY(-1px);
-          box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        .invoice-button.disabled {
-          background: #E5E7EB;
-          color: #9CA3AF;
-          cursor: not-allowed;
-        }
-
-        .invoice-button i {
-          font-size: 1.1em;
-        }
-
-
-           .invoice-section {
+        /* Invoice section */
+        .invoice-section {
             margin: 15px 0;
             padding: 15px;
             border-radius: 8px;
             background: #f8f9fa;
             border: 1px solid #e9ecef;
-          }
+        }
 
-          .invoice-badge {
+        .invoice-button {
             display: inline-flex;
             align-items: center;
-            gap: 6px;
-            padding: 4px 8px;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 500;
+            transition: all 0.2s;
+            border: none;
+            cursor: pointer;
+            background: #4F46E5;
+            color: white;
+        }
+
+        .invoice-button:hover:not(.disabled) {
+            background: #4338CA;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .invoice-button.disabled {
+            background: #E5E7EB;
+            color: #9CA3AF;
+            cursor: not-allowed;
+        }
+
+        /* Pagination */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 20px;
+            gap: 15px;
+        }
+
+        .pagination a {
+            text-decoration: none;
+            padding: 8px 16px;
+            border: 1px solid #ddd;
             border-radius: 4px;
-            font-size: 0.875rem;
-            background: #fff;
-            border: 1px solid #dee2e6;
-          }
-          @media (max-width: 768px) {
-              .sidebar {
-                  position: fixed;
-                  left: -250px;
-                  height: 100%;
-                  z-index: 999;
-              }
-              .sidebar.active {
-                  left: 0;
-              }
-              .main-content {
-                  margin-left: 0;
-              }
-              .menu-toggle {
-                  display: block;
-              }
-          }
-        </style>
-      </head>
-      <body>
+            color: #007bff;
+        }
 
+        .pagination a:hover {
+            background-color: #f1f1f1;
+        }
 
-        <div class="sidebar">
-        
-          <ul class="sidebar-menu">
-            <li><a href="/user/manage"><i class="fas fa-home"></i> Dashboard</a></li>
-            <li><a href="/user/order-details" class="active"><i class="fas fa-shopping-bag"></i> Orders</a></li>
-            <li><a href="/user/wishlist"><i class="fas fa-heart"></i> Wishlist</a></li>
-            <li><a href="/user/address"><i class="fas fa-map-marker-alt"></i> Addresses</a></li>
-              <li><a href="/logout"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
-        </ul>
-          </div>
-      <div class="main-content">
-        <div class="container">
-          <% if (!orders || orders.length === 0) { %>
-            <!-- Your existing "No Orders Found" section -->
-            <div class="order-card" style="text-align: center; padding: 40px; margin-top: 100px">
-              <i class="fas fa-shopping-bag" style="font-size: 48px; color: #ccc; margin-bottom: 20px"></i>
-              <h2>No Orders Found</h2>
-              <p>You haven't placed any orders yet.</p>
-              <a href="/user/shop" style="display: inline-block; margin-top: 20px; padding: 10px 20px; background-color: #007bff; color: white; text-decoration: none; border-radius: 4px;">
-                Start Shopping
-              </a>
-            </div>
-          <% } else { %>
-            <% orders.forEach(order => { %>
-              <div class="order-card">
-                <div class="order-header">
-                  <div class="order-number">Order #<%= order.orderNumber %></div>
-                  <div class="order-status status-<%= order.orderStatus %>">
-                    <%= order.orderStatus %>
-                  </div>
-                </div>
-    
-                <!-- Cancel Order Button -->
-                <div class="order-header">
-                  <% if (order.orderStatus !== 'Cancelled' && order.orderStatus !== 'Delivered' && order.orderStatus !== 'Returned') { %>
-                    <button class="cancel-order-btn" 
-                      style="background-color: #dc3545; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer;"
-                      onclick="cancelAllOrders('<%=order._id%>')">
-                      Cancel Order
-                    </button>
-                  <% } %>
-                </div>
-                <div class="invoice-section">
-                  <% if ((order.payment.method === "Razorpay" && order.payment.status === "Completed") || 
-                         (order.payment.method === 'COD' && order.orderStatus === 'Delivered') || 
-                         (order.payment.method === "Wallet" && order.payment.status === "Completed")) { %>
-                      
-                      <div style="display: flex; align-items: center; justify-content: space-between;">
-                          <div>
-                              <h4 style="margin: 0 0 5px 0;">Invoice</h4>
-                              <span class="invoice-badge">
-                                  <i class="fas fa-check-circle" style="color: #28a745;"></i> 
-                                  Available for download
-                              </span>
-                          </div>
-                          <button 
-                              onclick="downloadInvoice('<%= order._id %>')" 
-                              class="invoice-button">
-                              <i class="fas fa-file-download"></i>
-                              Download Invoice
-                          </button>
-                      </div>
-                      
-                  <% } else { %>
-                      <div style="display: flex; align-items: center; justify-content: space-between;">
-                          <div>
-                              <h4 style="margin: 0 0 5px 0;">Invoice</h4>
-                              <span class="invoice-badge">
-                                  <i class="fas fa-clock" style="color: #6c757d;"></i>
-                                  <% if (order.payment.method === 'Razorpay' && order.payment.status !== 'Completed') { %>
-                                      Waiting for payment confirmation
-                                  <% } else if (order.payment.method === 'COD' && order.orderStatus !== 'Delivered') { %>
-                                      Available after delivery
-                                  <% } else if (order.orderStatus === 'Returned') { %>
-                                      Cannot download invoice for returned order
-                                  <% } else { %>
-                                      Waiting for confirmation
-                                  <% } %>
-                              </span>
-                          </div>
-                          <button 
-                              class="invoice-button disabled" 
-                              disabled>
-                              <i class="fas fa-file-download"></i>
-                              Download Invoice
-                          </button>
-                      </div>
-                  <% } %>
-              </div>
-                <% if (order.orderStatus !== 'Cancelled') { %>
-                  <div class="payment-status-section" style="margin: 15px 0;">
-                    <% if (order.payment.status === 'Failed') { %>
-                      <div class="alert alert-danger" style="background-color: #f8d7da; color: #721c24; padding: 10px; border-radius: 4px; margin-bottom: 10px;">
-                        Payment Failed
-                      </div>
-                      <button 
-                        class="retry-payment-btn"
-                        onclick="retryPayment('<%= order._id %>', <%= order.pricing.finalAmount %>)"
-                        style="background-color: #28a745; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer;">
-                        Retry Payment
-                      </button>
-                    <% } %>
-                  </div>
-                <% } %>
-    
-                <!-- Order Information -->
-                <div class="order-info-grid">
-                  <!-- Order Info Section -->
-                  <div class="info-section">
-                    <h3>Order Information</h3>
-                    <p><strong>Order Date:</strong> <%= new Date(order.createdAt).toLocaleDateString() %></p>
-                    <% if (order.expectedDeliveryDate) { %>
-                      <p><strong>Expected Delivery:</strong> <%= new Date(order.expectedDeliveryDate).toLocaleDateString() %></p>
-                    <% } %>
-                    <p><strong>Payment Method:</strong> <%= order.payment.method %></p>
-                    <p><strong>Payment Status:</strong> <%= order.payment.status %></p>
-                  </div>
-    
-                  <!-- Shipping Address -->
-                  <div class="info-section">
-                    <h3>Shipping Address</h3>
-                    <p><%= order.shippingAddress.name %></p>
-                    <p><%= order.shippingAddress.landMark %></p>
-                    <p><%= order.shippingAddress.city %>, <%= order.shippingAddress.state %></p>
-                    <p><%= order.shippingAddress.country %> - <%= order.shippingAddress.pincode %></p>
-                    <p>Phone: <%= order.shippingAddress.phone %></p>
-                  </div>
-                </div>
-    
-                <!-- Product List -->
-                <div class="product-list">
-                  <h3>Ordered Items</h3>
-                  <% order.orderItems.forEach(item => { %>
-                    <div class="product-item">
-                      <!-- Product Image -->
-                      <img src="<%= item.variant.productImage %>" alt="Product" class="product-image" />
-                      
-                      <!-- Product Details -->
-                      <div class="product-details">
-                        <h4><%= item.product.productName %></h4>
-                        <p>Color: <%= item.variant.colorName %></p>
-                        <p>Size: <%= item.variant.size %></p>
-                        <p>Quantity: <%= item.quantity %></p>
-    
-                        <!-- Item Status -->
-                          <%if(order.payment.status === "Failed"){%>
-                              <p class="status-Cancelled" style="color: #dc3545; font-weight: bold; text-align: center">
-                              payment Cancelled
-                              </p>
-                            <%}else if(item.status.itemStatus === "Cancelled"){%>
-                                <p class="status-Cancelled" style="color: #dc3545; font-weight: bold; text-align: center">
-                                cancelled
-                                </p>
-                        <% } else if (item.status.return && item.status.return.requested) { %>
-                          <p class="return-status">
-                            Return status: <%= item.status.return.status %>
-                          </p>
-                        <% } else if (order.orderStatus !== 'Cancelled' && order.orderStatus !== 'Delivered' && order.orderStatus !== "Returned") { %>
-                          <button class="cancel-item-btn"
-                            onclick="confirmCancelItem('<%= order._id %>', '<%= item._id %>')"
-                            style="background-color: #dc3545; color: white; padding: 4px 12px; border: none; border-radius: 4px; cursor: pointer; margin-top: 10px; font-size: 0.9rem;">
-                            Cancel This Item
-                          </button>
-                        <% } %>
-    
-                       
-                        <% if (order.orderStatus === 'Delivered' && item.status.itemStatus !== 'Cancelled' ) { %>
-                          <% if (item.status.return && item.status.return.requested) { %>
-                            <p class="return-status" style="color: #007bff; font-weight: bold; margin-top: 10px; text-align: center;">
-                              Item returned: <%= item.status.return.status %>
-                            </p>
-                          <% } else { %>
-                            <button class="return-item-btn"
-                              onclick="initiateReturn('<%= order._id %>', '<%= item._id %>')"
-                              style="background-color: #28a745; color: white; padding: 4px 12px; border: none; border-radius: 4px; cursor: pointer; margin-top: 10px; font-size: 0.9rem;">
-                              Return Item
-                            </button>
-                          <% } %>
-                        <% } %>
-                      </div>
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .product-item {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+
+            .product-image {
+                margin: 0 auto;
+            }
+
+            .price-details {
+                text-align: center;
+            }
+
+            .order-header {
+                flex-direction: column;
+                gap: 10px;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Include Header -->
+    <%- include('../partials/user/header.ejs') %>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Include Sidebar -->
+            <%- include('../partials/user/userSidebar.ejs') %>
+
+            <!-- Main Content -->
+            <div class="col-lg-9 main-content">
+                <% if (!orders || orders.length === 0) { %>
+                    <!-- Empty State -->
+                    <div class="order-card text-center py-5">
+                        <i class="fas fa-shopping-bag fa-3x mb-3" style="color: #ccc;"></i>
+                        <h2>No Orders Found</h2>
+                        <p class="text-muted">You haven't placed any orders yet.</p>
+                        <a href="/user/shop" class="btn btn-primary mt-3">
+                            Start Shopping
+                        </a>
+                    </div>
+                <% } else { %>
+                    <!-- Orders List -->
+                    <% orders.forEach(order => { %>
+                        <div class="order-card">
+                            <!-- Order Header -->
+                            <div class="order-header">
+                                <div class="order-number">Order #<%= order.orderNumber %></div>
+                                <div class="order-status status-<%= order.orderStatus %>">
+                                    <%= order.orderStatus %>
+                                </div>
+                            </div>
+
+                            <!-- Cancel Order Section -->
+                            <% if (order.orderStatus !== 'Cancelled' && order.orderStatus !== 'Delivered' && order.orderStatus !== 'Returned') { %>
+                                <div class="d-flex justify-content-end mb-3">
+                                    <button class="btn btn-danger" onclick="cancelAllOrders('<%=order._id%>')">
+                                        Cancel Order
+                                    </button>
+                                </div>
+                            <% } %>
+
+                            <!-- Invoice Section -->
+                            <div class="invoice-section">
+                                <% if ((order.payment.method === "Razorpay" && order.payment.status === "Completed") || 
+                                    (order.payment.method === 'COD' && order.orderStatus === 'Delivered') || 
+                                    (order.payment.method === "Wallet" && order.payment.status === "Completed")) { %>
+                                    <div class="d-flex align-items-center justify-content-between">
+                                        <div>
+                                            <h4 class="mb-1">Invoice</h4>
+                                            <span class="badge bg-success">
+                                                <i class="fas fa-check-circle me-1"></i>
+                                                Available for download
+                                            </span>
+                                        </div>
+                                        <button onclick="downloadInvoice('<%= order._id %>')" class="invoice-button">
+                                            <i class="fas fa-file-download"></i>
+                                            Download Invoice
+                                        </button>
+                                    </div>
+                                <% } else { %>
+                                    <div class="d-flex align-items-center justify-content-between">
+                                        <div>
+                                            <h4 class="mb-1">Invoice</h4>
+                                            <span class="badge bg-secondary">
+                                                <i class="fas fa-clock me-1"></i>
+                                                <%= order.payment.method === 'Razorpay' && order.payment.status !== 'Completed' ? 
+                                                    'Waiting for payment confirmation' : 
+                                                    order.payment.method === 'COD' && order.orderStatus !== 'Delivered' ?
+                                                    'Available after delivery' :
+                                                    order.orderStatus === 'Returned' ?
+                                                    'Cannot download invoice for returned order' :
+                                                    'Waiting for confirmation' %>
+                                            </span>
+                                        </div>
+                                        <button class="invoice-button disabled" disabled>
+                                            <i class="fas fa-file-download"></i>
+                                            Download Invoice
+                                        </button>
+                                    </div>
+                                <% } %>
+                            </div>
+
+                            <!-- Payment Status Section -->
+                            <% if (order.orderStatus !== 'Cancelled' && order.payment.status === 'Failed') { %>
+                                <div class="alert alert-danger mb-3">
+                                    <p class="mb-2">Payment Failed</p>
+                                    <button class="btn btn-success" 
+                                            onclick="retryPayment('<%= order._id %>', <%= order.pricing.finalAmount %>)">
+                                        Retry Payment
+                                    </button>
+                                </div>
+                            <% } %>
+
+                            <!-- Order Information -->
+                            <div class="order-info-grid">
+                                <div class="info-section">
+                                    <h3>Order Information</h3>
+                                    <p><strong>Order Date:</strong> <%= new Date(order.createdAt).toLocaleDateString() %></p>
+                                    <% if (order.expectedDeliveryDate) { %>
+                                        <p><strong>Expected Delivery:</strong> <%= new Date(order.expectedDeliveryDate).toLocaleDateString() %></p>
+                                    <% } %>
+                                    <p><strong>Payment Method:</strong> <%= order.payment.method %></p>
+                                    <p><strong>Payment Status:</strong> <%= order.payment.status %></p>
+                                </div>
+
+                                <div class="info-section">
+                                    <h3>Shipping Address</h3>
+                                    <p><%= order.shippingAddress.name %></p>
+                                    <p><%= order.shippingAddress.landMark %></p>
+                                    <p><%= order.shippingAddress.city %>, <%= order.shippingAddress.state %></p>
+                                    <p><%= order.shippingAddress.country %> - <%= order.shippingAddress.pincode %></p>
+                                    <p>Phone: <%= order.shippingAddress.phone %></p>
+                                </div>
+                            </div>
+
+                            <!-- Product List -->
+                            <div class="product-list">
+                                <h3>Ordered Items</h3>
+                                <% order.orderItems.forEach(item => { %>
+                                    <div class="product-item">
+                                        <img src="<%= item.variant.productImage %>" alt="Product" class="product-image">
+                                        
+                                        <div class="product-details">
+                                            <h4><%= item.product.productName %></h4>
+                                            <p>Color: <%= item.variant.colorName %></p>
+                                            <p>Size: <%= item.variant.size %></p>
+                                            <p>Quantity: <%= item.quantity %></p>
+
+                                            <!-- Item Status -->
+                                            <% if (item.status.itemStatus === "Cancelled") { %>
+                                                <p class="text-danger fw-bold">Cancelled</p>
+                                            <% } else if (item.status.return && item.status.return.requested) { %>
+                                                <p>Return status: <%= item.status.return.status %></p>
+                                            <% } else if (order.orderStatus !== 'Cancelled' && order.orderStatus !== 'Delivered') { %>
+                                                <button class="btn btn-sm btn-danger mt-2"
+                                                        onclick="confirmCancelItem('<%= order._id %>', '<%= item._id %>')">
+                                                    Cancel This Item
+                                                </button>
+                                            <% } %>
+
+                                            <!-- Return Option -->
+                                            <% if (order.orderStatus === 'Delivered' && item.status.itemStatus !== 'Cancelled') { %>
+                                                <% if (item.status.return && item.status.return.requested) { %>
+                                                    <p class="text-primary fw-bold mt-2">
+                                                        Return status: <%= item.status.return.status %>
+                                                    </p>
+                                                <% } else { %>
+                                                    <button class="btn btn-sm btn-success mt-2"
+                                                            onclick="initiateReturn('<%= order._id %>', '<%= item._id %>')">
+                                                        Return Item
+                                                    </button>
+                                                <% } %>
+                                            <% } %>
+                                        </div>
     
                       <!-- Price Details -->
                       <div class="price-details">
