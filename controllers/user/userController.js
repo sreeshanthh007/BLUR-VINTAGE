@@ -737,7 +737,8 @@ const loadWomen = async (req, res,next) => {
             return res.render("user/women", { 
                 products: [],
                 currentSort: sortOption,
-                categoryNotListed:true
+                categoryNotListed:true,
+                
             });
         }
 

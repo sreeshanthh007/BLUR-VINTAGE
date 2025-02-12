@@ -529,31 +529,203 @@
             alert('Failed to update delivery address. Please try again.');
         }
     }
-        async function handleNewAddress(e) {
-            e.preventDefault();
-            
-            const formData = new FormData(e.target);
-            const addressData = Object.fromEntries(formData.entries());
-
-            try {
-                const response = await fetch('/user/addresses', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(addressData)
-                });
-
-                if (response.ok) {
-                    window.location.reload();
-                } else {
-                    throw new Error('Failed to add address');
-                }
-            } catch (error) {
-                console.error('Error adding address:', error);
-                alert('Failed to add address. Please try again.');
-            }
+    function handleNewAddress(e) {
+    e.preventDefault();
+    
+    // Get form and form data
+    const form = e.target;
+    const formData = new FormData(form);
+    const addressData = Object.fromEntries(formData.entries());
+    
+    // Reset previous error messages
+    clearErrors(form);
+    
+    // Validation rules
+    const validations = {
+        name: {
+            pattern: /^[a-zA-Z\s]{3,50}$/,
+            message: "Name should be 3-50 characters long and contain only letters"
+        },
+        phone: {
+            pattern: /^[0-9]{10}$/,
+            message: "Please enter a valid 10-digit phone number"
+        },
+        landMark: {
+            pattern: /^[a-zA-Z0-9\s,.-]{3,100}$/,
+            message: "Landmark should be 3-100 characters long"
+        },
+        city: {
+            pattern: /^[a-zA-Z\s]{3,50}$/,
+            message: "City should contain only letters and be 3-50 characters long"
+        },
+        state: {
+            pattern: /^[a-zA-Z\s]{3,50}$/,
+            message: "State should contain only letters and be 3-50 characters long"
+        },
+        country: {
+            pattern: /^[a-zA-Z\s]{3,50}$/,
+            message: "Country should contain only letters and be 3-50 characters long"
+        },
+        pincode: {
+            pattern: /^[0-9]{6}$/,
+            message: "Please enter a valid 6-digit pincode"
         }
+    };
+
+   
+    let hasErrors = false;
+    Object.keys(validations).forEach(field => {
+        const value = addressData[field]?.trim();
+        const validation = validations[field];
+
+        
+        if (!value) {
+            showError(form, field, `${field.charAt(0).toUpperCase() + field.slice(1)} is required`);
+            hasErrors = true;
+            return;
+        }
+
+        // Check pattern
+        if (!validation.pattern.test(value)) {
+            showError(form, field, validation.message);
+            hasErrors = true;
+        }
+    });
+
+    if (hasErrors) {
+        return;
+    }
+
+   
+    submitAddress(addressData);
+}
+
+
+function showError(form, field, message) {
+    const input = form.querySelector(`[name="${field}"]`);
+    const errorDiv = input.parentElement.querySelector('.error-message') || 
+                    createErrorElement(input);
+    
+    input.classList.add('is-invalid');
+    errorDiv.textContent = message;
+    errorDiv.style.display = 'block';
+}
+
+
+function createErrorElement(input) {
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'error-message text-danger small mt-1';
+    input.parentElement.appendChild(errorDiv);
+    return errorDiv;
+}
+
+
+function clearErrors(form) {
+    form.querySelectorAll('.is-invalid').forEach(input => {
+        input.classList.remove('is-invalid');
+    });
+    form.querySelectorAll('.error-message').forEach(error => {
+        error.style.display = 'none';
+    });
+}
+
+
+async function submitAddress(addressData) {
+    try {
+        const response = await fetch('/user/addresses', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(addressData)
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Success',
+                text: 'Address added successfully',
+                timer: 1500,
+                showConfirmButton: false
+            }).then(() => {
+                window.location.reload();
+            });
+        } else {
+            throw new Error(data.message || 'Failed to add address');
+        }
+    } catch (error) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: error.message || 'Failed to add address. Please try again.'
+        });
+    }
+}
+
+
+
+        function addInputListeners(form) {
+    const inputs = form.querySelectorAll('input');
+    inputs.forEach(input => {
+        input.addEventListener('input', () => {
+            const field = input.name;
+            const validation = validations[field];
+            const value = input.value.trim();
+
+            clearErrors(form);
+
+            if (validation && value) {
+                if (!validation.pattern.test(value)) {
+                    showError(form, field, validation.message);
+                }
+            }
+        });
+    });
+}
+
+
+        const formHTML = `
+    <form id="newAddressForm" novalidate>
+        <div class="mb-3">
+            <label class="form-label">Name*</label>
+            <input type="text" class="form-control" name="name" required 
+                   placeholder="Enter full name">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Phone*</label>
+            <input type="tel" class="form-control" name="phone" required 
+                   placeholder="10-digit mobile number">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Landmark*</label>
+            <input type="text" class="form-control" name="landMark" required 
+                   placeholder="Nearby landmark">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">City*</label>
+            <input type="text" class="form-control" name="city" required 
+                   placeholder="Enter city">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">State*</label>
+            <input type="text" class="form-control" name="state" required 
+                   placeholder="Enter state">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Country*</label>
+            <input type="text" class="form-control" name="country" required 
+                   placeholder="Enter country">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Pincode*</label>
+            <input type="text" class="form-control" name="pincode" required 
+                   placeholder="6-digit pincode">
+        </div>
+        <button type="submit" class="btn btn-primary">Save Address</button>
+    </form>
+`;
     
     
         //======= PAYMENT METHODS FETCH FUNCTIONS //=================
