@@ -46,7 +46,8 @@ const userSchema = mongoose.Schema({
      referredBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Users',
-      required: false
+      required: false,
+      sparse:true
      },
      referralCount: {
       type: Number,
