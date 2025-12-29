@@ -1,89 +1,96 @@
-const express = require('express');
-const app =express();
-const session = require('express-session');
-const nocache = require('nocache');
-const flash = require("connect-flash")
-const path = require('path');
-const bodyparser = require('body-parser')
-const passport = require('./config/passport.js')
-const env = require('dotenv').config();
-const override  = require("method-override")
+// server.js or app.js
+
+import express from 'express';
+import session from 'express-session';
+import nocache from 'nocache';
+import flash from 'connect-flash';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import bodyParser from 'body-parser';
+import passport from './config/passport.js';
+import dotenv from 'dotenv';
+import methodOverride from 'method-override';
+
+dotenv.config(); // Load environment variables
+
+// Fix for __dirname in ES Modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const app = express();
+
+// Database connection
+import './config/mongodb.js'; // Assuming it connects on import
+
+// Routers
+import userRouter from './routes/userRoutes.js';
+import adminRouter from './routes/adminRoutes.js';
+import authRoutes from './routes/authroutes.js';
+
+// Middleware
+import adminAccess from './middlewares/auth.js';
+import connectDB from './config/mongodb.js';
 
 
-const mongodb = require('./config/mongodb');
-const userRouter = require('./routes/userRoutes')
-const adminRouter = require("./routes/adminRoutes.js")
-const authRoutes = require('./routes/authroutes.js');
-const adminAccess = require("./middlewares/auth.js")
-
-mongodb();
-
-
+connectDB()
+// Session configuration
 app.use(session({
-    secret: process.env.session_secret,
+    secret: process.env.SESSION_SECRET || process.env.session_secret, // Use consistent naming
     resave: false,
     saveUninitialized: false,
     cookie: {
-        secure: false, 
+        secure: false, // Set to true in production with HTTPS
         httpOnly: true,
-        maxAge: 3600000 // 1 hour in milliseconds
+        maxAge: 3600000 // 1 hour
     },
     rolling: true,
-
 }));
 
-
 app.use(nocache());
-app.use(passport.initialize())
+app.use(passport.initialize());
 app.use(passport.session());
 app.use(flash());
+
+// Make flash messages available in views
 app.use((req, res, next) => {
-    res.locals.messages = req.flash();  // This makes the flash messages available in templates
+    res.locals.messages = req.flash();
     next();
 });
-app.use(bodyparser.urlencoded({extended:true}))
-app.use(override('_method'))
 
-app.use(express.json({limit:'50mb'}));
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(methodOverride('_method'));
 
+app.use(express.json({ limit: '50mb' }));
 
+// View engine setup
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
 
+// Static files
+app.use(express.static(path.join(__dirname, 'public')));
 
+// Routes
+app.use('/user', userRouter);
+app.use('/admin', adminRouter);
+app.use('/', authRoutes);
 
-app.set("view engine","ejs");
+// Authentication middlewares (order matters!)
+app.use('/admin', adminAccess.adminAuth); // Protect admin routes
+app.use('/user', adminAccess.userAuth);   // Protect user routes
 
-
-
-app.set('views',[path.join(__dirname,"views")]);
-
-app.use(express.static(path.join(__dirname,"public")));
-
-
-
-// for user needs
-app.use('/user',userRouter)
-// for admin
-app.use("/admin",adminRouter)
-// prevent users  accessing admin
-
-app.use("/admin",adminAccess.adminAuth)
-app.use("/user",adminAccess.userAuth)
-
-// for google authenication
-app.use('/',authRoutes)
-
-
-app.use((err,req,res,next)=>{
-
-    console.log("this is the error stack",err.stack);
-
-    res.status(err.status || 500).render("error", { 
-        message: err.message || "Internal Server Error"
+// Global error handler
+app.use((err, req, res, next) => {
+    console.error('Error stack:', err.stack);
+    res.status(err.status || 500).render('error', {
+        message: err.message || 'Internal Server Error'
     });
-
-})
-
-app.listen(process.env.PORT,()=>{
-    console.log("server started")
 });
-module.exports = app;
+
+// Start server
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log(`Server started on http://localhost:${PORT}`);
+});
+
+
+export default app;

@@ -1,55 +1,54 @@
-const user = require("../../models/userSchema");
+import User from "../../models/userSchema.js";
 
-
-
-const userInfo = async (req,res)=>{
+const userInfo = async (req, res) => {
     try {
-        let search="";
-        if(req.query.search){
-            search = req.query.search;
+        let search = "";
+        if (req.query.search) {
+            search = req.query.search.trim();
         }
-        let page = parseInt(req.query.page)||1
-       
-        const limit =5;
-        const userData = await user.find({
-            isAdmin:false,
-            $or:[
-                {name:{$regex:".*"+search+".*"}},
-                {email:{$regex:".*"+search+".*"}}
-            ],
+
+        let page = parseInt(req.query.page) || 1;
+        const limit = 5;
+
+        const regex = new RegExp(search, "i");
+
+        const userData = await User.find({
+            isAdmin: false,
+            $or: [
+                { firstName: { $regex: regex } },
+                { lastName: { $regex: regex } },
+                { email: { $regex: regex } }
+            ]
         })
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .lean();
 
-        .limit(limit*1)
-        .skip((page-1)*limit)
-        .exec();
-
-        const count = await user.find({
-            isAdmin:false,
-            $or:[
-                {name:{$regex:".*"+search+".*"}},
-                {email:{$regex:".*"+search+".*"}}
-            ],
-
-        }).countDocuments();
+        const count = await User.countDocuments({
+            isAdmin: false,
+            $or: [
+                { firstName: { $regex: regex } },
+                { lastName: { $regex: regex } },
+                { email: { $regex: regex } }
+            ]
+        });
 
         const totalPages = Math.ceil(count / limit);
 
-        res.render("admin/userManage",{
-            users:userData,
-            currentPage:page,
+        res.render("admin/userManage", {
+            users: userData,
+            currentPage: page,
             totalPages,
             search,
             limit
         });
     } catch (error) {
-        console.log('error in userinfo',error);
-        
+        console.log("Error in userInfo:", error);
+        res.status(500).send("Server error");
     }
-}
+};
 
+export default {
+    userInfo
+};
 
-module.exports = {
-    userInfo,
-   
-
-}

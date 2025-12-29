@@ -1,21 +1,35 @@
+// routes/authroutes.js
 
-const express = require('express');
+import express from 'express';
+import passport from 'passport';
+import User from "../models/userSchema.js";
+
 const router = express.Router();
-const passport = require('passport');
-const users = require("../models/userSchema")
+
 
 router.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 
-// Google authentication callback
-router.get('/auth/google/callback', passport.authenticate('google', {
-    failureRedirect: '/user/register', // If authentication fails, redirect to register page
-}), async (req, res) => {
-    const user = await users.findOne({googleId:req.user.googleId});
-    if(user.isBlocked){
-        return res.status(400).send("your account is blocked");
+
+router.get('/auth/google/callback', 
+    passport.authenticate('google', {
+        failureRedirect: '/user/register'
+    }),
+    async (req, res) => {
+        try {
+            const user = await User.findOne({ googleId: req.user.googleId });
+
+            if (user && user.isBlocked) {
+                return res.status(403).render('user/login', { 
+                    message: "Your account has been blocked by the admin. Please contact support." 
+                });
+            }
+
+            res.redirect('/user/home');
+        } catch (error) {
+            console.error("Error in Google callback:", error);
+            res.status(500).send("Authentication error");
+        }
     }
-    res.redirect('/user/home'); // On success, redirect to user home page
-});
+);
 
-
-module.exports = router; 
+export default router;

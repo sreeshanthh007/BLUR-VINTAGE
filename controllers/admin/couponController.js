@@ -1,199 +1,203 @@
-const Coupon = require("../../models/couponSchema");
-const Cart = require("../../models/cartSchema")
+// controllers/admin/couponController.js
 
-const couponPage = async(req,res)=>{
+import Coupon from "../../models/couponSchema.js";
+import Cart from "../../models/cartSchema.js";
+
+// Load coupon management page
+const couponPage = async (req, res) => {
     try {
-        
-        const coupons = await Coupon.find({});
-        
-        return res.render('admin/couponAddPage',{
-            coupons,
-        })
+        const coupons = await Coupon.find({}).sort({ createdAt: -1 });
+
+        return res.render('admin/couponAddPage', { coupons });
     } catch (error) {
-        
+        console.error("Error loading coupon page:", error);
+        res.status(500).render('error', { message: "Failed to load coupons" });
     }
-}
+};
 
-    const addCoupon = async(req,res)=>{
-        try {
+// Add new coupon
+const addCoupon = async (req, res) => {
+    try {
+        const { code, limit, amount, description, startDate, endDate, minOrder } = req.body;
 
-        const { code, limit, amount, description, startDate, endDate, minOrder} = req.body;
-
-        const existingCoupon = await Coupon.findOne({code:code});
-
-        if(existingCoupon){
-            return res.status(400).json({success:false,message:"this coupon already exist"})
+        // Basic validation
+        if (!code || !limit || !amount || !startDate || !endDate) {
+            return res.status(400).json({ success: false, message: "All required fields must be filled" });
         }
 
-            const parsedStartdate = new Date(startDate);
+        const trimmedCode = code.trim().toUpperCase();
 
-            parsedStartdate.setUTCHours(0,0,0,0)
+        const existingCoupon = await Coupon.findOne({ code: trimmedCode });
 
-            const parsedenddate = new Date(endDate)
+        if (existingCoupon) {
+            return res.status(400).json({ success: false, message: "Coupon code already exists" });
+        }
 
-            parsedenddate.setUTCHours(23,59,59,999);
-            
+        const parsedStartDate = new Date(startDate);
+        parsedStartDate.setUTCHours(0, 0, 0, 0);
+
+        const parsedEndDate = new Date(endDate);
+        parsedEndDate.setUTCHours(23, 59, 59, 999);
+
+        if (parsedStartDate > parsedEndDate) {
+            return res.status(400).json({ success: false, message: "End date must be after start date" });
+        }
 
         const newCoupon = new Coupon({
-            code:code,
-            usageLimit:limit,
-            description:description,
-            startDate:parsedStartdate,
-            endDate:parsedenddate,
-            discountType:"Flat",
-            minimumOrderAmount:minOrder,
-            discountValue:amount,
-            isActive:true
+            code: trimmedCode,
+            usageLimit: Number(limit),
+            currentUsageCount: 0,
+            discountType: "Flat",
+            discountValue: Number(amount),
+            minimumOrderAmount: Number(minOrder || 0),
+            description: description.trim(),
+            startDate: parsedStartDate,
+            endDate: parsedEndDate,
+            isActive: true
         });
+
         await newCoupon.save();
 
-        return res.status(200).json({success:true,message:"coupon added successfully"})
-
-        } catch (error) {
-            console.log("error ion adding coupon controller",error.message)
-        }
+        return res.json({ success: true, message: "Coupon added successfully" });
+    } catch (error) {
+        console.error("Error adding coupon:", error);
+        return res.status(500).json({ success: false, message: "Failed to add coupon" });
     }
+};
 
+// Load edit coupon page
+const loadEditCoupon = async (req, res) => {
+    try {
+        const { couponId } = req.params;
 
-    const loadEditCoupon = async(req,res,next)=>{
-        try {
+        const coupon = await Coupon.findById(couponId);
 
-            const couponId = req.params.couponId;
+        if (!coupon) {
+            return res.status(404).render('error', { message: "Coupon not found" });
+        }
 
-            const coupon =  await Coupon.findById(couponId)
-
-            if(!coupon){
-                return res.status(400).json({success:false,message:"coupon not found"})
-            }
-
-            const formattedStartDate = coupon.startDate.toISOString().split('T')[0];
+        const formattedStartDate = coupon.startDate.toISOString().split('T')[0];
         const formattedEndDate = coupon.endDate.toISOString().split('T')[0];
 
-            return res.render('admin/editCoupon',{
-                coupon:{
-                    _id:coupon._id,
-                    code:coupon.code,
-                    usageLimit:coupon.usageLimit,
-                    discountValue:coupon.discountValue,
-                    minimumOrderAmount:coupon.minimumOrderAmount,
-                    description:coupon.description,
-                    startDate:formattedStartDate,
-                    endDate:formattedEndDate,
-                }
-            });
-        } catch (error) {
-            next(error);
-            console.log("error in edit coupon controller",error.message)
-        }
-    }
-
-
-    const editCoupon = async(req,res,next)=>{
-        try {
-            const couponId = req.params.couponId;
-
-            const coupon = await Coupon.findById(couponId);
-
-            if(!coupon){
-                return res.status(400).json({success:false,message:"coupon not found"})
+        res.render('admin/editCoupon', {
+            coupon: {
+                _id: coupon._id,
+                code: coupon.code,
+                usageLimit: coupon.usageLimit,
+                currentUsageCount: coupon.currentUsageCount,
+                discountValue: coupon.discountValue,
+                minimumOrderAmount: coupon.minimumOrderAmount,
+                description: coupon.description,
+                startDate: formattedStartDate,
+                endDate: formattedEndDate,
+                isActive: coupon.isActive
             }
-
-            const { usageLimit, discountValue, minOrder, description, startDate, endDate } = req.body;
-
-            const parsedStartDate = new Date(startDate);
-            parsedStartDate.setUTCHours(0,0,0,0);
-    
-            const parsedEndDate = new Date(endDate);
-            parsedEndDate.setUTCHours(23,59,59,999);
-    
-            // Validate dates
-            if (parsedStartDate > parsedEndDate) {
-                return res.status(400).json({
-                    success: false,
-                    message: "End date must be after start date"
-                });
-            }
-
-
-
-            const updatedCoupon = await Coupon.findByIdAndUpdate(
-                couponId,
-                {
-                    usageLimit: usageLimit,
-                    discountValue: discountValue,
-                    minimumOrderAmount: minOrder,
-                    description: description,
-                    startDate: parsedStartDate,
-                    endDate: parsedEndDate
-                },
-                { new: true }
-            );
-
-
-            if (!updatedCoupon) {
-                return res.status(404).json({
-                    success: false,
-                    message: "Coupon not found"
-                });
-            }
-
-
-            return res.status(200).json({
-                success: true,
-                message: "Coupon updated successfully",
-                redirectUrl: '/admin/coupons'
-            });
-
-
-        } catch (error) {
-            next(error);
-            console.log("edit coupon error",error.message)
-        }
+        });
+    } catch (error) {
+        console.error("Error loading edit coupon:", error);
+        res.status(500).render('error', { message: "Server error" });
     }
+};
 
+// Update existing coupon
+const editCoupon = async (req, res) => {
+    try {
+        const { couponId } = req.params;
+        const { usageLimit, discountValue, minOrder, description, startDate, endDate } = req.body;
 
-    const deleteCoupon = async(req,res)=>{
-        try {
-            const {couponId} = req.query;
+        const coupon = await Coupon.findById(couponId);
 
-          const coupon = await Coupon.findByIdAndDelete(couponId)
-
-           if(!coupon){
-            return res.status(400).json({success:false,message:"coupon not found"})
-           }
-           
-           return res.status(200).json({success:true,message:"coupon deleted successfully"});
-
-        } catch (error) {
-            console.log("error in coupon deletion",error.message)
+        if (!coupon) {
+            return res.status(404).json({ success: false, message: "Coupon not found" });
         }
-    }
 
+        const parsedStartDate = new Date(startDate);
+        parsedStartDate.setUTCHours(0, 0, 0, 0);
 
-    const availableCoupons = async(req,res,next)=>{
-        try {
-            const now = new Date();
+        const parsedEndDate = new Date(endDate);
+        parsedEndDate.setUTCHours(23, 59, 59, 999);
 
-            const availableCoupons = await Coupon.find({
-                isActive: true,
-                startDate: { $lte: now },
-                endDate: { $gte: now },
-                currentUsageCount: { $lt: '$usageLimit' }
-            });
-
-            res.json(availableCoupons)
-        } catch (error) {
-            next(error)
-            console.log("availabel coupons error  in cupon controller",error)
+        if (parsedStartDate > parsedEndDate) {
+            return res.status(400).json({ success: false, message: "End date must be after start date" });
         }
+
+        const updatedCoupon = await Coupon.findByIdAndUpdate(
+            couponId,
+            {
+                usageLimit: Number(usageLimit),
+                discountValue: Number(discountValue),
+                minimumOrderAmount: Number(minOrder || 0),
+                description: description?.trim(),
+                startDate: parsedStartDate,
+                endDate: parsedEndDate
+            },
+            { new: true, runValidators: true }
+        );
+
+        if (!updatedCoupon) {
+            return res.status(404).json({ success: false, message: "Failed to update coupon" });
+        }
+
+        return res.json({
+            success: true,
+            message: "Coupon updated successfully",
+            redirectUrl: '/admin/coupons'
+        });
+    } catch (error) {
+        console.error("Error editing coupon:", error);
+        return res.status(500).json({ success: false, message: "Failed to update coupon" });
     }
-    
-module.exports={
+};
+
+// Delete coupon
+const deleteCoupon = async (req, res) => {
+    try {
+        const { couponId } = req.query;
+
+        if (!couponId) {
+            return res.status(400).json({ success: false, message: "Coupon ID is required" });
+        }
+
+        const coupon = await Coupon.findByIdAndDelete(couponId);
+
+        if (!coupon) {
+            return res.status(404).json({ success: false, message: "Coupon not found" });
+        }
+
+        return res.json({ success: true, message: "Coupon deleted successfully" });
+    } catch (error) {
+        console.error("Error deleting coupon:", error);
+        return res.status(500).json({ success: false, message: "Failed to delete coupon" });
+    }
+};
+
+// Get currently available (active & valid) coupons – used on frontend checkout
+const availableCoupons = async (req, res) => {
+    try {
+        const now = new Date();
+
+        const activeCoupons = await Coupon.find({
+            isActive: true,
+            startDate: { $lte: now },
+            endDate: { $gte: now },
+            $expr: { $lt: ["$currentUsageCount", "$usageLimit"] }
+        }).select("code discountValue discountType minimumOrderAmount description");
+
+        res.json(activeCoupons);
+    } catch (error) {
+        console.error("Error fetching available coupons:", error);
+        res.status(500).json({ success: false, message: "Server error" });
+    }
+};
+
+
+
+
+export default {
     couponPage,
     addCoupon,
-    deleteCoupon,
-    availableCoupons,
     loadEditCoupon,
     editCoupon,
-
-}
+    deleteCoupon,
+    availableCoupons
+};

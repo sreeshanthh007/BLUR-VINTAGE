@@ -1,37 +1,49 @@
-const multer = require('multer');
-const { v4: uuidv4 } = require('uuid');
-const path = require('path');
+
+import multer from 'multer';
+import { v4 as uuidv4 } from 'uuid';
+import path from 'path';
+
 
 const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
+    destination: (req, file, cb) => {
         cb(null, 'public/uploads/product-images');
     },
-    filename: function (req, file, cb) {
-        const ext = file.originalname.split('.').pop();
-        cb(null, `${uuidv4()}.${ext}`);
+    filename: (req, file, cb) => {
+        const ext = path.extname(file.originalname); // More reliable than split/pop
+        cb(null, `${uuidv4()}${ext}`);
     }
 });
 
-// Configure storage for memory uploads (for image processing)
+
 const memoryStorage = multer.memoryStorage();
 
+
 const imageFileFilter = (req, file, cb) => {
-    if (!file.originalname.match(/\.(jpg|JPG|jpeg|JPEG|png|PNG|gif|GIF|webp|WEBP)$/)) {
-        req.fileValidationError = 'Only image files are allowed!';
-        return cb(null, false);
+    const allowedTypes = /\.(jpg|jpeg|png|gif|webp)$/i;
+    if (!allowedTypes.test(file.originalname)) {
+        req.fileValidationError = 'Only image files (JPG, JPEG, PNG, GIF, WEBP) are allowed!';
+        return cb(null, false); 
     }
-    cb(null, true);
+    cb(null, true); 
 };
 
-const diskUpload = multer({ storage: storage });
+
+const diskUpload = multer({ storage });
+
+
 const memoryUpload = multer({
     storage: memoryStorage,
-    fileFilter: imageFileFilter
-}).any();
+    fileFilter: imageFileFilter,
+    limits: {
+        fileSize: 10 * 1024 * 1024 // Optional: limit to 10MB
+    }
+}).any(); 
 
 
+export { diskUpload, memoryUpload };
 
-module.exports={
+
+export default {
     diskUpload,
     memoryUpload
-}
+};
