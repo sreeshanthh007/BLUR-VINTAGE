@@ -115,7 +115,8 @@ const addAddress = async(req,res)=>{
    const editAddress = async(req,res)=>{
   try {
     const editAddressId = req.params.id;
-console.log("editaddressid",editAddressId);
+
+    
 
     if(!editAddressId){
         return res.redirect("/user/address");

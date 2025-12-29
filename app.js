@@ -24,7 +24,7 @@ app.use(session({
     resave: false,
     saveUninitialized: false,
     cookie: {
-        secure: false, // Set to true if you're using https
+        secure: false, 
         httpOnly: true,
         maxAge: 3600000 // 1 hour in milliseconds
     },
@@ -72,7 +72,7 @@ app.use("/user",adminAccess.userAuth)
 // for google authenication
 app.use('/',authRoutes)
 
-// to handle the errors
+
 app.use((err,req,res,next)=>{
 
     console.log("this is the error stack",err.stack);
