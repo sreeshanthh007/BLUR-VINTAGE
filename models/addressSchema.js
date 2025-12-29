@@ -1,5 +1,5 @@
-// addressSchema.js
-const mongoose = require('mongoose');
+
+import mongoose from 'mongoose';
 
 const addressSchema = new mongoose.Schema({
     userId: {
@@ -31,11 +31,12 @@ const addressSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    country:{
-        type:String,
-        required:true
+    country: {
+        type: String,
+        required: true
     }
 });
 
 const Address = mongoose.model('Address', addressSchema);
-module.exports = Address;
+
+export default Address;

@@ -1,29 +1,27 @@
+// controllers/admin/categoryController.js
 
-const Category = require("../../models/categorySchema");
+import Category from "../../models/categorySchema.js";
 
+// Load category management page with pagination
 const categoryInfo = async (req, res) => {
-    console.log("category info page loaded")
     try {
-        const page = parseInt(req.query.page) || 1; 
+        const page = parseInt(req.query.page) || 1;
         const limit = 4;
         const skip = (page - 1) * limit;
 
-        // Fetch category data with pagination
         const categoryData = await Category.find({})
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(limit);
 
-        console.log("categoryData:", categoryData); 
-
         const totalCategories = await Category.countDocuments();
-        const totalpages = Math.ceil(totalCategories / limit);
+        const totalPages = Math.ceil(totalCategories / limit);
 
         res.render('admin/categorymanage', {
-            Category: categoryData, 
+            Category: categoryData,
             currentPage: page,
-            totalpages: totalpages,
-            totalCategories: totalCategories
+            totalPages,
+            totalCategories
         });
     } catch (error) {
         console.error("Error in categoryInfo:", error);
@@ -31,126 +29,141 @@ const categoryInfo = async (req, res) => {
     }
 };
 
-
-const addCategory = async(req,res)=>{
+// Add new category
+const addCategory = async (req, res) => {
     try {
-        console.log("add category body",req.body);
-        const {name,description} = req.body;
+        const { name, description } = req.body;
+
+        if (!name || !description) {
+            return res.status(400).json({ success: false, message: "Name and description are required" });
+        }
 
         const trimmedName = name.trim();
 
-        const existingCategory = await Category.findOne({name:trimmedName});
+        const existingCategory = await Category.findOne({ name: { $regex: new RegExp(`^${trimmedName}$`, 'i') } });
 
-        if(existingCategory){
-            return res.status(400).json({success:false,message:"the category already exist !"})
+        if (existingCategory) {
+            return res.status(400).json({ success: false, message: "Category already exists!" });
         }
+
         const newCategory = new Category({
-            name,
+            name: trimmedName,
             description
         });
+
         await newCategory.save();
-        return res.json({success:true,message:"category added successfully"});      
-        
 
+        return res.json({ success: true, message: "Category added successfully" });
     } catch (error) {
-        console.log('error in add category',error)
-        return res.status(400).json({error:"internal server error"});       
+        console.error("Error adding category:", error);
+        return res.status(500).json({ success: false, message: "Internal server error" });
     }
+};
 
-}
-
-const loadeditCategory = async (req,res)=>{
+// Load edit category page
+const loadeditCategory = async (req, res) => {
     try {
-        const {editId} = req.params
-        console.log("edit id",editId)
+        const { editId } = req.params;
 
-        const category = await Category.findById(editId)   // in find by id, it should give in () because the findbyid is a method that will deafult find the id. we dont give that in {()}
-        console.log("load category",category)
-        if(!category){
-            console.log("cannot find load edit category ")
-        }
-        res.render("admin/editcategory",{category:category})
-    } catch (error) {
-        console.log("error in backend edit category");
-        res.status(400);
-        
-    }
-}
-const editCategory = async (req,res)=>{
-    try {
-        const {categoryId} = req.params;
+        const category = await Category.findById(editId);
 
-        console.log("edit category ",categoryId);
-
-        const{name,description,isListed}=req.body
-
-        if(name==""){
-            req.flash("error","enter a name");
-            return res.redirect(`/admin/editcategory/${categoryId}`)
-        }else if(description==""){
-            req.flash("error","enter description");
-            return res.redirect(`/admin/editcategory/${categoryId}`)
+        if (!category) {
+            return res.status(404).render("error", { message: "Category not found" });
         }
 
-        console.log("name description,islisted",req.body)
+        res.render("admin/editcategory", { category });
+    } catch (error) {
+        console.error("Error loading edit category:", error);
+        res.status(500).send("Server error");
+    }
+};
 
-        const existingCategory = await Category.findOne({name:name});
+// Update category
+const editCategory = async (req, res) => {
+    try {
+        const { categoryId } = req.params;
+        const { name, description, isListed } = req.body;
 
-        if(existingCategory){
-            req.flash("error","category name already exists");
+        if (!name?.trim()) {
+            req.flash("error", "Category name is required");
+            return res.redirect(`/admin/editcategory/${categoryId}`);
+        }
 
-            return res.redirect(`/admin/editcategory/${categoryId}`)
+        if (!description?.trim()) {
+            req.flash("error", "Description is required");
+            return res.redirect(`/admin/editcategory/${categoryId}`);
+        }
+
+        const trimmedName = name.trim();
+
+        // Check if another category with same name exists
+        const existingCategory = await Category.findOne({
+            name: { $regex: new RegExp(`^${trimmedName}$`, 'i') },
+            _id: { $ne: categoryId }
+        });
+
+        if (existingCategory) {
+            req.flash("error", "Category name already exists");
+            return res.redirect(`/admin/editcategory/${categoryId}`);
         }
 
         const updatedCategory = await Category.findByIdAndUpdate(
             categoryId,
-            {name,description,isListed:isListed==="on"},
-            {new:true}
+            {
+                name: trimmedName,
+                description: description.trim(),
+                isListed: isListed === "on"
+            },
+            { new: true }
         );
 
-        if(!updatedCategory){
-            console.log("updated category not found");
+        if (!updatedCategory) {
+            req.flash("error", "Category not found");
+            return res.redirect("/admin/category");
         }
-        req.flash("success","category updated successfully")
-        res.redirect("/admin/category")
-    
+
+        req.flash("success", "Category updated successfully");
+        res.redirect("/admin/category");
     } catch (error) {
-        console.log("error in updating category",error.message,error.stack);
-        res.status(400);
-        
+        console.error("Error updating category:", error);
+        req.flash("error", "Failed to update category");
+        res.redirect("/admin/category");
     }
-}
+};
 
-
-toggler = async (req,res)=>{
+// Toggle category listing status
+const toggler = async (req, res) => {
     try {
-        
-        const {categoryId} = req.params;
-        const {isListed} = req.body;
-        console.log("islisted body",isListed)
+        const { categoryId } = req.params;
+        const { isListed } = req.body;
 
-       const upadteCategory =  await Category.findByIdAndUpdate(categoryId,{isListed:isListed},{new:true});
-       if(!upadteCategory){
-        res.status(400).json({success:false,message:"category not found"})
-       }
-        res.status(200).json({message:"changed !",
-            success:true,
-            upadteCategory
+        const updatedCategory = await Category.findByIdAndUpdate(
+            categoryId,
+            { isListed: isListed === "true" || isListed === true },
+            { new: true }
+        );
+
+        if (!updatedCategory) {
+            return res.status(404).json({ success: false, message: "Category not found" });
+        }
+
+        res.json({
+            success: true,
+            message: "Category status updated",
+            isListed: updatedCategory.isListed
         });
     } catch (error) {
-        console.log("error in backend toggler");
-        res.status(400).json({message:"server error"});
-        
+        console.error("Error in toggler:", error);
+        res.status(500).json({ success: false, message: "Server error" });
     }
-}
+};
 
 
 
-
-module.exports={
-    addCategory,
+export default {
     categoryInfo,
-    toggler,
+    addCategory,
     loadeditCategory,
-    editCategory
-}
+    editCategory,
+    toggler
+};

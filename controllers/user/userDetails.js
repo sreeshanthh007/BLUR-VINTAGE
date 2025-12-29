@@ -1,267 +1,266 @@
-const users = require("../../models/userSchema");
-const address = require("../../models/adressSchema");
-const Wallet = require('../../models/walletSchema')
 
-// user profile
-const manage= async (req,res)=>{
+import User from "../../models/userSchema.js";
+import Address from "../../models/addressSchema.js";
+import Wallet from '../../models/walletSchema.js';
+
+const manage = async (req, res) => {
     try {
-        const userId = req.session.user || req.session?.passport?.user;;
-    if(!userId){
-        return res.render("user/userManage",{user:null})
-    }
-    const userData = await users.findOne({_id:userId});
-    console.log("this is user data",userData)
-    if(userData){
-        res.render('user/userManage',{user:userData});
-    }else{
-        res.render("user/userManage")
-    }
-    } catch (error) {
-        console.log("errror in user manage",error.message)
-    }
-}
+        const userId = req.session.user || req.session?.passport?.user;
 
-// profile update controller
-const updateDetails = async(req,res)=>{
-   try {
-    console.log("body in update details",req.body);
-    
-    const {firstName,lastName,phoneNo,email} = req.body;
-    if(firstName==""|| phoneNo=="" || email==""){
-        return res.status(400).json({success:false,message:"all fields are required to be filled"});
-    }
-
-     const updateUserDetails = await users.findOneAndUpdate(
-      { email: email },  // Search by email
-      { 
-        firstName:firstName,
-        lastName: lastName,       // Fields to update
-        phoneNo: phoneNo 
-      },
-      { new: true }               // Option to return the updated document
-    );
-
-    if(updateUserDetails){
-        res.status(200).json({success:true,message:"details updated successfully",redirectUrl:"/user/manage"});
-    }else{
-        res.status(404).json({success:false,message:"user not found"})
-    }
-   } catch (error) {
-    console.log("error in update user details",error);
-    
-   }
-
-}
-
-// manage address
-const getAddress = async (req,res)=>{
-    try {
-        const addresses = await address.find({userId:req.session.user || req.session?.passport?.user});
-
-        return res.render('user/addressManage',{addresses})
-    } catch (error) {
-        
-    }
-}
-
-
-// add address
-
-const addAddress = async(req,res)=>{
-    
-    try {
-        console.log("user id in add address",req.session.user || req.session.passport.user);
-
-        const userID = req.session?.user || req.session?.passport?.user
-        
-        console.log("addrsss",req.body);
-        
-        const {name,phone,landMark,city,state,pincode,country}=req.body;
-
-        console.log("extracted",{name,phone,landMark,city,state,pincode});
-        
-        if(!name || !phone || !landMark ||  !city || !pincode || !country){
-            return res.status(400).json({success:false,message:"all fields are required"})
+        if (!userId) {
+            return res.render("user/userManage", { user: null });
         }
 
-        if (!userID) {
-            return res.status(401).json({
-              success: false,
-              message: "User not authenticated"
-            });
-          }
+        const userData = await User.findById(userId);
 
-        const addressSAVE = new address({
-            userId: userID,
-            name,
-            phone,
-            landMark,
-            city,
-            state,
-            pincode,
-            country
+        res.render('user/userManage', { user: userData || null });
+    } catch (error) {
+        console.error("Error in manage profile:", error);
+        res.status(500).render('error', { message: "Failed to load profile" });
+    }
+};
 
+const updateDetails = async (req, res) => {
+    try {
+        const { firstName, lastName, phoneNo, email } = req.body;
+
+        if (!firstName || !phoneNo || !email) {
+            return res.status(400).json({ success: false, message: "All fields are required" });
+        }
+
+        const updatedUser = await User.findOneAndUpdate(
+            { email: email.trim() },
+            {
+                firstName: firstName.trim(),
+                lastName: lastName?.trim() || "",
+                phoneNo: phoneNo.trim()
+            },
+            { new: true, runValidators: true }
+        );
+
+        if (!updatedUser) {
+            return res.status(404).json({ success: false, message: "User not found" });
+        }
+
+        res.json({
+            success: true,
+            message: "Profile updated successfully",
+            redirectUrl: "/user/manage"
         });
-        await addressSAVE.save();
-        return res.status(200).json({success:true,message:"address added successfully",redirectUrl:"/user/address"});
-
     } catch (error) {
-        console.log("error in  add address",error.message);
+        console.error("Error updating profile:", error);
+        res.status(500).json({ success: false, message: "Failed to update profile" });
     }
+};
 
-  
-}
-    // passing data to edit address
-   const editAddress = async(req,res)=>{
-  try {
-    const editAddressId = req.params.id;
-
-    
-
-    if(!editAddressId){
-        return res.redirect("/user/address");
-    }
-    const addressData = await address.findById(editAddressId);
-    if(!addressData){
-        return res.redirect("/user/address")
-    }
-    return res.render("user/editAddress",{addressData})
-  } catch (error) {
-    console.log("error in edit address",error.message);
-  }
-}
-
-// updating address
-const updateAddress = async (req,res)=>{
-  try {
-    const id = req.params.id;
-    console.log("update address id",id);
-    const updateData = req.body;
-    console.log("update address data",updateData);
-    
-
-    const updateAddress = await address.findByIdAndUpdate(
-        id,
-        updateData,
-        {new:true}
-    );
-
-    if(!updateAddress){
-        return res.status(400).json({success:false,message:"address not found"});
-    }
-    return res.status(200).json({success:true,message:"address updated successfully",redirectUrl:"/user/address"});
-  } catch (error) {
-     console.log("error in update address",error.message);
-  }
-}
-
-const loadAddAddress = async(req,res)=>{
-    if(req.session?.user || req.session?.passport?.user){
-        return res.render("user/addAddress");
-    }else{
-        return res.redirect("/user/login")
-    }
-   
-}
-
-
-// delete address
-
-const deleteAddress = async(req,res)=>{
+const getAddress = async (req, res) => {
     try {
-        const addressId = req.query.id;
-        console.log("addressid",addressId);
-        
-     await address.findByIdAndDelete(addressId);
-
-     return res.redirect("/user/address")
-
-    } catch (error) {
-        console.log("error while deleteing address",error.message);
-    }
-
-}
-
-   const wallet = async (req,res)=>{
-    try {
-        const userId = req.session?.user || req.session?.passport?.user;
-
-        if(!userId){
-            return res.redirect('/user/login')
+        const userId = req.session.user || req.session?.passport?.user;
+        if (!userId) {
+            return res.redirect("/user/login");
         }
 
-        let wallet = await Wallet.findOne({userId:userId});
+        const addresses = await Address.find({ userId }).sort({ createdAt: -1 });
 
+        res.render('user/addressManage', { addresses });
+    } catch (error) {
+        console.error("Error fetching addresses:", error);
+        res.status(500).render('error', { message: "Failed to load addresses" });
+    }
+};
+
+const loadAddAddress = async (req, res) => {
+    const userId = req.session.user || req.session?.passport?.user;
+    if (!userId) {
+        return res.redirect("/user/login");
+    }
+    res.render("user/addAddress");
+};
+
+const addAddress = async (req, res) => {
+    try {
+        const userId = req.session.user || req.session?.passport?.user;
+        if (!userId) {
+            return res.status(401).json({ success: false, message: "User not authenticated" });
+        }
+
+        const { name, phone, landMark, city, state, pincode, country } = req.body;
+
+        if (!name || !phone || !landMark || !city || !state || !pincode || !country) {
+            return res.status(400).json({ success: false, message: "All fields are required" });
+        }
+
+        const newAddress = new Address({
+            userId,
+            name: name.trim(),
+            phone: phone.trim(),
+            landMark: landMark.trim(),
+            city: city.trim(),
+            state: state.trim(),
+            pincode: pincode.trim(),
+            country: country.trim()
+        });
+
+        await newAddress.save();
+
+        res.json({
+            success: true,
+            message: "Address added successfully",
+            redirectUrl: "/user/address"
+        });
+    } catch (error) {
+        console.error("Error adding address:", error);
+        res.status(500).json({ success: false, message: "Failed to add address" });
+    }
+};
+
+const editAddress = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const userId = req.session.user || req.session?.passport?.user;
+
+        if (!userId) {
+            return res.redirect("/user/login");
+        }
+
+        const addressData = await Address.findOne({ _id: id, userId });
+        if (!addressData) {
+            return res.redirect("/user/address");
+        }
+
+        res.render("user/editAddress", { addressData });
+    } catch (error) {
+        console.error("Error loading edit address:", error);
+        res.redirect("/user/address");
+    }
+};
+
+const updateAddress = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const userId = req.session.user || req.session?.passport?.user;
+
+        if (!userId) {
+            return res.status(401).json({ success: false, message: "User not authenticated" });
+        }
+
+        const updateData = req.body;
+
+        const updatedAddress = await Address.findOneAndUpdate(
+            { _id: id, userId },
+            updateData,
+            { new: true, runValidators: true }
+        );
+
+        if (!updatedAddress) {
+            return res.status(404).json({ success: false, message: "Address not found" });
+        }
+
+        res.json({
+            success: true,
+            message: "Address updated successfully",
+            redirectUrl: "/user/address"
+        });
+    } catch (error) {
+        console.error("Error updating address:", error);
+        res.status(500).json({ success: false, message: "Failed to update address" });
+    }
+};
+
+const deleteAddress = async (req, res) => {
+    try {
+        const { id } = req.query;
+        const userId = req.session.user || req.session?.passport?.user;
+
+        if (!userId) {
+            return res.redirect("/user/login");
+        }
+
+        const result = await Address.findOneAndDelete({ _id: id, userId });
+
+        if (!result) {
+            return res.status(404).send("Address not found");
+        }
+
+        res.redirect("/user/address");
+    } catch (error) {
+        console.error("Error deleting address:", error);
+        res.redirect("/user/address");
+    }
+};
+
+const wallet = async (req, res) => {
+    try {
+        const userId = req.session.user || req.session?.passport?.user;
+        if (!userId) {
+            return res.redirect('/user/login');
+        }
+
+        let wallet = await Wallet.findOne({ userId });
         if (!wallet) {
             wallet = new Wallet({
-                userId: userId,
+                userId,
                 balance: 0,
                 transactions: []
             });
             await wallet.save();
         }
 
-        if (wallet && wallet.transactions) {
-            wallet.transactions.sort((a, b) => b.date - a.date);
-        }
+        // Sort transactions newest first
+        wallet.transactions.sort((a, b) => new Date(b.date) - new Date(a.date));
 
-        return res.render('user/wallet',{
-            wallet:wallet
-        });
+        res.render('user/wallet', { wallet });
     } catch (error) {
-        console.log("error in wallet rendering",error.message)
+        console.error("Error loading wallet:", error);
+        res.status(500).render('error', { message: "Failed to load wallet" });
     }
-   }
+};
 
-   const addMoney = async(req,res)=>{
+const addMoney = async (req, res) => {
     try {
-        const {amount} = req.body
-        console.log("amt",amount)
-        const userId = req.session?.user || req.session?.passport?.user;
+        const { amount } = req.body;
+        const userId = req.session.user || req.session?.passport?.user;
 
-        if(!userId){
-            return res.status(404).json({success:false,message:"user not found"});
+        if (!userId) {
+            return res.status(401).json({ success: false, message: "User not authenticated" });
         }
 
-        if(amount<1 || amount>10000){
-            return res.status(404).json({success:false,message:"Invalid amount. amount must be between ₹1 and ₹10,000"})
-        }
-
-        let  wallet = await Wallet.findOne({userId:userId});
-
-        
-        if(!wallet){
-            wallet = new Wallet({
-                userId: userId,
-                balance: 0,
-                transactions: []
+        const parsedAmount = parseFloat(amount);
+        if (isNaN(parsedAmount) || parsedAmount < 1 || parsedAmount > 10000) {
+            return res.status(400).json({
+                success: false,
+                message: "Amount must be between ₹1 and ₹10,000"
             });
         }
-        
+
+        let wallet = await Wallet.findOne({ userId });
+        if (!wallet) {
+            wallet = new Wallet({ userId, balance: 0, transactions: [] });
+        }
+
+        wallet.balance += parsedAmount;
         wallet.transactions.unshift({
             type: 'Deposit',
-            amount: parseFloat(amount),
-            description: 'Wallet top-up via online payment',
-            status: 'Completed'
+            amount: parsedAmount,
+            description: 'Wallet top-up',
+            status: 'Completed',
+            date: new Date()
         });
-
-
-
-        wallet.balance += parseFloat(amount);
 
         await wallet.save();
 
-        res.status(200).json({ 
-            message: 'Money added successfully', 
-            newBalance: wallet.balance 
+        res.json({
+            success: true,
+            message: 'Money added successfully',
+            newBalance: wallet.balance
         });
-
     } catch (error) {
-        console.log("error while adding money",error.message);
-        
+        console.error("Error adding money to wallet:", error);
+        res.status(500).json({ success: false, message: "Failed to add money" });
     }
-   }
-module.exports={
+};
+
+export default {
     manage,
     updateDetails,
     getAddress,
@@ -271,10 +270,6 @@ module.exports={
     deleteAddress,
     updateAddress,
     wallet,
-    addMoney,
-
-}
-
-
-
+    addMoney
+};
 

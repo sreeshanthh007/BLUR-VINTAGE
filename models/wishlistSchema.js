@@ -1,14 +1,17 @@
-const mongoose = require('mongoose');
+// models/wishlistSchema.js
+
+import mongoose from 'mongoose';
+
 const { Schema } = mongoose;
 
 const wishlistSchema = new Schema({
     userId: {
-        type: mongoose.Schema.Types.ObjectId,
+        type: Schema.Types.ObjectId,
         ref: 'Users',
         required: true
     },
     product: {
-        type: mongoose.Schema.Types.ObjectId,
+        type: Schema.Types.ObjectId,
         ref: 'Product',
         required: true
     },
@@ -33,11 +36,11 @@ const wishlistSchema = new Schema({
             type: Number,
             required: true
         },
-        discount: {       
+        discount: {
             type: Number,
             default: 0
         },
-        offerName: {     
+        offerName: {
             type: String,
             default: ''
         },
@@ -65,4 +68,4 @@ const wishlistSchema = new Schema({
 
 const Wishlist = mongoose.model('Wishlist', wishlistSchema);
 
-module.exports = Wishlist;
+export default Wishlist;

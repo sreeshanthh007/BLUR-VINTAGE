@@ -150,7 +150,7 @@
         <div class="form-side rounded border">
             <div class="container-fluid">
                 <h3 class="text-center mb-4 fw-bold" style="color: #000;">Welcome to Blur Vintage</h3>
-                <h1 class="text-center mb-4 fw-light" style="color: #000;">Register</h1>
+                <h1 class="text-center mb-4 fw-light" style="color: #000;">Register to Begin</h1>
                 <form id="register-Form">
                     <div class="row g-3">
                         <div class="col-12 col-sm-6">
@@ -235,10 +235,10 @@
 
     const registerForm = document.getElementById('register-Form');
 
-    // Validation functions
+
     function nameValidateChecking() {
         const firstName = firstNameField.value.trim();
-        const firstNamePattern = /^[A-Za-z\s]+$/; // Letters and spaces only
+        const firstNamePattern = /^[A-Za-z\s]+$/; 
 
         if (firstName=="") {
             error1.style.display = 'block';

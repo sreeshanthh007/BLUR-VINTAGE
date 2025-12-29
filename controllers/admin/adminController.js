@@ -1,246 +1,220 @@
+// controllers/admin/adminController.js
 
-const user = require("../../models/userSchema");
-const mongoose = require('mongoose');
-const bcrypt = require("bcrypt");
-const Order = require("../../models/orderSchema");
-const Product = require("../../models/productSchema");
-const Coupon = require("../../models/couponSchema");
-const moment = require('moment');
-const pdfDocument = require('pdfkit')
-const fs = require('fs');
-const path = require('path');
+import User from "../../models/userSchema.js";
+import Order from "../../models/orderSchema.js";
+import Product from "../../models/productSchema.js";
+import Coupon from "../../models/couponSchema.js";
+import moment from 'moment';
+import pdfKit from 'pdfkit';
+import fs from 'fs';
+import path from 'path';
+import bcrypt from "bcrypt";
 
+// Admin Login
+const login = async (req, res) => {
+    try {
+        const { email, password } = req.body;
 
-const login = async (req,res)=>{
-  try {
-    const {email,password} = req.body;
+        const admin = await User.findOne({ email, isAdmin: true });
 
-    const admin = await user.findOne({email,isAdmin:true});
-    console.log("adminnnnnn",admin)
-
-    if(!admin){
-        return res.status(500).json({success:false,message:"admin not found"});
-    }
-    const isMatch = await bcrypt.compare(password,admin.password);
-
-    if(!isMatch){
-        return res.json({success:false,message:"invalid mail or password"});
-    }
-
-    req.session.admin = {
-        id:admin._id,
-        role:"admin"
-    }
-    console.log("admin session",req.session.admin)
-
-    return res.json({success:true,redirectUrl:"/admin/dashboard"}); 
-
-
-  } catch (error) {
-    console.log('error in admin login',error);
-    
-  }
-}
-
-const logOut = async (req,res)=>{
-    req.session.destroy((err)=>{
-        if(err){
-            console.log("cant destroy session",err);
-            res.status(500).json({success:false,message:"failed to log out"});
+        if (!admin) {
+            return res.status(401).json({ success: false, message: "Invalid credentials" });
         }
-        res.clearCookie("connect-sid");
-        return res.status(200).json({success:true});
-       
-    })
-}
 
-const blockUser = async (req,res)=>{
-    try {
-        let {userId} = req.body
-      await user.updateOne({_id:userId},{$set:{isBlocked:true}});
+        const isMatch = await bcrypt.compare(password, admin.password);
 
-       res.json({success:true})
-
-    } catch (error) {
-        console.log("error in block user",error);
-    }
-}
-
-const unblockUser = async (req,res)=>{
-    try {
-        let {userId} = req.body;
-        
-        await user.updateOne({_id:userId},{$set:{isBlocked:false}});
-       
-        res.json({success:true})
-
-    } catch (error) {
-        console.log("error in unblock user",error)
-    }
-}
-
-const loadlogin =  (req,res)=>{
-    try {
-        if(req.session.admin){
-            res.redirect("/admin/dashboard");
+        if (!isMatch) {
+            return res.status(401).json({ success: false, message: "Invalid credentials" });
         }
-        res.render('admin/adminlogin',{message:null});
+
+        req.session.admin = {
+            id: admin._id,
+            role: "admin"
+        };
+
+        return res.json({ success: true, redirectUrl: "/admin/dashboard" });
     } catch (error) {
-        console.log("error in admin loadlogin",error)
+        console.error('Error in admin login:', error);
+        res.status(500).json({ success: false, message: "Server error" });
     }
-}
+};
 
-
-const dashboard = (req,res)=>{
-    try {
-        if(req.session.admin){
-            res.render("admin/adminDashboard");
+// Admin Logout
+const logOut = (req, res) => {
+    req.session.destroy((err) => {
+        if (err) {
+            console.error("Error destroying session:", err);
+            return res.status(500).json({ success: false, message: "Failed to log out" });
         }
+        res.clearCookie("connect.sid");
+        return res.json({ success: true });
+    });
+};
+
+// Block User
+const blockUser = async (req, res) => {
+    try {
+        const { userId } = req.body;
+        await User.updateOne({ _id: userId }, { $set: { isBlocked: true } });
+        res.json({ success: true });
     } catch (error) {
-        console.log("canoot go to dashboard")
+        console.error("Error blocking user:", error);
+        res.status(500).json({ success: false });
     }
-    
-}
-const userManage = (req,res)=>{
+};
+
+// Unblock User
+const unblockUser = async (req, res) => {
+    try {
+        const { userId } = req.body;
+        await User.updateOne({ _id: userId }, { $set: { isBlocked: false } });
+        res.json({ success: true });
+    } catch (error) {
+        console.error("Error unblocking user:", error);
+        res.status(500).json({ success: false });
+    }
+};
+
+// Load Admin Login Page
+const loadlogin = (req, res) => {
+    try {
+        if (req.session.admin) {
+            return res.redirect("/admin/dashboard");
+        }
+        res.render('admin/adminlogin', { message: null });
+    } catch (error) {
+        console.error("Error loading admin login:", error);
+        res.status(500).send("Server error");
+    }
+};
+
+// Load Dashboard
+const dashboard = (req, res) => {
+    try {
+        if (!req.session.admin) {
+            return res.redirect("/admin/login");
+        }
+        res.render("admin/adminDashboard");
+    } catch (error) {
+        console.error("Error loading dashboard:", error);
+        res.status(500).send("Server error");
+    }
+};
+
+// Load User Management Page (kept for completeness)
+const userManage = (req, res) => {
     res.render("admin/userManage");
+};
 
-}
-
-const orderList = async(req,res)=>{
-
+// Order List with Pagination
+const orderList = async (req, res) => {
     try {
-        const pages = parseInt(req.query.page) || 1;
+        const page = parseInt(req.query.page) || 1;
         const limit = 5;
-        const skip = (pages-1)*limit;
+        const skip = (page - 1) * limit;
 
-        const totalOrders = await Order.countDocuments();   
-        const totalPages = Math.ceil(totalOrders/limit);
+        const totalOrders = await Order.countDocuments();
+        const totalPages = Math.ceil(totalOrders / limit);
 
         const orders = await Order.find()
-        .populate("orderItems.product","name")
-        .sort({createdAt:-1})
-        .skip(skip)
-        .limit(limit);
+            .populate("orderItems.product", "productName")
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit);
 
-       
-        
         const formattedOrders = orders.map(order => {
-           
-            const itemsDisplay = order.orderItems.map(item => {
-                return `${item.variant.colorName} (${item.quantity})`;
-            }).join(', ');
+            const itemsDisplay = order.orderItems.map(item =>
+                `${item.variant.colorName} (${item.quantity})`
+            ).join(', ');
 
-            // Calculate total quantity
             const totalQuantity = order.orderItems.reduce((sum, item) => sum + item.quantity, 0);
 
-            const finalAmount = order.pricing.finalAmount
-
-            console.log("final amt",finalAmount)
-            
             return {
                 id: order.orderNumber,
                 name: order.shippingAddress?.name || 'No name provided',
-                address: order.shippingAddress ? 
-                    `${order.shippingAddress.landMark}, ${order.shippingAddress.city}` : 
-                    'No address provided',
+                address: order.shippingAddress
+                    ? `${order.shippingAddress.landMark}, ${order.shippingAddress.city}`
+                    : 'No address provided',
                 date: order.createdAt.toLocaleDateString('en-US', {
                     day: '2-digit',
                     month: 'short',
                     year: 'numeric'
                 }),
-                // Show all items with their quantities
                 item: `${itemsDisplay} (Total: ${totalQuantity} items)`,
                 status: order.orderStatus,
-
-                amount:finalAmount
+                amount: order.pricing.finalAmount
             };
         });
 
-
         const pagination = {
-            currentPage: pages,
-            totalPages: totalPages,
-            hasNextPage: pages < totalPages,
-            hasPrevPage: pages > 1,
-            nextPage: pages + 1,
-            prevPage: pages - 1,
+            currentPage: page,
+            totalPages,
+            hasNextPage: page < totalPages,
+            hasPrevPage: page > 1,
+            nextPage: page + 1,
+            prevPage: page - 1,
             lastPage: totalPages
         };
 
-        return res.render("admin/orderList",{
-            orders:formattedOrders,
-            pagination:pagination
-        });
-
+        res.render("admin/orderList", { orders: formattedOrders, pagination });
     } catch (error) {
-        console.log("error in order list ",error.message);
+        console.error("Error in order list:", error);
+        res.status(500).send("Server error");
     }
+};
 
-
-  
-}
-
-
-const orderDetails = async(req,res)=>{
+// Order Details
+const orderDetails = async (req, res) => {
     try {
-        console.log("all",req.query);
-        
         const orderNumber = req.query.id;
-        console.log("number",orderNumber);
-        
+
         if (!orderNumber) {
-            return res.status(400).json({ message: "Order ID is required" });
+            return res.status(400).send("Order ID is required");
         }
 
-        const order = await Order.findOne({orderNumber:orderNumber})
+        const order = await Order.findOne({ orderNumber })
             .populate({
                 path: "orderItems.product",
                 model: "Product"
             });
 
         if (!order) {
-            return res.status(404).json({ message: "Order not found" });
+            return res.status(404).send("Order not found");
         }
-        console.log("product order",order)
-        
-        return res.render("admin/orderDetails",{order})
-    } catch (error) {
-        console.log("error in order details",error.message);
-        
-  } 
-}
 
-// for changing the order status of the item
-const updateOrderStatus = async(req,res)=>{
+        res.render("admin/orderDetails", { order });
+    } catch (error) {
+        console.error("Error in order details:", error);
+        res.status(500).send("Server error");
+    }
+};
+
+// Update Order Status
+const updateOrderStatus = async (req, res) => {
     try {
-        console.log("req.query",req.query);
-        
-        const {id,status}  = req.query;
+        const { id, status } = req.query;
 
         if (!id || !status) {
-            return res.status(400).json({ message: "Order ID and status are required" });
-        }
-        const order = await Order.findOne({orderNumber:id})
-
-        if(!order){
-            return res.status(400).json({success:false,message:"order not found"})
+            return res.status(400).json({ success: false, message: "Order ID and status required" });
         }
 
+        const order = await Order.findOne({ orderNumber: id });
+        if (!order) {
+            return res.status(404).json({ success: false, message: "Order not found" });
+        }
+
+        // Restore stock if cancelled
         if (status === 'Cancelled') {
-            for (const orderItem of order.orderItems) {
+            for (const item of order.orderItems) {
                 await Product.findOneAndUpdate(
-                    { 
-                        _id: orderItem.product,
-                        'variants.color': orderItem.variant.color,
-                        'variants.size': orderItem.variant.size
+                    {
+                        _id: item.product,
+                        'variants.color': item.variant.color,
+                        'variants.size': item.variant.size
                     },
                     {
-                        $inc: {
-                            'variants.$.stock': orderItem.quantity
-                        },
-                        $set: {
-                            'variants.$.status': 'Available'
-                        }
+                        $inc: { 'variants.$.stock': item.quantity },
+                        $set: { 'variants.$.status': 'Available' }
                     }
                 );
             }
@@ -248,42 +222,30 @@ const updateOrderStatus = async(req,res)=>{
 
         order.orderStatus = status;
 
-        if(status==="Delivered" && order.payment.method==="COD"){
-            order.payment.status = "Completed"
+        if (status === "Delivered") {
             order.deliveryDate = new Date();
-        }else if(status==="Delivered" && order.payment.method==="Razorpay"){
-            order.deliveryDate = new Date();
+            if (order.payment.method === "COD") {
+                order.payment.status = "Completed";
+            }
         }
 
+        await order.save();
 
-        
-        await order.save()
-
-        if (!order) {
-            return res.status(404).json({ message: "Order not found" });
-        }
-
-        return res.status(200).json({message:"updated successfully"})
-       
+        res.json({ success: true, message: "Order status updated successfully" });
     } catch (error) {
-        console.log("error in update backend",error.message);
-        
+        console.error("Error updating order status:", error);
+        res.status(500).json({ success: false });
     }
-}
+};
 
-
-
-
-
-
+// Sales Report
 const getSalesReport = async (req, res) => {
     try {
         const { dateRange, startDate, endDate } = req.query;
-        
-        // Calculate date range based on selection
+
         let startDateTime, endDateTime;
-        
-        switch(dateRange) {
+
+        switch (dateRange) {
             case 'day':
                 startDateTime = moment().startOf('day');
                 endDateTime = moment().endOf('day');
@@ -297,52 +259,32 @@ const getSalesReport = async (req, res) => {
                 endDateTime = moment().endOf('month');
                 break;
             case 'custom':
-                startDateTime = startDate ? moment(startDate).startOf('day') : moment().subtract(30, 'days').startOf('day');
-                endDateTime = endDate ? moment(endDate).endOf('day') : moment().endOf('day');
+                startDateTime = startDate ? moment(startDate).startOf('day') : moment().subtract(30, 'days');
+                endDateTime = endDate ? moment(endDate).endOf('day') : moment();
                 break;
             default:
                 startDateTime = moment().subtract(30, 'days').startOf('day');
                 endDateTime = moment().endOf('day');
         }
 
-        
         const matchStage = {
-            deliveryDate: {
-                $gte: startDateTime.toDate(),
-                $lte: endDateTime.toDate()
-            },
-            orderStatus: 'Delivered' 
+            deliveryDate: { $gte: startDateTime.toDate(), $lte: endDateTime.toDate() },
+            orderStatus: 'Delivered'
         };
 
         const salesReport = await Order.aggregate([
             { $match: matchStage },
             {
                 $group: {
-                    _id: {
-                        date: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } }
-                    },
+                    _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
                     ordersCount: { $sum: 1 },
                     grossSales: { $sum: '$pricing.subtotal' },
                     couponDiscount: { $sum: '$pricing.coupon.discount' },
                     productOffers: { $sum: '$pricing.productOffersTotal' },
-                    finalRevenue: { $sum: '$pricing.finalAmount' },
-                    orders: {
-                        $push: {
-                            orderNumber: '$orderNumber',
-                            orderDate: '$createdAt',
-                            subtotal: '$pricing.subtotal',
-                            couponDiscount: '$pricing.coupon.discount',
-                            productOffers: '$pricing.productOffersTotal',
-                            finalAmount: '$pricing.finalAmount',
-                            paymentMethod: '$payment.method',
-                            status: '$orderStatus'
-                        }
-                    }
+                    finalRevenue: { $sum: '$pricing.finalAmount' }
                 }
             },
-            {
-                $sort: { "_id.date": 1 }
-            },
+            { $sort: { "_id": 1 } },
             {
                 $group: {
                     _id: null,
@@ -363,17 +305,12 @@ const getSalesReport = async (req, res) => {
                     totalCouponDiscount: 1,
                     totalProductOffers: 1,
                     totalFinalRevenue: 1,
-                    totalDiscount: {
-                        $add: ['$totalCouponDiscount', '$totalProductOffers']
-                    },
-                    averageOrderValue: {
-                        $divide: ['$totalFinalRevenue', '$totalOrders']
-                    }
+                    totalDiscount: { $add: ['$totalCouponDiscount', '$totalProductOffers'] },
+                    averageOrderValue: { $divide: ['$totalFinalRevenue', { $max: ['$totalOrders', 1] }] }
                 }
             }
         ]);
 
-        // Calculate additional metrics
         const report = salesReport[0] || {
             totalOrders: 0,
             totalGrossSales: 0,
@@ -385,12 +322,8 @@ const getSalesReport = async (req, res) => {
             dailyData: []
         };
 
-        // Calculate percentages
-        report.discountPercentage = (report.totalDiscount / report.totalGrossSales * 100) || 0;
-        report.couponDiscountPercentage = (report.totalCouponDiscount / report.totalGrossSales * 100) || 0;
-        report.productOffersPercentage = (report.totalProductOffers / report.totalGrossSales * 100) || 0;
+        report.discountPercentage = report.totalGrossSales ? (report.totalDiscount / report.totalGrossSales * 100) : 0;
 
-        // Get payment method distribution - updated to only include delivered orders
         const paymentMethodStats = await Order.aggregate([
             { $match: matchStage },
             {
@@ -402,9 +335,8 @@ const getSalesReport = async (req, res) => {
             }
         ]);
 
-        report.paymentMethods = paymentMethodStats; 
+        report.paymentMethods = paymentMethodStats;
 
-        // Render the sales report page with all metrics
         res.render('admin/salesreport', {
             title: 'Sales Report',
             report,
@@ -413,49 +345,37 @@ const getSalesReport = async (req, res) => {
             endDate: endDateTime.format('YYYY-MM-DD'),
             moment
         });
-
     } catch (error) {
         console.error('Error generating sales report:', error);
-        res.status(500).render('error', {
-            message: 'Error generating sales report',
-            error
-        });
+        res.status(500).render('error', { message: 'Error generating sales report' });
     }
 };
 
-
-
-
+// Analytics Dashboard
 const getAnalyticsDashboard = async (req, res) => {
     try {
         const timeframe = req.query.timeframe || 'monthly';
         let startDate, endDate;
+
         switch (timeframe) {
             case 'weekly':
                 startDate = new Date();
-                startDate.setHours(0, 0, 0, 0); // Start of day
-                startDate.setDate(startDate.getDate() - startDate.getDay()); // Start of week (Sunday)
+                startDate.setHours(0, 0, 0, 0);
+                startDate.setDate(startDate.getDate() - startDate.getDay());
                 endDate = new Date(startDate);
-                endDate.setDate(startDate.getDate() + 6); // End of week (Saturday)
-                endDate.setHours(23, 59, 59, 999); // End of day
+                endDate.setDate(endDate.getDate() + 6);
+                endDate.setHours(23, 59, 59, 999);
                 break;
-                
             case 'monthly':
                 startDate = new Date();
-                startDate.setDate(1); // Start of current month
+                startDate.setDate(1);
                 startDate.setHours(0, 0, 0, 0);
-                endDate = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 0); 
-                endDate.setHours(23, 59, 59, 999);
+                endDate = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 0, 23, 59, 59, 999);
                 break;
-                
             case 'yearly':
-                startDate = new Date();
-                startDate.setMonth(0, 1); // January 1st of current year
-                startDate.setHours(0, 0, 0, 0);
-                endDate = new Date(startDate.getFullYear(), 11, 31); // December 31st
-                endDate.setHours(23, 59, 59, 999);
+                startDate = new Date(new Date().getFullYear(), 0, 1);
+                endDate = new Date(new Date().getFullYear(), 11, 31, 23, 59, 59, 999);
                 break;
-                
             default:
                 startDate = new Date();
                 startDate.setMonth(startDate.getMonth() - 1);
@@ -464,14 +384,8 @@ const getAnalyticsDashboard = async (req, res) => {
                 endDate.setHours(23, 59, 59, 999);
         }
 
-      
         const topProducts = await Order.aggregate([
-            {
-                $match: {
-                    createdAt: { $gte: startDate, $lte: endDate },
-                    orderStatus: { $nin: ['Cancelled', 'Failed'] }
-                }
-            },
+            { $match: { createdAt: { $gte: startDate, $lte: endDate }, orderStatus: { $nin: ['Cancelled', 'Failed'] } } },
             { $unwind: '$orderItems' },
             {
                 $lookup: {
@@ -487,25 +401,15 @@ const getAnalyticsDashboard = async (req, res) => {
                     _id: '$orderItems.product',
                     productName: { $first: '$productInfo.productName' },
                     totalQuantity: { $sum: '$orderItems.quantity' },
-                    totalRevenue: {
-                        $sum: {
-                            $multiply: ['$orderItems.quantity', '$orderItems.price.discountedPrice']
-                        }
-                    }
+                    totalRevenue: { $sum: { $multiply: ['$orderItems.quantity', '$orderItems.price.discountedPrice'] } }
                 }
             },
             { $sort: { totalQuantity: -1 } },
             { $limit: 10 }
         ]);
 
-        
         const topCategories = await Order.aggregate([
-            {
-                $match: {
-                    createdAt: { $gte: startDate, $lte: endDate },
-                    orderStatus: { $nin: ['Cancelled', 'Failed'] }
-                }
-            },
+            { $match: { createdAt: { $gte: startDate, $lte: endDate }, orderStatus: { $nin: ['Cancelled', 'Failed'] } } },
             { $unwind: '$orderItems' },
             {
                 $lookup: {
@@ -524,17 +428,13 @@ const getAnalyticsDashboard = async (req, res) => {
                     as: 'categoryInfo'
                 }
             },
-            { $unwind: '$categoryInfo' },
+            { $unwind: { path: '$categoryInfo', preserveNullAndEmptyArrays: true } },
             {
                 $group: {
                     _id: '$categoryInfo._id',
                     categoryName: { $first: '$categoryInfo.name' },
                     totalQuantity: { $sum: '$orderItems.quantity' },
-                    totalRevenue: {
-                        $sum: {
-                            $multiply: ['$orderItems.quantity', '$orderItems.price.discountedPrice']
-                        }
-                    }
+                    totalRevenue: { $sum: { $multiply: ['$orderItems.quantity', '$orderItems.price.discountedPrice'] } }
                 }
             },
             { $sort: { totalQuantity: -1 } },
@@ -550,21 +450,15 @@ const getAnalyticsDashboard = async (req, res) => {
                 end: endDate.toLocaleDateString()
             }
         });
-
     } catch (error) {
         console.error('Analytics Error:', error);
         res.status(500).send('Error generating analytics');
     }
 };
 
-module.exports = { getAnalyticsDashboard };
 
 
-
-
-
-
-module.exports ={
+export default {
     loadlogin,
     dashboard,
     login,
@@ -577,4 +471,4 @@ module.exports ={
     updateOrderStatus,
     getSalesReport,
     getAnalyticsDashboard
-}
+};
