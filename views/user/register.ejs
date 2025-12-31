@@ -258,11 +258,10 @@
         const email = emailField.value.trim();
         const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
-
-        if(email==""){
-            error3.style.display="block";
-            error3.innerHTML="please enter your Email"
-            return false
+        if (email === "") {
+            error3.style.display = "block";
+            error3.innerHTML = "Please enter your Email";
+            return false;
         }
         if (!emailPattern.test(email)) {
             error3.style.display = 'block';

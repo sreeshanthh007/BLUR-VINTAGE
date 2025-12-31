@@ -1,8 +1,7 @@
-// controllers/admin/categoryController.js
 
 import Category from "../../models/categorySchema.js";
 
-// Load category management page with pagination
+
 const categoryInfo = async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
@@ -20,7 +19,7 @@ const categoryInfo = async (req, res) => {
         res.render('admin/categorymanage', {
             Category: categoryData,
             currentPage: page,
-            totalPages,
+            totalpages : totalPages,
             totalCategories
         });
     } catch (error) {

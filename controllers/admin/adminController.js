@@ -17,6 +17,8 @@ const login = async (req, res) => {
 
         const admin = await User.findOne({ email, isAdmin: true });
 
+   
+
         if (!admin) {
             return res.status(401).json({ success: false, message: "Invalid credentials" });
         }

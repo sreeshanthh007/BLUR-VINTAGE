@@ -93,6 +93,28 @@
             margin: 0 auto 1rem;
         }
 
+
+
+        .pagination .page-link {
+             color: #333;
+            border: 1px solid #ddd;
+        }
+
+        .pagination .page-item.active .page-link {
+            background-color: #212529;
+            border-color: #212529;
+            color: #fff;
+        }
+
+        .pagination .page-item.disabled .page-link {
+            color: #6c757d;
+            background-color: #f8f9fa;
+        }
+
+        .pagination .page-link:hover {
+            background-color: #e9ecef;
+        }
+
         @media (max-width: 991px) {
             .sidebar {
                 width: 200px;
@@ -171,43 +193,109 @@
 
 
             <div class="table-responsive">
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>Coupon Code</th>
-                            <th>Coupon Amount</th>
-                            <th>Description</th>
-                            <th>Usage Limit</th>
-                            <th>Expiry Date</th>
-                            <th>Remove</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <% coupons.forEach(function(coupon) { %>
-                        <tr>
-                          
-                            <td><%= coupon.code %></td>
-                            <td><%= coupon.discountValue %></td>
-                            <td><%= coupon.description %></td>
-                            <td><%= coupon.usageLimit %></td>
-                            <td><%= new Date(coupon.endDate).toLocaleDateString() %></td>
-                            <td>
-                                <button class="btn-remove m-2" onclick="removeCoupon('<%= coupon._id %>')">
-                                    <i class="bi bi-trash"></i>
-                                </button>
-                                <a style="color: black;" href="/admin/edit-coupon/<%=coupon._id%>">
-                                    <i class="bi bi-pencil-square"></i>
-                                </a>
-                                    
-                            </td>
-                        </tr>
-                        <% }); %>
-                         </tbody>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+    <table class="table table-hover align-middle bg-black">
+        <thead class="table-dark">
+            <tr>
+                <th>Coupon Code</th>
+                <th>Coupon Amount</th>
+                <th>Description</th>
+                <th>Usage Limit</th>
+                <th>Expiry Date</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% if (coupons.length === 0) { %>
+                <tr>
+                    <td colspan="6" class="text-center py-4">No coupons found</td>
+                </tr>
+            <% } else { %>
+                <% coupons.forEach(function(coupon) { %>
+                <tr>
+                    <td><strong><%= coupon.code %></strong></td>
+                    <td>
+                        <%= coupon.discountValue %>
+                        <% if (coupon.discountType === 'percentage') { %> % <% } else { %> ₹ <% } %>
+                    </td>
+                    <td><%= coupon.description || '-' %></td>
+                    <td><%= coupon.usageLimit %></td>
+                    <td><%= new Date(coupon.endDate).toLocaleDateString('en-IN') %></td>
+                    <td>
+                        <button class="btn-remove me-3" onclick="removeCoupon('<%= coupon._id %>')" title="Delete">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                        <a href="/admin/edit-coupon/<%= coupon._id %>" class="text-dark" title="Edit">
+                            <i class="bi bi-pencil-square"></i>
+                        </a>
+                    </td>
+                </tr>
+                <% }); %>
+            <% } %>
+        </tbody>
+    </table>
+</div>
+
+
+            <% if (totalPages > 1) { %>
+            <div class="d-flex justify-content-center mt-4">
+                <nav aria-label="Coupon pagination">
+                    <ul class="pagination">
+
+                        <!-- Previous -->
+                        <% if (hasPrevPage) { %>
+                            <li class="page-item">
+                                <a class="page-link" href="?page=<%= prevPage %>">Previous</a>
+                            </li>
+                        <% } else { %>
+                            <li class="page-item disabled"><span class="page-link">Previous</span></li>
+                        <% } %>
+
+                        <!-- First Page -->
+                        <li class="page-item <%= currentPage === 1 ? 'active' : '' %>">
+                            <a class="page-link" href="?page=1">1</a>
+                        </li>
+
+                        <!-- Ellipsis after 1 -->
+                        <% if (currentPage > 4) { %>
+                            <li class="page-item disabled"><span class="page-link">...</span></li>
+                        <% } %>
+
+                        <!-- Middle Pages -->
+                        <% 
+                            const startPage = Math.max(2, currentPage - 2);
+                            const endPage = Math.min(totalPages - 1, currentPage + 2);
+                            for (let i = startPage; i <= endPage; i++) { 
+                        %>
+                            <li class="page-item <%= currentPage === i ? 'active' : '' %>">
+                                <a class="page-link" href="?page=<%= i %>"><%= i %></a>
+                            </li>
+                        <% } %>
+
+                        <!-- Ellipsis before last -->
+                        <% if (currentPage < totalPages - 3) { %>
+                            <li class="page-item disabled"><span class="page-link">...</span></li>
+                        <% } %>
+
+                        <!-- Last Page -->
+                        <% if (totalPages > 1) { %>
+                            <li class="page-item <%= currentPage === totalPages ? 'active' : '' %>">
+                                <a class="page-link" href="?page=<%= totalPages %>"><%= totalPages %></a>
+                            </li>
+                        <% } %>
+
+                        <!-- Next -->
+                        <% if (hasNextPage) { %>
+                            <li class="page-item">
+                                <a class="page-link" href="?page=<%= nextPage %>">Next</a>
+                            </li>
+                        <% } else { %>
+                            <li class="page-item disabled"><span class="page-link">Next</span></li>
+                        <% } %>
+
+                    </ul>
+                </nav>
             </div>
+            <% } %>
         </div>
     </main>
 
