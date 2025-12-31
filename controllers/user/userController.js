@@ -6,8 +6,8 @@ dotenv.config();
 import Users from "../../models/userSchema.js";
 import Wallet from "../../models/walletSchema.js";
 import { EMAIL_SEND_TEMPLATE, generateOTP, generateReferralCode, securePassword } from "../../helpers/Helpers.js";
-
-
+import Category from "../../models/categorySchema.js"
+import Product from "../../models/productSchema.js"
 
 
 
@@ -71,7 +71,7 @@ async function sendVerificationEmail(email, otp) {
             debug: true,
         });
 
-        const htmlContent = EMAIL_SEND_TEMPLATE
+        const htmlContent = EMAIL_SEND_TEMPLATE(otp)
 
         const info = await transport.sendMail({
             from: `"BLUR VINTAGE ⭐" <${process.env.NODE_MAILER_EMAIL}>`,
@@ -712,7 +712,7 @@ const loadmen = async (req,res,next)=>{
             let offerName = '';
 
             if (product.variants && product.variants.length > 0) {
-                activeVariant = product.variants.find(variant => variant.quantity > 0) || product.variants[0];
+               const activeVariant = product.variants.find(variant => variant.quantity > 0) || product.variants[0];
                 originalPrice = activeVariant.price;
                 finalPrice = originalPrice;
 
@@ -750,7 +750,7 @@ const loadmen = async (req,res,next)=>{
             };
         });
 
-        console.log("product with offer",productsWithOffers)
+ 
         const renderOptions = {
             products: productsWithOffers,
             currentSort: sortOption,
@@ -775,7 +775,7 @@ const loadmen = async (req,res,next)=>{
         }
 
     } catch (error) {
-       console.log
+       console.log("error while loading men",error)
     }
 }
 
@@ -785,7 +785,7 @@ const loadShop = async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1; 
         const user = req.session?.user || req.session?.passport?.user
-        const productsPerPage = 8; // 4 products per row * 2 rows
+        const productsPerPage = 8; 
         const sortOption = req.query.sort || "default"
         const query = req.query.search
         const categoryFilter = req.query.category
@@ -944,7 +944,7 @@ const loadShop = async (req, res) => {
 
 
 
-
+const otpStore = {};
 const otpForPassword = async (req, res,next) => {
     const { email } = req.body;
 

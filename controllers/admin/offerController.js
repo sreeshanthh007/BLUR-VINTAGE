@@ -7,19 +7,48 @@ import Offer from "../../models/offerSchema.js";
 
 const loadOffer = async (req, res) => {
     try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = 1;
+        const skip = (page - 1) * limit;
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+
+        const query = { expiryDate: { $gte: today } };
+
+        const offers = await Offer.find(query)
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit)
+            .populate('productId', 'productName')
+            .populate('categoryId', 'name');
+
+        const totalOffers = await Offer.countDocuments(query);
+        const totalPages = Math.ceil(totalOffers / limit);
+
+        // For dropdowns in "Add Offer" form
         const products = await Product.find({}, "productName");
         const categories = await Category.find({}, "name");
 
-        return res.render("admin/offerAddPage", {
+        res.render("admin/offerAddPage", {
+            offers,
             products,
-            categories
+            categories,
+            currentPage: page,
+            totalPages,
+            hasNextPage: page < totalPages,
+            hasPrevPage: page > 1,
+            nextPage: page + 1,
+            prevPage: page - 1,
+            lastPage: totalPages
         });
+
     } catch (error) {
         console.error("Error loading offer page:", error.message);
-        res.status(500).send("Internal Server Error");
+        res.status(500).render('error', { message: "Failed to load offers" });
     }
 };
-
 
 const getItemByType = async (req, res) => {
     try {
@@ -85,8 +114,37 @@ const addOffer = async (req, res) => {
 
 
 
+const deleteoffer = async(req,res)=>{
+
+    try {
+    const {offerId} = req.params
+        
+
+    if(!offerId){
+        res.status(400).json({success:false,message:"offer id not found"});
+        return
+    }
+
+    const offerExist = await Offer.findById(offerId)
+
+    if(!offerExist){
+        res.status(404).json({success:false,message:"offer not found"});
+        return
+    }
+
+    await Offer.findByIdAndDelete(offerId)
+
+    res.status(200).json({success:true,message:"offer deleted successfully"});
+    return
+    } catch (error) {
+        console.log("error while removing offer",error)
+    }
+}
+
+
 export default {
     loadOffer,
     getItemByType,
-    addOffer
+    addOffer,
+    deleteoffer
 };

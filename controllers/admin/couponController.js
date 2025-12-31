@@ -1,26 +1,49 @@
 // controllers/admin/couponController.js
 
 import Coupon from "../../models/couponSchema.js";
-import Cart from "../../models/cartSchema.js";
+
 
 // Load coupon management page
 const couponPage = async (req, res) => {
     try {
-        const coupons = await Coupon.find({}).sort({ createdAt: -1 });
+        const page = parseInt(req.query.page) || 1;
+        const limit = 5; 
+        const skip = (page - 1) * limit;
 
-        return res.render('admin/couponAddPage', { coupons });
+       
+        const coupons = await Coupon.find({})
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit);
+
+       
+        const totalCoupons = await Coupon.countDocuments();
+        const totalPages = Math.ceil(totalCoupons / limit);
+
+        res.render('admin/couponAddPage', {
+            coupons,
+            currentPage: page,
+            totalPages,
+            totalCoupons,
+            hasNextPage: page < totalPages,
+            hasPrevPage: page > 1,
+            nextPage: page + 1,
+            prevPage: page - 1,
+            lastPage: totalPages
+        });
+
     } catch (error) {
         console.error("Error loading coupon page:", error);
         res.status(500).render('error', { message: "Failed to load coupons" });
     }
 };
 
-// Add new coupon
+
 const addCoupon = async (req, res) => {
     try {
         const { code, limit, amount, description, startDate, endDate, minOrder } = req.body;
 
-        // Basic validation
+      
         if (!code || !limit || !amount || !startDate || !endDate) {
             return res.status(400).json({ success: false, message: "All required fields must be filled" });
         }

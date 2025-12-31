@@ -6,6 +6,7 @@
     <title>Offers Management - BLUR VINTAGE</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         :root {
             --mint-bg: #f0f7f7;
@@ -52,42 +53,28 @@
         }
 
         .error-message {
-    display: none;
-}
-
-.is-invalid + .error-message {
-    display: block;
-}
-
-.is-invalid {
-    border-color: #dc3545;
-}
-
-.is-valid {
-    border-color: #198754;
-}
-
-        .brand {
-            font-size: 1.75rem;
-            text-align: center;
-            padding: 1rem;
-            margin-bottom: 2rem;
+            display: none;
+            font-size: 0.875rem;
         }
 
-        .form-control, .btn {
-            border-radius: 4px;
+        .is-invalid {
+            border-color: #dc3545 !important;
         }
 
-        .form-control {
-            background-color: #fff;
-            border: 1px solid #e0e0e0;
+        .is-valid {
+            border-color: #198754 !important;
+        }
+
+        .is-invalid + .error-message,
+        .is-invalid ~ .error-message {
+            display: block;
         }
 
         .offer-form {
             background-color: var(--mint-bg);
             padding: 2rem;
             border-radius: 8px;
-            margin-bottom: 2rem;
+            margin-bottom: 3rem;
         }
 
         .table {
@@ -99,27 +86,6 @@
         .table th {
             font-weight: 500;
             background: rgba(0,0,0,0.02);
-        }
-
-        .user-avatar {
-            width: 80px;
-            height: 80px;
-            background: #e0e0e0;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 1rem;
-        }
-
-        .user-avatar i {
-            font-size: 2rem;
-            color: #666;
-        }
-
-        .form-label {
-            font-weight: 500;
-            margin-bottom: 0.5rem;
         }
 
         .btn-add {
@@ -134,60 +100,63 @@
             color: #fff;
         }
 
-        .filters select {
-            background-color: var(--mint-bg);
-            border: 1px solid #e0e0e0;
-            padding: 0.25rem 1rem;
+        .pagination .page-link {
+            color: #333;
+            border: 1px solid #ddd;
+        }
+
+        .pagination .page-item.active .page-link {
+            background-color: #212529;
+            border-color: #212529;
+            color: #fff;
+        }
+
+        .pagination .page-item.disabled .page-link {
+            color: #6c757d;
         }
 
         @media (max-width: 991px) {
-            .sidebar {
-                width: 200px;
-            }
-            .main-content {
-                margin-left: 200px;
-            }
+            .sidebar { width: 200px; }
+            .main-content { margin-left: 200px; }
         }
 
         @media (max-width: 767px) {
             .sidebar {
                 width: 100%;
                 height: auto;
-                min-height: auto;
                 position: relative;
             }
             .main-content {
                 margin-left: 0;
                 padding: 1rem;
             }
-            .offer-form {
-                padding: 1rem;
-            }
-            .table-responsive {
-                font-size: 0.875rem;
-            }
+            .offer-form { padding: 1.5rem; }
         }
     </style>
 </head>
 <body>
     <div class="sidebar">
-       <%-include('../../views/partials/admin/sidebar.ejs')%>
+        <%- include('../../views/partials/admin/sidebar.ejs') %>
     </div>
 
     <main class="main-content">
         <div class="container-fluid">
+            <h2 class="mb-4">Offers Management</h2>
+
+            <!-- Add New Offer Form -->
             <form class="offer-form">
                 <div class="row g-3">
                     <div class="col-md-6">
                         <div class="mb-3">
-                            <label class="form-label">Offer name :</label>
+                            <label class="form-label">Offer Name :</label>
                             <input type="text" class="form-control" name="offerName">
+                            <div class="error-message text-danger mt-1"></div>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Discount :</label>
-                            <input type="number" class="form-control" name="discount">
+                            <label class="form-label">Discount (%) :</label>
+                            <input type="number" class="form-control" name="discount" min="1" max="100">
+                            <div class="error-message text-danger mt-1"></div>
                         </div>
-
                     </div>
                     <div class="col-md-6">
                         <div class="mb-3">
@@ -200,282 +169,345 @@
                         <div class="mb-3">
                             <label class="form-label">Select Item :</label>
                             <select class="form-select" id="itemSelect">
-                                <!-- Items will be dynamically populated here -->
+                                <!-- Populated dynamically -->
                             </select>
+                            <div class="error-message text-danger mt-1">Please select an item</div>
                         </div>
                     </div>
-                    <div class="col-6">
+                    <div class="col-md-6">
                         <div class="mb-3">
-                            <label class="form-label">start Date :</label>
-                            <input type="date" class="form-control" name="startDate">
+                            <label class="form-label">Start Date :</label>
+                            <input type="date" class="form-control" name="startDate" >
+                            <div class="error-message text-danger mt-1"></div>
                         </div>
+                    </div>
+                    <div class="col-md-6">
                         <div class="mb-3">
                             <label class="form-label">Expiry Date :</label>
-                            <input type="date" class="form-control" name="expiryDate">
+                            <input type="date" class="form-control" name="expiryDate" >
+                            <div class="error-message text-danger mt-1"></div>
                         </div>
                     </div>
-                    </div>
                     <div class="col-12 text-end">
-                        <button type="submit" class="btn btn-add">Add</button>
+                        <button type="submit" class="btn btn-add">Add Offer</button>
                     </div>
                 </div>
             </form>
 
-            <!-- <div class="d-flex justify-content-between align-items-center mb-3 filters">
-                <div class="d-flex gap-2 align-items-center">
-                    <span>Sort</span>
-                    <select class="form-select form-select-sm" style="width: auto;">
-                        <option>Discount</option>
-                    </select>
-                    <span>By</span>
-                    <select class="form-select form-select-sm" style="width: auto;">
-                        <option>Ascending</option>
-                    </select>
-                </div>
-                <div class="d-flex gap-2 align-items-center">
-                    <span>Filter</span>
-                    <select class="form-select form-select-sm" style="width: auto;">
-                        <option>All</option>
-                    </select>
-                </div>
-            </div> -->
+            <!-- Existing Offers Table -->
+            <h3 class="mb-4">Existing Offers</h3>
 
-            <!-- <div class="table-responsive">
-                <table class="table">
-                    <thead>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle bg-black">
+                    <thead class="table-dark">
                         <tr>
-                            <th>Offer name</th>
+                            <th>Offer Name</th>
                             <th>Type</th>
+                            <th>Applies To</th>
                             <th>Discount</th>
-                            <th>Description</th>
-                            <th>Usage Limit</th>
+                            <th>Start Date</th>
                             <th>Expiry Date</th>
+                            <th>Status</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            <td>Anniversary</td>
-                            <td>Flat</td>
-                            <td>500</td>
-                            <td>...........</td>
-                            <td>1</td>
-                            <td>01/07/2024</td>
-                        </tr>
+                        <% if (offers.length === 0) { %>
+                            <tr>
+                                <td colspan="8" class="text-center py-4 text-muted">No offers created yet</td>
+                            </tr>
+                        <% } else { %>
+                            <% offers.forEach(offer => { %>
+                                <tr>
+                                    <td><strong><%= offer.offerName %></strong></td>
+                                    <td>
+                                        <span class="badge bg-primary">
+                                            <%= offer.type.charAt(0).toUpperCase() + offer.type.slice(1) %>
+                                        </span>
+                                    </td>
+                                  <td>
+                                    <% 
+                                        let appliesToName = 'N/A';
+                                        if (offer.type === 'product' && offer.productId) {
+                                            appliesToName = offer.productId.productName;
+                                        } else if (offer.type === 'category' && offer.categoryId) {
+                                            appliesToName = offer.categoryId.name;
+                                        }
+                                    %>
+                                    <%= appliesToName %>
+                                </td>
+                                    <td><%= offer.discount %>% off</td>
+                                    <td><%= new Date(offer.startDate).toLocaleDateString('en-IN') %></td>
+                                    <td><%= new Date(offer.expiryDate).toLocaleDateString('en-IN') %></td>
+                                    <td>
+                                        <% 
+                                            const today = new Date();
+                                            const isActive = today >= new Date(offer.startDate) && today <= new Date(offer.expiryDate);
+                                        %>
+                                        <span class="badge <%= isActive ? 'bg-success' : 'bg-secondary' %>">
+                                            <%= isActive ? 'Active' : 'Inactive' %>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-danger" 
+                                                onclick="deleteOffer('<%= offer._id %>')">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            <% }); %>
+                        <% } %>
                     </tbody>
                 </table>
-            </div> -->
+            </div>
+
+            <!-- Smart Pagination -->
+            <% if (totalPages > 1) { %>
+            <div class="d-flex justify-content-center mt-4">
+                <nav aria-label="Offers pagination">
+                    <ul class="pagination">
+                        <!-- Previous -->
+                        <% if (hasPrevPage) { %>
+                            <li class="page-item">
+                                <a class="page-link" href="?page=<%= prevPage %>">Previous</a>
+                            </li>
+                        <% } else { %>
+                            <li class="page-item disabled"><span class="page-link">Previous</span></li>
+                        <% } %>
+
+                        <!-- First Page -->
+                        <li class="page-item <%= currentPage === 1 ? 'active' : '' %>">
+                            <a class="page-link" href="?page=1">1</a>
+                        </li>
+
+                        <!-- Ellipsis -->
+                        <% if (currentPage > 4) { %>
+                            <li class="page-item disabled"><span class="page-link">...</span></li>
+                        <% } %>
+
+                        <!-- Middle Pages -->
+                        <% 
+                            const startPage = Math.max(2, currentPage - 2);
+                            const endPage = Math.min(totalPages - 1, currentPage + 2);
+                            for (let i = startPage; i <= endPage; i++) { 
+                        %>
+                            <li class="page-item <%= currentPage === i ? 'active' : '' %>">
+                                <a class="page-link" href="?page=<%= i %>"><%= i %></a>
+                            </li>
+                        <% } %>
+
+                        <!-- Ellipsis before last -->
+                        <% if (currentPage < totalPages - 3) { %>
+                            <li class="page-item disabled"><span class="page-link">...</span></li>
+                        <% } %>
+
+                        <!-- Last Page -->
+                        <% if (totalPages > 1) { %>
+                            <li class="page-item <%= currentPage === totalPages ? 'active' : '' %>">
+                                <a class="page-link" href="?page=<%= totalPages %>"><%= totalPages %></a>
+                            </li>
+                        <% } %>
+
+                        <!-- Next -->
+                        <% if (hasNextPage) { %>
+                            <li class="page-item">
+                                <a class="page-link" href="?page=<%= nextPage %>">Next</a>
+                            </li>
+                        <% } else { %>
+                            <li class="page-item disabled"><span class="page-link">Next</span></li>
+                        <% } %>
+                    </ul>
+                </nav>
+            </div>
+            <% } %>
         </div>
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
 
-<script>    
+    <script>
+        // Validation Helpers
+        function getErrorDiv(input) {
+            return input.parentNode.querySelector('.error-message');
+        }
 
+        function showError(input, message) {
+            input.classList.add('is-invalid');
+            input.classList.remove('is-valid');
+            const errorDiv = getErrorDiv(input);
+            if (errorDiv) errorDiv.textContent = message;
+        }
 
+        function showSuccess(input) {
+            input.classList.remove('is-invalid');
+            input.classList.add('is-valid');
+            const errorDiv = getErrorDiv(input);
+            if (errorDiv) errorDiv.textContent = '';
+        }
 
-                function validateOfferName(value) {
-                    const offerNameInput = document.querySelector('input[name="offerName"]');
-                    const errorDiv = getOrCreateErrorDiv(offerNameInput);
-                    
-                    if (!value.trim()) {
-                        showError(offerNameInput, errorDiv, 'Offer name is required');
-                        return false;
-                    } else if (value.length < 3) {
-                        showError(offerNameInput, errorDiv, 'Offer name must be at least 3 characters');
-                        return false;
-                    } else {
-                        showSuccess(offerNameInput, errorDiv);
-                        return true;
-                    }
-                }
+        function validateOfferName(value) {
+            const input = document.querySelector('input[name="offerName"]');
+            if (!value.trim()) {
+                showError(input, 'Offer name is required');
+                return false;
+            } else if (value.length < 3) {
+                showError(input, 'Offer name must be at least 3 characters');
+                return false;
+            }
+            showSuccess(input);
+            return true;
+        }
 
-                function validateDiscount(value) {
-                    const discountInput = document.querySelector('input[name="discount"]');
-                    const errorDiv = getOrCreateErrorDiv(discountInput);
-                    
-                    if (!value) {
-                        showError(discountInput, errorDiv, 'Discount is required');
-                        return false;
-                    } else if (isNaN(value) || value <= 0) {
-                        showError(discountInput, errorDiv, 'Please enter a valid positive number');
-                        return false;
-                    } else if (value > 100) {
-                        showError(discountInput, errorDiv, 'Discount cannot exceed 100%');
-                        return false;
-                    } else {
-                        showSuccess(discountInput, errorDiv);
-                        return true;
-                    }
-                }
+        function validateDiscount(value) {
+            const input = document.querySelector('input[name="discount"]');
+            if (!value || value <= 0) {
+                showError(input, 'Discount must be greater than 0');
+                return false;
+            } else if (value > 100) {
+                showError(input, 'Discount cannot exceed 100%');
+                return false;
+            }
+            showSuccess(input);
+            return true;
+        }
 
-                function validateDates(startDate, expiryDate) {
-                    const startDateInput = document.querySelector('input[name="startDate"]');
-                    const expiryDateInput = document.querySelector('input[name="expiryDate"]');
-                    const startErrorDiv = getOrCreateErrorDiv(startDateInput);
-                    const expiryErrorDiv = getOrCreateErrorDiv(expiryDateInput);
-                    
-                    const today = new Date();
-                    today.setHours(0, 0, 0, 0);
-                    const start = new Date(startDate);
-                    const expiry = new Date(expiryDate);
-                    
-                    let isValid = true;
-                    
-                    if (!startDate) {
-                        showError(startDateInput, startErrorDiv, 'Start date is required');
-                        isValid = false;
-                    } else if (start < today) {
-                        showError(startDateInput, startErrorDiv, 'Start date cannot be in the past');
-                        isValid = false;
-                    } else {
-                        showSuccess(startDateInput, startErrorDiv);
-                    }
-                    
-                    if (!expiryDate) {
-                        showError(expiryDateInput, expiryErrorDiv, 'Expiry date is required');
-                        isValid = false;
-                    } else if (expiry <= start) {
-                        showError(expiryDateInput, expiryErrorDiv, 'Expiry date must be after start date');
-                        isValid = false;
-                    } else {
-                        showSuccess(expiryDateInput, expiryErrorDiv);
-                    }
-                    
-                    return isValid;
-                }
+        function validateDates(startVal, expiryVal) {
+            const startInput = document.querySelector('input[name="startDate"]');
+            const expiryInput = document.querySelector('input[name="expiryDate"]');
+            const today = new Date();
+            today.setHours(0,0,0,0);
+            const start = new Date(startVal);
+            const expiry = new Date(expiryVal);
+            let valid = true;
 
-                // Helper functions for showing errors and success states
-                function getOrCreateErrorDiv(input) {
-                    let errorDiv = input.nextElementSibling;
-                    if (!errorDiv || !errorDiv.classList.contains('error-message')) {
-                        errorDiv = document.createElement('div');
-                        errorDiv.className = 'error-message text-danger mt-1';
-                        input.parentNode.insertBefore(errorDiv, input.nextSibling);
-                    }
-                    return errorDiv;
-                }
+            if (!startVal) {
+                showError(startInput, 'Start date is required');
+                valid = false;
+            } else if (start < today) {
+                showError(startInput, 'Start date cannot be in the past');
+                valid = false;
+            } else {
+                showSuccess(startInput);
+            }
 
-                function showError(input, errorDiv, message) {
-                    input.classList.add('is-invalid');
-                    input.classList.remove('is-valid');
-                    errorDiv.textContent = message;
-                }
+            if (!expiryVal) {
+                showError(expiryInput, 'Expiry date is required');
+                valid = false;
+            } else if (expiry <= start) {
+                showError(expiryInput, 'Expiry date must be after start date');
+                valid = false;
+            } else {
+                showSuccess(expiryInput);
+            }
 
-                function showSuccess(input, errorDiv) {
-                    input.classList.remove('is-invalid');
-                    input.classList.add('is-valid');
-                    errorDiv.textContent = '';
-                }
+            return valid;
+        }
 
-                // Add event listeners for real-time validation
-                document.querySelector('input[name="offerName"]').addEventListener('input', function() {
-                    validateOfferName(this.value);
-                });
+        // Real-time validation
+        document.querySelector('input[name="offerName"]').addEventListener('input', function() {
+            validateOfferName(this.value);
+        });
 
-                document.querySelector('input[name="discount"]').addEventListener('input', function() {
-                    validateDiscount(this.value);
-                });
+        document.querySelector('input[name="discount"]').addEventListener('input', function() {
+            validateDiscount(this.value);
+        });
 
-                document.querySelector('input[name="startDate"]').addEventListener('change', function() {
-                    validateDates(this.value, document.querySelector('input[name="expiryDate"]').value);
-                });
+        document.querySelector('input[name="startDate"]').addEventListener('change', function() {
+            validateDates(this.value, document.querySelector('input[name="expiryDate"]').value);
+        });
 
-                document.querySelector('input[name="expiryDate"]').addEventListener('change', function() {
-                    validateDates(document.querySelector('input[name="startDate"]').value, this.value);
-                });
+        document.querySelector('input[name="expiryDate"]').addEventListener('change', function() {
+            validateDates(document.querySelector('input[name="startDate"]').value, this.value);
+        });
 
-
+        // Populate item dropdown based on type
         function updateItemList() {
-        const offerType = document.getElementById('offerType').value;
-        const itemSelect = document.getElementById('itemSelect');
-        
-        
-        itemSelect.innerHTML = '';
-        
-       
-        fetch(`/admin/offers/items?type=${offerType}`)
-            .then(response => response.json())
-            .then(items => {
-                items.forEach(item => {
-                    const option = document.createElement('option');
-                    option.value = item._id;
-                    option.textContent = item.productName || item.name;
-                    itemSelect.appendChild(option);
+            const offerType = document.getElementById('offerType').value;
+            const itemSelect = document.getElementById('itemSelect');
+            itemSelect.innerHTML = '<option value="">Loading...</option>';
+
+            fetch(`/admin/offers/items?type=${offerType}`)
+                .then(res => res.json())
+                .then(items => {
+                    itemSelect.innerHTML = '<option value="">Select an item</option>';
+                    items.forEach(item => {
+                        const opt = document.createElement('option');
+                        opt.value = item._id;
+                        opt.textContent = item.productName || item.name;
+                        itemSelect.appendChild(opt);
+                    });
+                })
+                .catch(err => {
+                    itemSelect.innerHTML = '<option value="">Error loading items</option>';
+                    console.error(err);
                 });
-            })  
-            .catch(error => {
-                console.error('Error:', error);
-            });
-    }
+        }
 
-    document.querySelector('.offer-form').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    const offerNameInput = document.querySelector('input[name="offerName"]');
-    const discountInput = document.querySelector('input[name="discount"]');
-    const typeSelect = document.getElementById('offerType');
-    const itemSelect = document.getElementById('itemSelect');
-    const startDateInput = document.querySelector('input[name="startDate"]');
-    const expiryDateInput = document.querySelector('input[name="expiryDate"]');
+        // Form Submit
+        document.querySelector('.offer-form').addEventListener('submit', function(e) {
+            e.preventDefault();
 
-    const isOfferNameValid = validateOfferName(offerNameInput.value);
-    const isDiscountValid = validateDiscount(discountInput.value);
-    const areDatesValid = validateDates(startDateInput.value, expiryDateInput.value);
+            const offerName = document.querySelector('input[name="offerName"]').value.trim();
+            const discount = document.querySelector('input[name="discount"]').value;
+            const type = document.getElementById('offerType').value;
+            const itemId = document.getElementById('itemSelect').value;
+            const startDate = document.querySelector('input[name="startDate"]').value;
+            const expiryDate = document.querySelector('input[name="expiryDate"]').value;
+
+            const validName = validateOfferName(offerName);
+            const validDiscount = validateDiscount(discount);
+            const validDates = validateDates(startDate, expiryDate);
+            const validItem = itemId ? true : (showError(document.getElementById('itemSelect'), 'Please select an item'), false);
+
+            if (validName && validDiscount && validDates && validItem) {
+                const formData = { offerName, discount, type, itemId, startDate, expiryDate };
+
+                fetch('/admin/offers/add', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire('Success!', data.message, 'success').then(() => location.reload());
+                    } else {
+                        Swal.fire('Error', data.message, 'error');
+                    }
+                })
+                .catch(() => Swal.fire('Error', 'Something went wrong', 'error'));
+            }
+        });
 
   
-    if (isOfferNameValid && isDiscountValid && areDatesValid) {
-        const formData = {
-            offerName: offerNameInput.value,
-            discount: discountInput.value,
-            type: typeSelect.value,
-            itemId: itemSelect.value,
-            startDate: startDateInput.value,
-            expiryDate: expiryDateInput.value
-        };
-
-        fetch('/admin/offers/add', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(formData)
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Offer Added!',
-                    text: data.message
-                });
-                this.reset();
-                document.querySelectorAll('.is-valid, .is-invalid').forEach(element => {
-                    element.classList.remove('is-valid', 'is-invalid');
-                });
-                document.querySelectorAll('.error-message').forEach(element => {
-                    element.textContent = '';
-                });
-                updateItemList();
-            } else {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Oops...',
-                    text: data.message
-                });
-            }
-        })
-        .catch(error => {
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: 'Unable to add the offer. Please try again later.'
+        async function deleteOffer(offerId) {
+ 
+            const result = await Swal.fire({
+                title: 'Are you sure?',
+                text: 'This offer will be permanently deleted!',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Yes, delete it!'
             });
-        });
-    }
-});
+
+            if (result.isConfirmed) {
+                fetch(`/admin/offers/delete/${offerId}`, { method: 'DELETE' })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire('Deleted!', data.message, 'success').then(() => location.reload());
+                        } else {
+                            Swal.fire('Error', data.message, 'error');
+                        }
+                    })
+                    .catch(() => Swal.fire('Error', 'Failed to delete', 'error'));
+            }
+        }
 
 
-document.addEventListener("DOMContentLoaded",updateItemList)
-</script>
+        document.addEventListener('DOMContentLoaded', updateItemList);
+    </script>
+</body>
+</html>

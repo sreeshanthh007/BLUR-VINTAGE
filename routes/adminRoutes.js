@@ -15,6 +15,7 @@ import OfferController from '../controllers/admin/offerController.js';
 // Middlewares
 import { memoryUpload } from '../middlewares/multer.js';  
 import { adminAuth } from "../middlewares/auth.js";
+import offerController from '../controllers/admin/offerController.js';
 
 // Admin Login
 router.get('/login', adminController.loadlogin);
@@ -75,6 +76,7 @@ router.get('/available-coupons', adminAuth, couponController.availableCoupons);
 router.get("/addOffer", adminAuth, OfferController.loadOffer);
 router.get("/offers/items", adminAuth, OfferController.getItemByType);
 router.post("/offers/add", adminAuth, OfferController.addOffer);
+router.delete("/offers/delete/:offerId",adminAuth,offerController.deleteoffer);
 
 // Sales & Analytics
 router.get("/sales-report", adminAuth, adminController.getSalesReport);

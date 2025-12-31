@@ -1,4 +1,3 @@
-// server.js or app.js
 
 import express from 'express';
 import session from 'express-session';
@@ -10,30 +9,30 @@ import bodyParser from 'body-parser';
 import passport from './config/passport.js';
 import dotenv from 'dotenv';
 import methodOverride from 'method-override';
+import './config/mongodb.js'; 
 
-dotenv.config(); // Load environment variables
+dotenv.config();
 
-// Fix for __dirname in ES Modules
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
 
-// Database connection
-import './config/mongodb.js'; // Assuming it connects on import
 
-// Routers
+
+
 import userRouter from './routes/userRoutes.js';
 import adminRouter from './routes/adminRoutes.js';
 import authRoutes from './routes/authroutes.js';
 
-// Middleware
+
 import adminAccess from './middlewares/auth.js';
 import connectDB from './config/mongodb.js';
 
 
 connectDB()
-// Session configuration
+
 app.use(session({
     secret: process.env.SESSION_SECRET || process.env.session_secret, // Use consistent naming
     resave: false,
@@ -51,7 +50,7 @@ app.use(passport.initialize());
 app.use(passport.session());
 app.use(flash());
 
-// Make flash messages available in views
+
 app.use((req, res, next) => {
     res.locals.messages = req.flash();
     next();
@@ -87,7 +86,7 @@ app.use((err, req, res, next) => {
 });
 
 // Start server
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT;
 app.listen(PORT, () => {
     console.log(`Server started on http://localhost:${PORT}`);
 });

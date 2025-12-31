@@ -243,23 +243,65 @@
                 </table>
             </div>
         </div>
-        <div class="pagination-container">
-            <ul class="pagination justify-content-center mt-4">
+        
+    <div class="pagination-container">
+    <ul class="pagination justify-content-center mt-4">
+        <!-- Previous -->
                 <% if (currentPage > 1) { %>
                     <li class="page-item">
-                        <a class="page-link" href="?page=<%= currentPage - 1 %>&search=<%= search %>">Previous</a>
+                        <a class="page-link" href="?page=<%= currentPage - 1 %>&search=<%= search || '' %>">Previous</a>
+                    </li>
+                <% } else { %>
+                    <li class="page-item disabled">
+                        <span class="page-link">Previous</span>
                     </li>
                 <% } %>
-        
-                <% for (let i = 1; i <= totalPages; i++) { %>
+
+                <!-- First Page -->
+                <li class="page-item <%= currentPage === 1 ? 'active' : '' %>">
+                    <a class="page-link" href="?page=1&search=<%= search || '' %>">1</a>
+                </li>
+
+                <!-- Ellipsis after 1 if gap -->
+                <% if (currentPage > 4) { %>
+                    <li class="page-item disabled">
+                        <span class="page-link">...</span>
+                    </li>
+                <% } %>
+
+                <!-- Middle pages: show up to 5 pages around current page -->
+                <% 
+                    let startPage = Math.max(2, currentPage - 2);
+                    let endPage = Math.min(totalPages - 1, currentPage + 2);
+                %>
+                <% for (let i = startPage; i <= endPage; i++) { %>
                     <li class="page-item <%= currentPage === i ? 'active' : '' %>">
-                        <a class="page-link" href="?page=<%= i %>&search=<%= search %>"><%= i %></a>
+                        <a class="page-link" href="?page=<%= i %>&search=<%= search || '' %>"><%= i %></a>
                     </li>
                 <% } %>
-        
+
+                <!-- Ellipsis before last page if gap -->
+                <% if (currentPage < totalPages - 3) { %>
+                    <li class="page-item disabled">
+                        <span class="page-link">...</span>
+                    </li>
+                <% } %>
+
+                <!-- Last Page (only if totalPages > 1) -->
+                <% if (totalPages > 1) { %>
+                    <li class="page-item <%= currentPage === totalPages ? 'active' : '' %>">
+                        <a class="page-link" href="?page=<%= totalPages %>&search=<%= search || '' %>"><%= totalPages %></a>
+                    </li>
+                <% } %>
+
+                <!-- Next -->
                 <% if (currentPage < totalPages) { %>
                     <li class="page-item">
-                        <a class="page-link" href="?page=<%= currentPage + 1 %>&search=<%= search %>">Next</a>
+                        <a class="page-link" href="?page=<%= currentPage + 1 %>&search=<%= search || '' %>">Next</a>
+                    </li>
+                <% } else { %>
+                    <li class="page-item disabled">
+                        <span class="page-link">Next</span>
                     </li>
                 <% } %>
             </ul>
