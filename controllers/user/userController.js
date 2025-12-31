@@ -5,7 +5,7 @@ import dotenv from "dotenv";
 dotenv.config(); 
 import Users from "../../models/userSchema.js";
 import Wallet from "../../models/walletSchema.js";
-import { EMAIL_SEND_TEMPLATE, generateOTP, generateReferralCode, securePassword } from "../../helpers/Helpers.js";
+import { generateOTP , EMAIL_SEND_TEMPLATE , generateReferralCode , securePassword } from "../../helpers/Helpers.js";
 import Category from "../../models/categorySchema.js"
 import Product from "../../models/productSchema.js"
 
