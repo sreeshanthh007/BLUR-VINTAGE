@@ -35,7 +35,7 @@ const memoryUpload = multer({
     storage: memoryStorage,
     fileFilter: imageFileFilter,
     limits: {
-        fileSize: 10 * 1024 * 1024 // Optional: limit to 10MB
+        fileSize: 20 * 1024 * 1024 // Optional: limit to 10MB
     }
 }).any(); 
 
