@@ -10,7 +10,7 @@ const loadAddCategory = async (req, res) => {
         const categories = await Category.find();
         res.render('admin/addproductpage', { cat: categories });
     } catch (err) {
-        console.log("error in loadaddcategory");
+        console.log("error in loadaddcategory",err);
         res.status(500).send("Server error");
     }
 };
@@ -133,7 +133,7 @@ const editProduct = async (req, res) => {
             return { ...variant, productImage: variantImages };
         }));
 
-        const updatedProduct = await Product.findByIdAndUpdate(
+        await Product.findByIdAndUpdate(
             id,
             {
                 $set: {
@@ -206,7 +206,7 @@ const blockProduct = async (req, res) => {
         await Product.updateOne({ _id: id }, { $set: { isBlocked: true } });
         res.redirect('/admin/productpage');
     } catch (error) {
-        console.log("error in blockproduct");
+        console.log("error in blockproduct",error);
         res.status(500).send("Server error");
     }
 };
@@ -217,7 +217,7 @@ const unBlockProduct = async (req, res) => {
         await Product.updateOne({ _id: id }, { $set: { isBlocked: false } });
         res.redirect('/admin/productpage');
     } catch (error) {
-        console.log("error in unblock product");
+        console.log("error in unblock product",error);
         res.status(500).send("Server error");
     }
 };

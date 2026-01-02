@@ -31,7 +31,7 @@ import adminAccess from './middlewares/auth.js';
 import connectDB from './config/mongodb.js';
 
 
-connectDB()
+connectDB();
 
 app.use(session({
     secret: process.env.SESSION_SECRET || process.env.session_secret, // Use consistent naming
@@ -84,6 +84,7 @@ app.use((err, req, res, next) => {
     res.status(err.status || 500).render('error', {
         message: err.message || 'Internal Server Error'
     });
+    next();
 });
 
 // Start server
