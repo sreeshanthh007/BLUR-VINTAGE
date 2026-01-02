@@ -248,7 +248,7 @@ document.getElementById("addMoneyForm").addEventListener("submit", async functio
     const amount = amountInput.value;
     
     try {
-        const response = await fetch('/user/wallet/add', {
+        const response = await fetch('/user/wallet', {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"

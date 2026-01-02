@@ -62,9 +62,9 @@ const addCategory = async (req, res) => {
 // Load edit category page
 const loadeditCategory = async (req, res) => {
     try {
-        const { editId } = req.params;
+        const { categoryId } = req.params;
 
-        const category = await Category.findById(editId);
+        const category = await Category.findById(categoryId);
 
         if (!category) {
             return res.status(404).render("error", { message: "Category not found" });

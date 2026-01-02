@@ -312,7 +312,7 @@ const verifyPayment = async (req, res) => {
             subtotal += discountedPrice * item.quantity;
             totalProductOffersDiscount += (variant.price - discountedPrice) * item.quantity;
 
-            // ATOMIC STOCK DEDUCTION
+            
             const updatedProduct = await Product.findOneAndUpdate(
                 {
                     _id: product._id,

@@ -12,16 +12,8 @@ import { userAuth } from '../middlewares/auth.js';
 
 const router = express.Router();
 
-// Public Routes
+// ==================== Public Routes ====================
 router.get("/aboutUs", userController.loadAboutUs);
-router.get('/register', userController.loadRegister);
-router.post('/register', userController.signUp);
-router.get('/otp-verification', userController.otp_verification);
-router.post("/otp-verification", userController.verifyOTP);
-router.post("/resend-otp", userController.resent_otp);
-router.get('/login', userController.loadLogin);
-router.post('/login', userController.login);
-router.post('/logout', userController.logOut);
 router.get('/shop', userController.loadShop);
 router.get('/home', userController.loadHome);
 router.get('/men', userController.loadmen);
@@ -29,10 +21,30 @@ router.get('/women', userController.loadWomen);
 router.get('/kids', userController.loadKids);
 router.get("/search", userController.userSearch);
 
-// Protected Routes (Require userAuth)
+router.route('/register')
+.get(userController.loadRegister)
+.post(userController.signUp);
+
+router.route('/otp-verification')
+.get(userController.otp_verification)
+.post(userController.verifyOTP);
+
+router.post("/resend-otp", userController.resent_otp);
+
+
+router.route('/login')
+.get(userController.loadLogin)
+.post(userController.login);
+
+router.post('/logout', userController.logOut);
+
+// ==================== Protected Routes (userAuth required) ====================
+
 router.get("/buy", userAuth, productController.productDetails);
-router.get("/manage", userAuth, userDetailsController.manage);
-router.post("/manage", userAuth, userDetailsController.updateDetails);
+
+router.route("/manage")
+  .get(userAuth, userDetailsController.manage)
+  .post(userAuth, userDetailsController.updateDetails);
 
 // Cart Routes
 router.get("/cart", userAuth, cartDetailsController.getCart);
@@ -52,19 +64,26 @@ router.post('/wishlist-to-cart', userAuth, wishlistController.wishlistToCart);
 
 // Checkout & Address Routes
 router.get("/checkout", userAuth, cartDetailsController.checkout);
-router.get("/addresses", userAuth, cartDetailsController.addresses);
-router.post("/addresses", userAuth, cartDetailsController.addNewAddress);
+
+router.route("/addresses")
+  .get(userAuth, cartDetailsController.addresses)
+  .post(userAuth, cartDetailsController.addNewAddress);
+
 router.post("/update-address", userAuth, cartDetailsController.updateAddress);
 router.get("/address", userAuth, userDetailsController.getAddress);
 router.get("/editAddress/:id", userAuth, userDetailsController.editAddress);
-router.get("/addAddress", userAuth, userDetailsController.loadAddAddress);
-router.post("/addAddress", userAuth, userDetailsController.addAddress);
+
+router.route("/addAddress")
+  .get(userAuth, userDetailsController.loadAddAddress)
+  .post(userAuth, userDetailsController.addAddress);
+
 router.get("/deleteAddress", userAuth, userDetailsController.deleteAddress);
 router.put("/editAddress/:id", userAuth, userDetailsController.updateAddress);
 
 // Wallet
-router.get('/wallet', userAuth, userDetailsController.wallet);
-router.post("/wallet/add", userAuth, userDetailsController.addMoney);
+router.route('/wallet')
+  .get(userAuth, userDetailsController.wallet)
+  .post(userAuth, userDetailsController.addMoney);
 
 // Order & Payment Routes
 router.get("/thankYou", userAuth, userController.thankYou);
@@ -83,10 +102,14 @@ router.get("/managepassword", userAuth, userController.managePassword);
 router.get("/email-verification", userController.emailverification);
 router.patch("/update-password", userAuth, userController.updatePassword);
 router.post("/email-verification", userController.otpForPassword);
-router.get("/check-email", userController.checkYourGmail);
-router.post("/check-email", userController.verifyResetPasswordOtp);
-router.get("/reset-password", userController.setNewPassword);
-router.post("/reset-password", userController.resetPassword);
+
+router.route("/check-email")
+  .get(userController.checkYourGmail)
+  .post(userController.verifyResetPasswordOtp);
+
+router.route("/reset-password")
+  .get(userController.setNewPassword)
+  .post(userController.resetPassword);
 
 // Invoice
 router.get('/download-invoice/:orderId', userAuth, invoiceController.downloadInvoice);
