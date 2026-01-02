@@ -7,13 +7,11 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
-        /* Custom CSS */
         .search-input {
             background-color: #f8f9fa;
             border-radius: 50px;
             padding-left: 40px;
         }
-        
         .search-icon {
             position: absolute;
             left: 15px;
@@ -21,44 +19,44 @@
             transform: translateY(-50%);
             color: #6c757d;
         }
-
         .cart-item-image {
             max-width: 200px;
             width: 100%;
             height: auto;
+            object-fit: cover;
+            border-radius: 8px;
         }
         .quantity-controls {
-        max-width: 150px;
-    }
-    .quantity-input {
-        border-radius: 4px;
-        height: 38px;
-        -moz-appearance: textfield;
-    }
-    .quantity-input::-webkit-outer-spin-button,
-    .quantity-input::-webkit-inner-spin-button {
-        -webkit-appearance: none;
-        margin: 0;
-    }
-    .quantity-btn {
-        width: 38px;
-        height: 38px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.2rem;
-        padding: 0;
-    }
+            max-width: 150px;
+        }
+        .quantity-input {
+            border-radius: 4px;
+            height: 38px;
+            -moz-appearance: textfield;
+        }
+        .quantity-input::-webkit-outer-spin-button,
+        .quantity-input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        .quantity-btn {
+            width: 38px;
+            height: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            padding: 0;
+        }
         .place-order-btn {
             background-color: #212529;
             border: none;
             padding: 12px;
+            font-weight: 500;
         }
-
         .place-order-btn:hover {
             background-color: #343a40;
         }
-
         @media (max-width: 768px) {
             .cart-item-image {
                 max-width: 100%;
@@ -68,37 +66,37 @@
 </head>
 <body class="bg-light">
     <!-- Header -->
-    <%-include('../../views/partials/user/header.ejs')%>
+    <%- include('../../views/partials/user/header.ejs') %>
 
     <!-- Main Content -->
-        <main class="container py-5">
-            <h2 class="text-center mb-5 fs-4" style="font-family: joahn;"> MY CART</h2>
+    <main class="container py-5">
+        <h2 class="text-center mb-5 fs-4" style="font-family: joahn;">MY CART</h2>
 
-            <div class="row g-4 mt-4">
-                <!-- Cart Items -->
-                <div class="col-lg-8">
-                    <% if (cart.items.length === 0) { %>
-                        <div class="bg-white p-4 rounded shadow-sm text-center">
-                            <h3>Your cart is empty</h3>
-                            <a href="/user/men" class="btn btn-dark mt-3">Continue Shopping</a>
-                        </div>
-                    <% } else { %>
-                        <% cart.items.forEach(item => { %>
-                            <%if(item && item.product){%>
+        <div class="row g-4 mt-4">
+            <!-- Cart Items -->
+            <div class="col-lg-8">
+                <% if (cart.items.length === 0) { %>
+                    <div class="bg-white p-4 rounded shadow-sm text-center">
+                        <h3>Your cart is empty</h3>
+                        <a href="/user/men" class="btn btn-dark mt-3">Continue Shopping</a>
+                    </div>
+                <% } else { %>
+                    <% cart.items.forEach(item => { %>
+                        <% if (item && item.product) { %>
                             <div class="bg-white p-4 rounded shadow-sm mb-3">
-                                <div class="row">
+                                <div class="row align-items-center">
                                     <div class="col-md-4 mb-3 mb-md-0">
                                         <img src="<%= item.productImage %>" alt="<%= item.product.productName %>" class="cart-item-image">
                                     </div>
                                     
                                     <div class="col-md-8">
                                         <div class="d-flex justify-content-between align-items-start mb-2">
-                                            <h3 class="h5"><%= item.product.productName %></h3>
-                                        <button class="btn btn-link text-secondary p-0 remove-item" 
-                                            onclick="removeProduct('<%= item.product._id %>', '<%= item._id %>')" 
-                                            data-item-id="<%= item._id %>">
-                                        <i class="bi bi-trash"></i>
-                                        </button>
+                                            <h3 class="h5 mb-0"><%= item.product.productName %></h3>
+                                            <button class="btn btn-link text-secondary p-0 remove-item"
+                                                onclick="removeProduct('<%= item.product._id %>', '<%= item._id %>')"
+                                                data-item-id="<%= item._id %>">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
                                         </div>
                                         
                                         <p class="h4 mb-3">
@@ -122,11 +120,8 @@
                                         
                                         <div class="quantity-controls d-flex align-items-center">
                                             <button class="btn btn-outline-secondary btn-sm quantity-btn minus" type="button">-</button>
-                                            <input type="number" class="form-control mx-2 quantity-input text-center" 
-                                                value="<%= item.quantity %>" 
-                                                min="1" 
-                                                max="6" 
-                                                readonly 
+                                            <input type="number" class="form-control mx-2 quantity-input text-center"
+                                                value="<%= item.quantity %>" min="1" max="10" readonly
                                                 data-item-id="<%= item._id %>"
                                                 style="width: 60px;">
                                             <button class="btn btn-outline-secondary btn-sm quantity-btn plus" type="button">+</button>
@@ -134,17 +129,17 @@
                                     </div>
                                 </div>
                             </div>
-                            <%}%>
-                        <% }) %>
-                    <% } %>
-                </div>
-                
-                <!-- Update the Order Summary section -->
-                <div class="col-lg-4">
-                    <div class="bg-white p-4 rounded shadow-sm">
-                        <h4 class="mb-4">Order Summary</h4>
-                        
-                        <%if(cart.items.length!=0){%>
+                        <% } %>
+                    <% }) %>
+                <% } %>
+            </div>
+            
+            <!-- Order Summary -->
+            <div class="col-lg-4">
+                <div class="bg-white p-4 rounded shadow-sm">
+                    <h4 class="mb-4">Order Summary</h4>
+                    
+                    <% if (cart.items.length !== 0) { %>
                         <div class="mb-3">
                             <div class="d-flex justify-content-between mb-2">
                                 <span>Order value</span>
@@ -154,369 +149,179 @@
                                 <span>Delivery charge</span>
                                 <span>free shipping</span>
                             </div>
-                            <div class="d-flex justify-content-between fw-bold">
-                                
-                                <p class="mb-1"><strong>Total:</strong></p>
-                                <span>Rs. <%= (cart.totalAmount).toFixed(2) %></span>
+                            <hr>
+                            <div class="d-flex justify-content-between fw-bold fs-5">
+                                <span>Total</span>
+                                <span>Rs. <%= cart.totalAmount.toFixed(2) %></span>
                             </div>
                         </div>
-                        <%}else{%>
-                            <div class="mb-3">
-                                <div class="d-flex justify-content-between mb-2">
-                                    <span>Order value</span>
-                                    <span></span>
-                                </div>
-                                <div class="d-flex justify-content-between mb-2">
-                                    <span>Delivery charge</span>
-                                    <span></span>
-                                </div>
-                                <div class="d-flex justify-content-between fw-bold">
-                                    
-                                    <p class="mb-1"><strong>Total:</strong></p>
-                                    <span></span>
-                                </div>
-                            </div
-                            <%}%>
-                        <% if (cart.items.length > 0) { %>
-                            <button class="btn btn-dark w-100 place-order-btn mb-3">
-                                CONFIRM TO CHECKOUT 
-                            </button>
-                        <% } %>
-                        
-                        <p class="text-center text-muted small mb-0">
-                            We accept Cash on Delivery
-                        </p>
-                    </div>
+
+                        <!-- Fixed: Simple link to checkout -->
+                        <a href="/user/checkout" class="btn btn-dark w-100 place-order-btn mb-3">
+                            CONFIRM TO CHECKOUT
+                        </a>
+                    <% } else { %>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Order value</span>
+                                <span>-</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Delivery charge</span>
+                                <span>-</span>
+                            </div>
+                            <hr>
+                            <div class="d-flex justify-content-between fw-bold fs-5">
+                                <span>Total</span>
+                                <span>-</span>
+                            </div>
+                        </div>
+                    <% } %>
+                    
+                    <p class="text-center text-muted small mb-0">
+                        We accept Cash on Delivery
+                    </p>
                 </div>
             </div>
-        </main>
+        </div>
+    </main>
 
+    <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-</body>
-</html>
 
-
-<script>
-   function removeProduct(productId,itemId) {
-    console.log("product id is", productId);
-    
-    Swal.fire({
-        icon: "warning",
-        title: "Are you sure",
-        text: "You want to remove this product from your cart?",
-        showCancelButton: true,
-        confirmButtonColor: '#3085d6',
-        cancelButtonColor: '#d33',
-        confirmButtonText: "Yes, remove it"
-    }).then((result) => {
-        if (result.isConfirmed) {
-            fetch(`/user/cart/remove/${productId}/${itemId}`, {
-                method: "DELETE",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-            })
-            .then((response) => response.json())
-            .then((data) => {
-                if (data.success) {
-                    // Find the cart item container using the onclick attribute
-                    const cartItem = document.querySelector(`[data-item-id="${itemId}"]`).closest('.bg-white');
-                    
-                    if (!cartItem) {
-                        throw new Error('Could not find cart item to remove');
-                    }
-
-                    // Remove the item from DOM
-                    cartItem.remove();
-                    
-                    // Find the order summary container
-                    const orderSummaryContainer = document.querySelector('.col-lg-4 .bg-white');
-                    
-                    
-                    let cartTotal = 0;
-                    if (data.cart && typeof data.cart.totalAmount === 'number') {
-                        cartTotal = data.cart.totalAmount;
-                    } else if (typeof data.cartTotal === 'number') {
-                        cartTotal = data.cartTotal;
-                    }
-                    
-                    // Update order value with safe number formatting
-                    const orderValueSpan = orderSummaryContainer.querySelector('.d-flex:first-child span:last-child');
-                    if (orderValueSpan) {
-                        orderValueSpan.textContent = `Rs. ${Number(cartTotal).toFixed(2)}`;
-                    }
-                    
-                    
-                    const deliveryChargeSpan = orderSummaryContainer.querySelector('.d-flex:nth-child(2) span:last-child');
-                    let deliveryCharge = 0;
-                    if (deliveryChargeSpan) {
-                        const charge = deliveryChargeSpan.textContent.replace('Rs. ', '');
-                        deliveryCharge = !isNaN(parseFloat(charge)) ? parseFloat(charge) : 0;
-                    }
-                    
-                   
-                    const finalTotalSpan = orderSummaryContainer.querySelector('.fw-bold span:last-child');
-                    if (finalTotalSpan) {
-                        const finalTotal = Number(cartTotal) + Number(deliveryCharge);
-                        finalTotalSpan.textContent = `Rs. ${finalTotal.toFixed(2)}`;
-                    }
-                    
-                 
-                    const remainingItems = document.querySelectorAll('.cart-item-image');
-                    if (remainingItems.length === 0) {
-                        // Show empty cart message
-                        const cartContainer = document.querySelector('.col-lg-8');
-                        if (cartContainer) {
-                            cartContainer.innerHTML = `
-                                <div class="bg-white p-4 rounded shadow-sm text-center">
-                                    <h3>Your cart is empty</h3>
-                                    <a href="/user/men" class="btn btn-dark mt-3">Continue Shopping</a>
-                                </div>
-                            `;
-                        }
-                        
-                        // Update order summary for empty cart
-                        if (orderSummaryContainer) {
-                            orderSummaryContainer.innerHTML = `
-                                <h4 class="mb-4">Order Summary</h4>
-                                <div class="mb-3">
-                                    <div class="d-flex justify-content-between mb-2">
-                                        <span>Order value</span>
-                                        <span></span>
-                                     </div>
-                                    <div class="d-flex justify-content-between mb-2">
-                                        <span>Delivery charge</span>
-                                        <span></span>
-                                    </div>
-                                    <div class="d-flex justify-content-between fw-bold">
-                                        <p class="mb-1"><strong>Total:</strong></p>
-                                        <span></span>
-                                    </div>
-                                </div>
-                                <p class="text-center text-muted small mb-0">
-                                    We accept Cash on Delivery
-                                </p>
-                            `;
-                        }
-                        
-                        // Remove the checkout button if it exists
-                        const checkoutButton = orderSummaryContainer.querySelector('.place-order-btn');
-                        if (checkoutButton) {
-                            checkoutButton.remove();
-                        }
-                    }
-
-                    // Refresh the page after successful removal to ensure all totals are correct
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 1500);
-
-                    Swal.fire({
-                        icon: "success",
-                        title: "Removed",
-                        text: data.message,
-                        timer: 1500
-                    });
-                } else {
-                    Swal.fire({
-                        icon: "error",
-                        title: "Error",
-                        text: data.message || 'Failed to remove product'
-                    });
-                }
-            }).catch(err => {
-                console.log("Error in remove product", err.message);
-                Swal.fire({
-                    icon: "error",
-                    title: "Error",
-                    text: "Failed to remove product"
-                });
-            });
-        }
-    });
-}
-
-
-
-document.querySelectorAll('.quantity-controls').forEach(control => {
-    const minusBtn = control.querySelector('.minus');
-    const plusBtn = control.querySelector('.plus');
-    const input = control.querySelector('.quantity-input');
-    const itemId = input.getAttribute('data-item-id');
-    let isUpdating = false;
-
-    async function updateQuantity(newQuantity) {
-        if (isUpdating) return;
-        
-        // Check quantity limit
-        if (newQuantity > 5) {
-            const Toast = Swal.mixin({
-                toast: true,
-                position: 'top-end',
-                showConfirmButton: false,
-                timer: 2000,
-                timerProgressBar: true
-            });
-            
-            Toast.fire({
-                icon: 'warning',
-                title: 'Maximum 5 items allowed per product'
-            });
-            return;
-        }
-
-        if (newQuantity < 1) return;
-        
-        isUpdating = true;
-        const itemContainer = control.closest('.bg-white');
-
-        try {
-            const response = await fetch('/user/cart/update-quantity', {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    itemId: itemId,
-                    quantity: newQuantity
-                })
-            });
-
-            const data = await response.json();
-
-            if (data.success) {
-                input.value = newQuantity;
-
-                // Update individual item total
-                const totalAmountElement = itemContainer.querySelector('.total-amount');
-            if (totalAmountElement) {
-                // Use discounted price if available, otherwise use original price
-                const displayPrice = data.discountedPrice || data.originalPrice;
-                totalAmountElement.textContent = (displayPrice * newQuantity).toFixed(2);
-            }
-
-            // Update price display
-            const priceElement = itemContainer.querySelector('.h4');
-            if (priceElement) {
-                if (data.discountedPrice) {
-                    priceElement.innerHTML = `
-                        Rs. ${data.discountedPrice}
-                        <small class="text-muted text-decoration-line-through">Rs. ${data.originalPrice}</small>
-                    `;
-                } else {
-                    priceElement.textContent = `Rs. ${data.originalPrice}`;
-                }
-            }
-
-            // Update order summary
-            const orderSummaryContainer = document.querySelector('.col-lg-4 .bg-white');
-            if (orderSummaryContainer) {
-                // Update order value
-                const orderValueSpan = orderSummaryContainer.querySelector('.d-flex:first-child span:last-child');
-                if (orderValueSpan) {
-                    orderValueSpan.textContent = `Rs. ${data.cartTotal.toFixed(2)}`;
-                }
-
-                // Update final total
-                const finalTotalSpan = orderSummaryContainer.querySelector('.fw-bold span:last-child');
-                if (finalTotalSpan) {
-                    finalTotalSpan.textContent = `Rs. ${data.cartTotal.toFixed(2)}`;
-                }
-            }
-
-                // Show success toast
-                const Toast = Swal.mixin({
-                    toast: true,
-                    position: 'top-end',
-                    showConfirmButton: false,
-                    timer: 1000
-                });
-                
-                Toast.fire({
-                    icon: 'success',
-                    title: 'Quantity updated'
-                });
-
-            } else {
-                throw new Error(data.message);
-            }
-        } catch (error) {
-            console.error('Error updating quantity:', error);
+    <script>
+        // Remove Product from Cart
+        function removeProduct(productId, itemId) {
             Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: error.message || 'Failed to update quantity'
-            });
-            // Reset to previous value on error
-            input.value = input.getAttribute('data-previous-value');
-        } finally {
-            isUpdating = false;
-        }
-    }
-
-    minusBtn.addEventListener('click', () => {
-        const newQuantity = parseInt(input.value) - 1;
-        if (newQuantity >= 1) {
-            updateQuantity(newQuantity);
-        }
-    });
-
-    plusBtn.addEventListener('click', () => {
-        const newQuantity = parseInt(input.value) + 1;
-        if (newQuantity <= 10) {
-            updateQuantity(newQuantity);
-        }
-    });
-
-    // Store initial value
-    input.setAttribute('data-previous-value', input.value);
-});
-
-
-    // REDIRECTING TO CHECKOUT
-document.querySelector('.place-order-btn').addEventListener('click', async function(e) {
-    e.preventDefault();
-    
-    try {
-        // First check if there are any blocked products
-        const response = await fetch('/user/checkout', {
-            method: 'GET',
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest'  // Marks the request as AJAX
-            }
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-            // If there are blocked products or other errors
-            Swal.fire({
-                icon: 'error',
-                title: 'Unable to Proceed',
-                text: data.message || 'Some products in your cart are no longer available',
-                confirmButtonText: 'View Cart',
+                icon: "warning",
+                title: "Are you sure?",
+                text: "You want to remove this product from your cart?",
                 showCancelButton: true,
-                cancelButtonText: 'Close'
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: "Yes, remove it"
             }).then((result) => {
                 if (result.isConfirmed) {
-                    window.location.href = '/user/cart';
+                    fetch(`/user/cart/remove/${productId}/${itemId}`, {
+                        method: "DELETE",
+                        headers: { "Content-Type": "application/json" }
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            const cartItem = document.querySelector(`[data-item-id="${itemId}"]`).closest('.bg-white');
+                            cartItem.remove();
+
+                            // Update totals
+                            const orderValue = document.querySelector('.col-lg-4 .d-flex:first-of-type span:last-child');
+                            const totalSpan = document.querySelector('.col-lg-4 .fw-bold span:last-child');
+                            const newTotal = data.cart?.totalAmount || 0;
+
+                            if (orderValue) orderValue.textContent = `Rs. ${newTotal.toFixed(2)}`;
+                            if (totalSpan) totalSpan.textContent = `Rs. ${newTotal.toFixed(2)}`;
+
+                            // If cart is empty
+                            if (document.querySelectorAll('.cart-item-image').length === 0) {
+                                document.querySelector('.col-lg-8').innerHTML = `
+                                    <div class="bg-white p-4 rounded shadow-sm text-center">
+                                        <h3>Your cart is empty</h3>
+                                        <a href="/user/men" class="btn btn-dark mt-3">Continue Shopping</a>
+                                    </div>
+                                `;
+                                document.querySelector('.col-lg-4 .bg-white').innerHTML = `
+                                    <h4 class="mb-4">Order Summary</h4>
+                                    <div class="mb-3">
+                                        <div class="d-flex justify-content-between mb-2"><span>Order value</span><span>-</span></div>
+                                        <div class="d-flex justify-content-between mb-2"><span>Delivery charge</span><span>-</span></div>
+                                        <hr>
+                                        <div class="d-flex justify-content-between fw-bold fs-5"><span>Total</span><span>-</span></div>
+                                    </div>
+                                    <p class="text-center text-muted small mb-0">We accept Cash on Delivery</p>
+                                `;
+                            }
+
+                            Swal.fire({ icon: "success", title: "Removed!", text: data.message, timer: 1500 });
+                            setTimeout(() => location.reload(), 1600); // Optional: refresh for consistency
+                        } else {
+                            Swal.fire("Error", data.message || "Failed to remove item", "error");
+                        }
+                    })
+                    .catch(err => {
+                        console.error(err);
+                        Swal.fire("Error", "Something went wrong", "error");
+                    });
                 }
             });
-            return;
         }
 
-        // If everything is okay, proceed to checkout page
-        window.location.href = data.redirectUrl
+        // Quantity Update
+        document.querySelectorAll('.quantity-controls').forEach(control => {
+            const minus = control.querySelector('.minus');
+            const plus = control.querySelector('.plus');
+            const input = control.querySelector('.quantity-input');
+            const itemId = input.dataset.itemId;
+            let updating = false;
 
-    } catch (error) {
-        console.error('Error checking checkout status:', error);
-        Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'Failed to proceed to checkout. Please try again.',
-            confirmButtonText: 'Okay'
+            const updateQuantity = async (newQty) => {
+                if (updating) return;
+                if (newQty < 1) return;
+                if (newQty > 10) {
+                    Swal.fire({ icon: 'warning', toast: true, position: 'top-end', title: 'Max 10 items allowed', timer: 2000, showConfirmButton: false });
+                    return;
+                }
+
+                updating = true;
+
+                try {
+                    const res = await fetch('/user/cart/update-quantity', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ itemId, quantity: newQty })
+                    });
+                    const data = await res.json();
+
+                    if (data.success) {
+                        input.value = newQty;
+
+                        // Update item total
+                        const itemTotal = control.closest('.bg-white').querySelector('.total-amount');
+                        const price = data.discountedPrice || data.originalPrice;
+                        if (itemTotal) itemTotal.textContent = (price * newQty).toFixed(2);
+
+                        const priceEl = control.closest('.bg-white').querySelector('.h4');
+                        if (priceEl) {
+                            if (data.discountedPrice) {
+                                priceEl.innerHTML = `Rs. ${data.discountedPrice} <small class="text-muted text-decoration-line-through">Rs. ${data.originalPrice}</small>`;
+                            } else {
+                                priceEl.textContent = `Rs. ${data.originalPrice}`;
+                            }
+                        }
+
+                        // Update order summary
+                        const orderValue = document.querySelector('.col-lg-4 .d-flex:first-of-type span:last-child');
+                        const total = document.querySelector('.col-lg-4 .fw-bold span:last-child');
+                        if (orderValue) orderValue.textContent = `Rs. ${data.cartTotal.toFixed(2)}`;
+                        if (total) total.textContent = `Rs. ${data.cartTotal.toFixed(2)}`;
+
+                        const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 1000 });
+                        Toast.fire({ icon: 'success', title: 'Quantity updated' });
+                    } else {
+                        throw new Error(data.message);
+                    }
+                } catch (err) {
+                    Swal.fire('Error', err.message || 'Failed to update quantity', 'error');
+                    input.value = input.dataset.previousValue || input.value;
+                } finally {
+                    updating = false;
+                }
+            };
+
+            minus.addEventListener('click', () => updateQuantity(parseInt(input.value) - 1));
+            plus.addEventListener('click', () => updateQuantity(parseInt(input.value) + 1));
+
+            input.dataset.previousValue = input.value;
         });
-    }
-});
-</script>
+    </script>
+</body>
+</html>

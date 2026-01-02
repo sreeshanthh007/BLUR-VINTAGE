@@ -1,4 +1,3 @@
-// controllers/user/placeOrderController.js
 
 import Product from "../../models/productSchema.js";
 import Order from "../../models/orderSchema.js";
@@ -18,7 +17,7 @@ const placeOrder = async (req, res) => {
         let subtotal = 0;
         let totalProductOffersDiscount = 0;
 
-        // Validate and process each cart item
+        // Process each item and calculate pricing
         for (const item of cart.items) {
             const product = await Product.findById(item.product._id)
                 .populate('productOffer')
@@ -43,8 +42,8 @@ const placeOrder = async (req, res) => {
                 v.color === item.color && v.size === item.size
             );
 
-            if (!variant || variant.stock < item.quantity) {
-                return res.status(400).json({ success: false, message: `Insufficient stock for ${product.productName}` });
+            if (!variant) {
+                return res.status(400).json({ success: false, message: `Variant not found: ${item.size}, ${item.color}` });
             }
 
             // Calculate best discount
@@ -76,9 +75,28 @@ const placeOrder = async (req, res) => {
                 totalProductOffersDiscount += (variant.price - discountedPrice) * item.quantity;
             }
 
-            // Reduce stock
-            variant.stock -= item.quantity;
-            await product.save();
+            // ATOMIC STOCK DEDUCTION for COD & Wallet only
+            if (paymentMethod !== "RAZORPAY") {
+                const updated = await Product.findOneAndUpdate(
+                    {
+                        _id: product._id,
+                        "variants.color": item.color,
+                        "variants.size": item.size,
+                        "variants.stock": { $gte: item.quantity }
+                    },
+                    {
+                        $inc: { "variants.$.stock": -item.quantity }
+                    },
+                    { new: true }
+                );
+
+                if (!updated) {
+                    return res.status(400).json({
+                        success: false,
+                        message: `Insufficient stock for ${product.productName} (${item.size}, ${item.color})`
+                    });
+                }
+            }
 
             orderItems.push({
                 product: item.product._id,
@@ -122,6 +140,7 @@ const placeOrder = async (req, res) => {
 
         const finalAmount = subtotal - finalDiscount;
 
+        // Razorpay: Only create order, no stock deduction yet
         if (paymentMethod === "RAZORPAY") {
             const options = {
                 amount: Math.round(finalAmount * 100),
@@ -138,6 +157,7 @@ const placeOrder = async (req, res) => {
             });
         }
 
+        // Wallet payment
         if (paymentMethod === "WALLET") {
             const wallet = await Wallet.findOne({ userId });
             if (!wallet || wallet.balance < finalAmount) {
@@ -155,7 +175,7 @@ const placeOrder = async (req, res) => {
             await wallet.save();
         }
 
-        // Create order for COD or Wallet
+        // Create order (COD or Wallet)
         const order = new Order({
             userId,
             orderItems,
@@ -259,14 +279,14 @@ const verifyPayment = async (req, res) => {
         let totalProductOffersDiscount = 0;
         let finalDiscount = 0;
 
+        // Deduct stock atomically on successful payment
         for (const item of cart.items) {
             const product = await Product.findById(item.product._id)
                 .populate('productOffer')
                 .populate({ path: 'category', populate: { path: 'categoryOffer' } });
 
-            const variant = product.variants.find(v =>
-                v.color === item.color && v.size === item.size
-            );
+            const variant = product.variants.find(v => v.color === item.color && v.size === item.size);
+            if (!variant) throw new Error("Variant not found");
 
             let discountedPrice = variant.price;
             let bestDiscount = 0;
@@ -292,6 +312,27 @@ const verifyPayment = async (req, res) => {
             subtotal += discountedPrice * item.quantity;
             totalProductOffersDiscount += (variant.price - discountedPrice) * item.quantity;
 
+            // ATOMIC STOCK DEDUCTION
+            const updatedProduct = await Product.findOneAndUpdate(
+                {
+                    _id: product._id,
+                    "variants.color": item.color,
+                    "variants.size": item.size,
+                    "variants.stock": { $gte: item.quantity }
+                },
+                {
+                    $inc: { "variants.$.stock": -item.quantity }
+                },
+                { new: true }
+            );
+
+            if (!updatedProduct) {
+                return res.status(400).json({
+                    success: false,
+                    message: `Item out of stock: ${product.productName} (${item.size}, ${item.color})`
+                });
+            }
+
             orderItems.push({
                 product: item.product._id,
                 quantity: item.quantity,
@@ -311,6 +352,7 @@ const verifyPayment = async (req, res) => {
             });
         }
 
+        // Apply coupon
         if (coupon?.code) {
             const validCoupon = await Coupon.findOne({ code: coupon.code.toUpperCase(), isActive: true });
             if (validCoupon && subtotal >= validCoupon.minimumOrderAmount && validCoupon.currentUsageCount < validCoupon.usageLimit) {
@@ -443,7 +485,7 @@ const verifyPaymentFailure = async (req, res) => {
             orderNumber
         });
 
-        await Cart.findOneAndUpdate({ user: userId }, { $set: { items: [], totalAmount: 0 } });
+        // await Cart.findOneAndUpdate({ user: userId }, { $set: { items: [], totalAmount: 0 } });
 
         res.json({ success: true, message: 'Order created with failed payment status', orderNumber });
     } catch (error) {
@@ -500,26 +542,47 @@ const retryPaymentVerification = async (req, res) => {
         }
 
         const order = await Order.findOne({ 'payment.razorpay.orderId': razorpay_order_id });
-        if (!order) {
-            return res.status(404).json({ success: false, message: "Order not found" });
+        if (!order || order.payment.status === "Completed") {
+            return res.status(400).json({ success: false, message: "Invalid or already completed order" });
         }
 
-        order.payment.status = 'Completed';
-        order.payment.razorpay.paymentId = razorpay_payment_id;
-        order.payment.razorpay.signature = razorpay_signature;
-        order.payment.paidAt = new Date();
-        order.orderStatus = 'Processing';
+    
+        for (const item of order.orderItems) {
+            const updatedProduct = await Product.findOneAndUpdate(
+                {
+                    _id: item.product,
+                    "variants.color": item.variant.color,
+                    "variants.size": item.variant.size,
+                    "variants.stock": { $gte: item.quantity }
+                },
+                {
+                    $inc: { "variants.$.stock": -item.quantity }
+                },
+                { new: true }
+            );
 
-        for (let item of order.orderItems) {
+            if (!updatedProduct) {
+                return res.status(400).json({
+                    success: false,
+                    message: `Insufficient stock during retry: ${item.variant.size}, ${item.variant.color}`
+                });
+            }
+
             item.status.itemStatus = "Processing";
         }
 
+        order.payment.status = "Completed";
+        order.payment.razorpay.paymentId = razorpay_payment_id;
+        order.payment.razorpay.signature = razorpay_signature;
+        order.payment.paidAt = new Date();
+        order.orderStatus = "Processing";
+
         await order.save();
 
-        res.json({ success: true, message: "Payment verified successfully" });
+        res.json({ success: true, message: "Retry payment successful" });
     } catch (error) {
-        console.error('Payment verification error:', error);
-        res.status(500).json({ success: false, message: 'Payment verification failed' });
+        console.error('Retry payment verification error:', error);
+        res.status(500).json({ success: false, message: 'Retry failed' });
     }
 };
 

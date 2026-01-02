@@ -63,6 +63,15 @@ const addtoCart = async (req, res, next) => {
             totalQuantity += cart.items[existingItemIndex].quantity;
         }
 
+
+        if(totalQuantity > variant.stock){
+            return res.status(400).json({
+            success: false,
+            message: `Only ${variant.stock} items available in stock (you already have ${cart.items[existingItemIndex]?.quantity || 0} in cart)`
+        });
+
+
+        }
         if (totalQuantity > 5) {
             return res.status(400).json({
                 success: false,
