@@ -17,9 +17,10 @@ import { memoryUpload } from '../middlewares/multer.js';
 import { adminAuth } from "../middlewares/auth.js";
 import offerController from '../controllers/admin/offerController.js';
 
-// Admin Login
-router.get('/login', adminController.loadlogin);
-router.post('/login', adminController.login);
+// ==================== Admin Auth ====================
+router.route('/login')
+  .get(adminController.loadlogin)
+  .post(adminController.login);
 
 // Dashboard
 router.get('/dashboard', adminAuth, adminController.dashboard);
@@ -27,24 +28,29 @@ router.get('/dashboard', adminAuth, adminController.dashboard);
 // Admin Logout
 router.get('/logout', adminAuth, adminController.logOut);
 
-// User Management
+// ==================== User Management ====================
 router.get('/userManage', adminAuth, userManageController.userInfo);
 
-// Block / Unblock User
 router.patch('/blockUser', adminAuth, adminController.blockUser);
 router.patch('/unblockUser', adminAuth, adminController.unblockUser);
 
-// Category Management
-router.get('/category', adminAuth, categoryController.categoryInfo);
-router.post('/category', adminAuth, categoryController.addCategory);
-router.post('/category/toggle/:categoryId', adminAuth, categoryController.toggler);
-router.get('/editcategory/:editId', adminAuth, categoryController.loadeditCategory);
-router.post('/editcategory/:categoryId', adminAuth, categoryController.editCategory);
+// ==================== Category Management ====================
+router.route('/category')
+  .get(adminAuth, categoryController.categoryInfo)
+  .post(adminAuth, categoryController.addCategory);
 
-// Product Management
+router.post('/category/toggle/:categoryId', adminAuth, categoryController.toggler);
+
+router.route('/editcategory/:categoryId') 
+  .get(adminAuth, categoryController.loadeditCategory) 
+  .post(adminAuth, categoryController.editCategory);
+
+// ==================== Product Management ====================
 router.get('/productpage', adminAuth, productController.loadproduct);
-router.get('/addproduct', adminAuth, productController.loadAddCategory);
-router.post('/addproduct', adminAuth, memoryUpload, productController.addProducts);
+
+router.route('/addproduct')
+  .get(adminAuth, productController.loadAddCategory)
+  .post(adminAuth, memoryUpload, productController.addProducts);
 
 // Block / Unblock Product
 router.get('/blockProduct', adminAuth, productController.blockProduct);
@@ -54,31 +60,32 @@ router.get('/unblockProduct', adminAuth, productController.unBlockProduct);
 router.get('/editproduct', adminAuth, productController.loadEditProduct);
 router.post('/editproduct/:id', adminAuth, memoryUpload, productController.editProduct);
 
-// Order Management
+// ==================== Order Management ====================
 router.get("/order-list", adminAuth, adminController.orderList);
 router.get("/order-details", adminAuth, adminController.orderDetails);
 router.get("/update-order-status", adminAuth, adminController.updateOrderStatus);
 
-// Return Requests
+// ==================== Return Requests ====================
 router.get('/manageOrder', adminAuth, returnController.getReturnRequests);
 router.post('/return-order-item/:orderId/:itemId', adminAuth, returnController.initiateReturn);
 router.put("/returns/:orderId/:itemId/approve", adminAuth, returnController.approvedReturn);
 
-// Coupon Management
+// ==================== Coupon Management ====================
 router.get('/coupons', adminAuth, couponController.couponPage);
 router.post("/addcoupons", adminAuth, couponController.addCoupon);
-router.get('/edit-coupon/:couponId', adminAuth, couponController.loadEditCoupon);
-router.put('/edit-coupon/:couponId', adminAuth, couponController.editCoupon);
+router.route('/edit-coupon/:couponId')
+  .get(adminAuth, couponController.loadEditCoupon)
+  .put(adminAuth, couponController.editCoupon);
 router.delete('/removeCoupon', adminAuth, couponController.deleteCoupon);
 router.get('/available-coupons', adminAuth, couponController.availableCoupons);
 
-// Offer Management
+// ==================== Offer Management ====================
 router.get("/addOffer", adminAuth, OfferController.loadOffer);
 router.get("/offers/items", adminAuth, OfferController.getItemByType);
 router.post("/offers/add", adminAuth, OfferController.addOffer);
 router.delete("/offers/delete/:offerId",adminAuth,offerController.deleteoffer);
 
-// Sales & Analytics
+// ==================== Sales & Analytics ====================
 router.get("/sales-report", adminAuth, adminController.getSalesReport);
 router.get('/analytics-dashboard', adminAuth, adminController.getAnalyticsDashboard);
 
