@@ -1,4 +1,3 @@
-// controllers/admin/offerController.js
 
 import Product from "../../models/productSchema.js";
 import Category from "../../models/categorySchema.js";
@@ -117,29 +116,29 @@ const addOffer = async (req, res) => {
 const deleteoffer = async(req,res)=>{
 
     try {
-    const {offerId} = req.params
+    const {offerId} = req.params;
         
 
     if(!offerId){
         res.status(400).json({success:false,message:"offer id not found"});
-        return
+        return;
     }
 
-    const offerExist = await Offer.findById(offerId)
+    const offerExist = await Offer.findById(offerId);
 
     if(!offerExist){
         res.status(404).json({success:false,message:"offer not found"});
-        return
+        return;
     }
 
-    await Offer.findByIdAndDelete(offerId)
+    await Offer.findByIdAndDelete(offerId);
 
     res.status(200).json({success:true,message:"offer deleted successfully"});
-    return
+    return;
     } catch (error) {
-        console.log("error while removing offer",error)
+        console.log("error while removing offer",error);
     }
-}
+};
 
 
 export default {

@@ -3,11 +3,7 @@
 import User from "../../models/userSchema.js";
 import Order from "../../models/orderSchema.js";
 import Product from "../../models/productSchema.js";
-import Coupon from "../../models/couponSchema.js";
 import moment from 'moment';
-import pdfKit from 'pdfkit';
-import fs from 'fs';
-import path from 'path';
 import bcrypt from "bcrypt";
 
 // Admin Login

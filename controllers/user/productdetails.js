@@ -1,7 +1,5 @@
-// controllers/user/productdetails.js
 
 import Product from "../../models/productSchema.js";
-import Category from "../../models/categorySchema.js";
 import User from '../../models/userSchema.js';
 
 const productDetails = async (req, res) => {

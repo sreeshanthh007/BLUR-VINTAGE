@@ -1,18 +1,12 @@
-
 import bcrypt from "bcrypt";
 import nodemailer from "nodemailer";
 import dotenv from "dotenv";
-dotenv.config(); 
+dotenv.config();
 import Users from "../../models/userSchema.js";
 import Wallet from "../../models/walletSchema.js";
-import { generateOTP , EMAIL_SEND_TEMPLATE , generateReferralCode , securePassword } from "../../helpers/Helpers.js";
-import Category from "../../models/categorySchema.js"
-import Product from "../../models/productSchema.js"
-
-
-
-
-
+import { generateOTP, EMAIL_SEND_TEMPLATE, generateReferralCode, securePassword } from "../../helpers/Helpers.js";
+import Category from "../../models/categorySchema.js";
+import Product from "../../models/productSchema.js";
 
 async function handleReferalReward(newUserId, referrerId) {
     try {
@@ -57,7 +51,6 @@ async function handleReferalReward(newUserId, referrerId) {
     }
 }
 
-
 async function sendVerificationEmail(email, otp) {
     try {
         const transport = nodemailer.createTransport({
@@ -71,7 +64,7 @@ async function sendVerificationEmail(email, otp) {
             debug: true,
         });
 
-        const htmlContent = EMAIL_SEND_TEMPLATE(otp)
+        const htmlContent = EMAIL_SEND_TEMPLATE(otp);
 
         const info = await transport.sendMail({
             from: `"BLUR VINTAGE ⭐" <${process.env.NODE_MAILER_EMAIL}>`,
@@ -89,7 +82,6 @@ async function sendVerificationEmail(email, otp) {
         return false;
     }
 }
-
 
 const signUp = async (req, res) => {
     try {
@@ -148,9 +140,6 @@ const signUp = async (req, res) => {
     }
 };
 
-
-
-// Verify OTP
 const verifyOTP = async (req, res) => {
     try {
         const ReceivedOTP = Object.values(req.body).join('');
@@ -195,7 +184,6 @@ const verifyOTP = async (req, res) => {
     }
 };
 
-// Resend OTP
 const resent_otp = async (req, res) => {
     try {
         const { email } = req.session.userData;
@@ -220,7 +208,6 @@ const resent_otp = async (req, res) => {
     }
 };
 
-// Login
 const login = async (req, res) => {
     try {
         const { email, password } = req.body;
@@ -246,7 +233,6 @@ const login = async (req, res) => {
     }
 };
 
-// Logout
 const logOut = async (req, res) => {
     try {
         req.session.destroy((err) => {
@@ -263,7 +249,6 @@ const logOut = async (req, res) => {
     }
 };
 
-// Page loaders
 const loadLogin = async (req, res) => {
     try {
         const message = req.query.message;
@@ -277,18 +262,16 @@ const loadRegister = async (req, res) => {
     try {
         return res.render('user/register');
     } catch (err) {
-        console.log("register not found");
+        console.log("register not found", err);
         res.status(500).redirect("/user/notFound");
     }
 };
 
-
-
 const loadHome = async (req, res) => {
     try {
         const userId = req.session.user || req.session?.passport?.user;
-        const referalSuccess = req.session.referalSuccess
-        delete req.session.referalSuccess
+        const referalSuccess = req.session.referalSuccess;
+        delete req.session.referalSuccess;
         let userData = null;
 
         if (userId) {
@@ -303,191 +286,180 @@ const loadHome = async (req, res) => {
 
         return res.render("user/userhome", {
             isNewUser: !userId,
-            referalSuccess:referalSuccess
-
-
+            referalSuccess: referalSuccess
         });
 
     } catch (err) {
         console.log("page not found", err.message);
-        res.status(500).send("server error")
+        res.status(500).send("server error");
     }
-}
+};
 
-const loadKids =async (req,res,next)=>{
-  try {
-    const user = req.session.user || req.session?.passport?.user;
-    const sortOption = req.query.sort || "default";
-    const productsPerPage = 8;
-    const page = (req.query.page) || 1;
-    const query = req.query.search
-
-    const kidsCategory = await Category.findOne({isListed:true,name:"kids"});
-
-    if(!kidsCategory){
-        return res.render("user/kids",{
-            products:[],
-            currentSort:sortOption,
-            categoryNotListed:true
-        });
-    }
-
-    const baseQuery={
-        isBlocked:false,
-        category:kidsCategory._id
-    };
-
-    if (query) {
-        baseQuery.$or = [
-            { productName: { $regex: query, $options: 'i' } },
-        ];
-    }
-    let sortConfig={};
-    switch(sortOption){
-        case 'price-low-high':
-            sortConfig = {'variants.0.price':1};
-            break;
-        case 'price-high-low':
-            sortConfig={'variants.0.price': -1};
-            break;
-        case 'name-a-z':
-            sortConfig={productName: 1};
-            break;
-        case 'name-z-a':
-            sortConfig={productName: -1};
-            break;
-        case 'new arrivals':
-            sortConfig={createdOn: -1};
-            break;
-        default:
-            sortConfig={createdOn: -1};
-            break;
-    }
-
-    const totalProducts = await Product.countDocuments(baseQuery);
-    const totalPages = Math.ceil(totalProducts/productsPerPage)
-
-    const productData = await Product.find(baseQuery)
-    .lean()
-    .populate('productOffer')
-    .populate({
-        path: 'category',
-        populate: {
-            path: 'categoryOffer'
-        }
-    })
-    .select("productName variants category productOffer")
-    .sort(sortConfig)
-    .skip((page - 1) * productsPerPage)
-    .limit(productsPerPage);
-
-
-    const productsWithOffers = productData.map(product => {
-        const now = new Date();
-        let bestDiscount = 0;
-        let originalPrice = 0;
-        let finalPrice = 0;
-        let offerName = '';
-
-        if (product.variants && product.variants.length > 0) {
-            originalPrice = product.variants[0].price;
-            finalPrice = originalPrice;
-
-            // Check product offer
-            if (product.productOffer && 
-                now >= new Date(product.productOffer.startDate) && 
-                now <= new Date(product.productOffer.expiryDate)) {
-                const productDiscount = product.productOffer.discount;
-                if (productDiscount > bestDiscount) {
-                    bestDiscount = productDiscount;
-                    finalPrice = originalPrice - (originalPrice * (productDiscount / 100));
-                    offerName = product.productOffer.offerName;
-                }
-            }
-
-            // Check category offer
-            if (product.category?.categoryOffer && 
-                now >= new Date(product.category.categoryOffer.startDate) && 
-                now <= new Date(product.category.categoryOffer.expiryDate)) {
-                const categoryDiscount = product.category.categoryOffer.discount;
-                if (categoryDiscount > bestDiscount) {
-                    bestDiscount = categoryDiscount;
-                    finalPrice = originalPrice - (originalPrice * (categoryDiscount / 100));
-                    offerName = product.category.categoryOffer.offerName;
-                }
-            }
-        }
-
-        return {
-            ...product,
-            originalPrice,
-            finalPrice: Math.round(finalPrice),
-            discount: bestDiscount,
-            offerName
-        };
-    });
-    
-    const renderOptions={
-        products: productsWithOffers,
-        currentSort: sortOption,
-        currentPage : page,
-        user,
-        totalPages,
-        search:query,
-        hasNextPage: page < totalPages,
-        hasPrevPage: page > 1,
-        nextPage: page + 1,
-        prevPage: page - 1
-    };
-
-
-if (req.xhr || req.headers['x-requested-with'] === 'XMLHttpRequest') {
-    return res.json({
-        products: productsWithOffers,
-        currentSort: sortOption,
-        currentPage: page,
-        totalPages: totalPages,
-        hasPrevPage: page > 1,
-        hasNextPage: page < totalPages,
-        prevPage: page - 1,
-        nextPage: page + 1
-    });
-}
-
-    if(user){
-        return res.render('user/kids',renderOptions)
-    }else{
-        return res.render("user/kids",renderOptions)
-    }
-
-
-     
-  } catch (error) {
-    next(error)
-  }
-}  
-
-
-const loadWomen = async (req, res,next) => {
+const loadKids = async (req, res, next) => {
     try {
         const user = req.session.user || req.session?.passport?.user;
-        const sortOption = req.query.sort || 'default';
-        const page = (req.query.page) || 1;
+        const sortOption = req.query.sort || "default";
         const productsPerPage = 8;
-        const query = req.query.search
+        const page = req.query.page || 1;
+        const query = req.query.search;
 
-        // Find the "women" category
-        const womenCategory = await Category.findOne({ isListed: true, name: "Women" });
-        if (!womenCategory) {
-            return res.render("user/women", { 
+        const kidsCategory = await Category.findOne({ isListed: true, name: "kids" });
+
+        if (!kidsCategory) {
+            return res.render("user/kids", {
                 products: [],
                 currentSort: sortOption,
-                categoryNotListed:true,
-                
+                categoryNotListed: true
             });
         }
 
-        // Base query
+        const baseQuery = {
+            isBlocked: false,
+            category: kidsCategory._id
+        };
+
+        if (query) {
+            baseQuery.$or = [
+                { productName: { $regex: query, $options: 'i' } },
+            ];
+        }
+
+        let sortConfig = {};
+        switch (sortOption) {
+            case 'price-low-high':
+                sortConfig = { 'variants.0.price': 1 };
+                break;
+            case 'price-high-low':
+                sortConfig = { 'variants.0.price': -1 };
+                break;
+            case 'name-a-z':
+                sortConfig = { productName: 1 };
+                break;
+            case 'name-z-a':
+                sortConfig = { productName: -1 };
+                break;
+            case 'new arrivals':
+                sortConfig = { createdOn: -1 };
+                break;
+            default:
+                sortConfig = { createdOn: -1 };
+                break;
+        }
+
+        const totalProducts = await Product.countDocuments(baseQuery);
+        const totalPages = Math.ceil(totalProducts / productsPerPage);
+
+        const productData = await Product.find(baseQuery)
+            .lean()
+            .populate('productOffer')
+            .populate({
+                path: 'category',
+                populate: {
+                    path: 'categoryOffer'
+                }
+            })
+            .select("productName variants category productOffer")
+            .sort(sortConfig)
+            .skip((page - 1) * productsPerPage)
+            .limit(productsPerPage);
+
+        const productsWithOffers = productData.map(product => {
+            const now = new Date();
+            let bestDiscount = 0;
+            let originalPrice = 0;
+            let finalPrice = 0;
+            let offerName = '';
+
+            if (product.variants && product.variants.length > 0) {
+                originalPrice = product.variants[0].price;
+                finalPrice = originalPrice;
+
+                if (product.productOffer &&
+                    now >= new Date(product.productOffer.startDate) &&
+                    now <= new Date(product.productOffer.expiryDate)) {
+                    const productDiscount = product.productOffer.discount;
+                    if (productDiscount > bestDiscount) {
+                        bestDiscount = productDiscount;
+                        finalPrice = originalPrice - (originalPrice * (productDiscount / 100));
+                        offerName = product.productOffer.offerName;
+                    }
+                }
+
+                if (product.category?.categoryOffer &&
+                    now >= new Date(product.category.categoryOffer.startDate) &&
+                    now <= new Date(product.category.categoryOffer.expiryDate)) {
+                    const categoryDiscount = product.category.categoryOffer.discount;
+                    if (categoryDiscount > bestDiscount) {
+                        bestDiscount = categoryDiscount;
+                        finalPrice = originalPrice - (originalPrice * (categoryDiscount / 100));
+                        offerName = product.category.categoryOffer.offerName;
+                    }
+                }
+            }
+
+            return {
+                ...product,
+                originalPrice,
+                finalPrice: Math.round(finalPrice),
+                discount: bestDiscount,
+                offerName
+            };
+        });
+
+        const renderOptions = {
+            products: productsWithOffers,
+            currentSort: sortOption,
+            currentPage: page,
+            user,
+            totalPages,
+            search: query,
+            hasNextPage: page < totalPages,
+            hasPrevPage: page > 1,
+            nextPage: page + 1,
+            prevPage: page - 1
+        };
+
+        if (req.xhr || req.headers['x-requested-with'] === 'XMLHttpRequest') {
+            return res.json({
+                products: productsWithOffers,
+                currentSort: sortOption,
+                currentPage: page,
+                totalPages: totalPages,
+                hasPrevPage: page > 1,
+                hasNextPage: page < totalPages,
+                prevPage: page - 1,
+                nextPage: page + 1
+            });
+        }
+
+        if (user) {
+            return res.render('user/kids', renderOptions);
+        } else {
+            return res.render("user/kids", renderOptions);
+        }
+
+    } catch (error) {
+        next(error);
+    }
+};
+
+const loadWomen = async (req, res, next) => {
+    try {
+        const user = req.session.user || req.session?.passport?.user;
+        const sortOption = req.query.sort || 'default';
+        const page = req.query.page || 1;
+        const productsPerPage = 8;
+        const query = req.query.search;
+
+        const womenCategory = await Category.findOne({ isListed: true, name: "Women" });
+        if (!womenCategory) {
+            return res.render("user/women", {
+                products: [],
+                currentSort: sortOption,
+                categoryNotListed: true,
+            });
+        }
+
         const baseQuery = {
             isBlocked: false,
             category: womenCategory._id,
@@ -499,7 +471,6 @@ const loadWomen = async (req, res,next) => {
             ];
         }
 
-        // Determine sort configuration
         let sortConfig = {};
         switch (sortOption) {
             case 'price-high-low':
@@ -518,26 +489,25 @@ const loadWomen = async (req, res,next) => {
                 sortConfig = { createdOn: -1 };
                 break;
             default:
-                sortConfig = { createdOn: -1 }; // Default sorting
+                sortConfig = { createdOn: -1 };
         }
 
         const totalProducts = await Product.countDocuments(baseQuery);
-        const totalPages = Math.ceil(totalProducts/productsPerPage);
+        const totalPages = Math.ceil(totalProducts / productsPerPage);
 
         const productData = await Product.find(baseQuery)
-        .lean()
-        .populate('productOffer')
-        .populate({
-            path: 'category',
-            populate: {
-                path: 'categoryOffer'
-            }
-        })
-        .select("productName variants category productOffer")
-        .sort(sortConfig)
-        .skip((page - 1) * productsPerPage)
-        .limit(productsPerPage);
-
+            .lean()
+            .populate('productOffer')
+            .populate({
+                path: 'category',
+                populate: {
+                    path: 'categoryOffer'
+                }
+            })
+            .select("productName variants category productOffer")
+            .sort(sortConfig)
+            .skip((page - 1) * productsPerPage)
+            .limit(productsPerPage);
 
         const productsWithOffers = productData.map(product => {
             const now = new Date();
@@ -550,9 +520,8 @@ const loadWomen = async (req, res,next) => {
                 originalPrice = product.variants[0].price;
                 finalPrice = originalPrice;
 
-                // Check product offer
-                if (product.productOffer && 
-                    now >= new Date(product.productOffer.startDate) && 
+                if (product.productOffer &&
+                    now >= new Date(product.productOffer.startDate) &&
                     now <= new Date(product.productOffer.expiryDate)) {
                     const productDiscount = product.productOffer.discount;
                     if (productDiscount > bestDiscount) {
@@ -562,9 +531,8 @@ const loadWomen = async (req, res,next) => {
                     }
                 }
 
-                // Check category offer
-                if (product.category?.categoryOffer && 
-                    now >= new Date(product.category.categoryOffer.startDate) && 
+                if (product.category?.categoryOffer &&
+                    now >= new Date(product.category.categoryOffer.startDate) &&
                     now <= new Date(product.category.categoryOffer.expiryDate)) {
                     const categoryDiscount = product.category.categoryOffer.discount;
                     if (categoryDiscount > bestDiscount) {
@@ -584,36 +552,33 @@ const loadWomen = async (req, res,next) => {
             };
         });
 
-        console.log("product with offer",productsWithOffers)
-            
+        console.log("product with offer", productsWithOffers);
 
-        // Render the page with products and current sort option
         const renderOptions = {
             products: productsWithOffers,
             currentSort: sortOption,
             user,
-            currentPage : page,
+            currentPage: page,
             totalPages,
-            search:query || "",
+            search: query || "",
             hasNextPage: page < totalPages,
             hasPrevPage: page > 1,
             nextPage: page + 1,
             prevPage: page - 1
-
         };
-           
-    if (req.xhr || req.headers['x-requested-with'] === 'XMLHttpRequest') {
-    return res.json({
-        products: productsWithOffers,
-        currentSort: sortOption,
-        currentPage: page,
-        totalPages: totalPages,
-        hasPrevPage: page > 1,
-        hasNextPage: page < totalPages,
-        prevPage: page - 1,
-        nextPage: page + 1
-    });
-  }
+
+        if (req.xhr || req.headers['x-requested-with'] === 'XMLHttpRequest') {
+            return res.json({
+                products: productsWithOffers,
+                currentSort: sortOption,
+                currentPage: page,
+                totalPages: totalPages,
+                hasPrevPage: page > 1,
+                hasNextPage: page < totalPages,
+                prevPage: page - 1,
+                nextPage: page + 1
+            });
+        }
 
         if (user) {
             res.render("user/women", renderOptions);
@@ -622,33 +587,32 @@ const loadWomen = async (req, res,next) => {
         }
 
     } catch (error) {
-        next(error)
+        next(error);
     }
 };
 
-
-const loadmen = async (req,res,next)=>{
+const loadmen = async (req, res, next) => {
     try {
         const user = req.session.user || req.session?.passport?.user;
         const sortOption = req.query.sort || "default";
         const page = parseInt(req.query.page) || 1;
-        const productsPerPage = 8; 
+        const productsPerPage = 8;
         const query = req.query.search;
 
-        const menCategory = await Category.findOne({isListed:true, name:"Men"});
+        const menCategory = await Category.findOne({ isListed: true, name: "Men" });
 
-        if(!menCategory){
-            return res.render("user/userlandingpage",{
+        if (!menCategory) {
+            return res.render("user/userlandingpage", {
                 products: [],
                 currentSort: sortOption,
-                search:"",
+                search: "",
                 currentPage: page,
-                totalPages,
-                hasNextPage: page < totalPages,
-                hasPrevPage: page > 1,
+                totalPages: 0,
+                hasNextPage: false,
+                hasPrevPage: false,
                 nextPage: page + 1,
                 prevPage: page - 1,
-            }); 
+            });
         }
 
         const baseQuery = {
@@ -663,12 +627,12 @@ const loadmen = async (req,res,next)=>{
         }
 
         let sortConfig = {};
-        switch(sortOption){
+        switch (sortOption) {
             case 'price-high-low':
-                sortConfig = {'variants.0.price': -1};
+                sortConfig = { 'variants.0.price': -1 };
                 break;
             case 'price-low-high':
-                sortConfig = {"variants.0.price": 1};
+                sortConfig = { "variants.0.price": 1 };
                 break;
             case 'name-a-z':
                 sortConfig = { productName: 1 };
@@ -677,32 +641,29 @@ const loadmen = async (req,res,next)=>{
                 sortConfig = { productName: -1 };
                 break;
             case 'new-arrivals':
-                sortConfig = {createdOn: -1};
+                sortConfig = { createdOn: -1 };
                 break;
             default:
-                sortConfig = {createdOn: -1};
+                sortConfig = { createdOn: -1 };
                 break;
         }
 
-       
         const totalProducts = await Product.countDocuments(baseQuery);
         const totalPages = Math.ceil(totalProducts / productsPerPage);
 
-        
         const productData = await Product.find(baseQuery)
-        .lean()
-        .populate('productOffer')
-        .populate({
-            path: 'category',
-            populate: {
-                path: 'categoryOffer'
-            }
-        })
-        .select("productName variants category productOffer")
-        .sort(sortConfig)
-        .skip((page - 1) * productsPerPage)
-        .limit(productsPerPage);
-
+            .lean()
+            .populate('productOffer')
+            .populate({
+                path: 'category',
+                populate: {
+                    path: 'categoryOffer'
+                }
+            })
+            .select("productName variants category productOffer")
+            .sort(sortConfig)
+            .skip((page - 1) * productsPerPage)
+            .limit(productsPerPage);
 
         const productsWithOffers = productData.map(product => {
             const now = new Date();
@@ -712,13 +673,12 @@ const loadmen = async (req,res,next)=>{
             let offerName = '';
 
             if (product.variants && product.variants.length > 0) {
-               const activeVariant = product.variants.find(variant => variant.quantity > 0) || product.variants[0];
+                const activeVariant = product.variants.find(variant => variant.quantity > 0) || product.variants[0];
                 originalPrice = activeVariant.price;
                 finalPrice = originalPrice;
 
-                // Check product offer
-                if (product.productOffer && 
-                    now >= new Date(product.productOffer.startDate) && 
+                if (product.productOffer &&
+                    now >= new Date(product.productOffer.startDate) &&
                     now <= new Date(product.productOffer.expiryDate)) {
                     const productDiscount = product.productOffer.discount;
                     if (productDiscount > bestDiscount) {
@@ -728,9 +688,8 @@ const loadmen = async (req,res,next)=>{
                     }
                 }
 
-                // Check category offer
-                if (product.category?.categoryOffer && 
-                    now >= new Date(product.category.categoryOffer.startDate) && 
+                if (product.category?.categoryOffer &&
+                    now >= new Date(product.category.categoryOffer.startDate) &&
                     now <= new Date(product.category.categoryOffer.expiryDate)) {
                     const categoryDiscount = product.category.categoryOffer.discount;
                     if (categoryDiscount > bestDiscount) {
@@ -750,14 +709,13 @@ const loadmen = async (req,res,next)=>{
             };
         });
 
- 
         const renderOptions = {
             products: productsWithOffers,
             currentSort: sortOption,
             user,
             currentPage: page,
             totalPages,
-            search:query || "",
+            search: query || "",
             hasNextPage: page < totalPages,
             hasPrevPage: page > 1,
             nextPage: page + 1,
@@ -767,47 +725,42 @@ const loadmen = async (req,res,next)=>{
         if (req.xhr || req.headers['x-requested-with'] === 'XMLHttpRequest') {
             return res.json(renderOptions);
         }
-        
-        if(!user){
-            return res.render('user/userlandingpage', renderOptions)
-        }else{
-            return res.render('user/userlandingpage',renderOptions)
+
+        if (!user) {
+            return res.render('user/userlandingpage', renderOptions);
+        } else {
+            return res.render('user/userlandingpage', renderOptions);
         }
 
     } catch (error) {
-       console.log("error while loading men",error)
+        console.log("error while loading men", error);
+        next(error);
     }
-}
-
-
+};
 
 const loadShop = async (req, res) => {
     try {
-        const page = parseInt(req.query.page) || 1; 
-        const user = req.session?.user || req.session?.passport?.user
-        const productsPerPage = 8; 
-        const sortOption = req.query.sort || "default"
-        const query = req.query.search
-        const categoryFilter = req.query.category
+        const page = parseInt(req.query.page) || 1;
+        const user = req.session?.user || req.session?.passport?.user;
+        const productsPerPage = 8;
+        const sortOption = req.query.sort || "default";
+        const query = req.query.search;
+        const categoryFilter = req.query.category;
 
         const listedCategories = await Category.find({ isListed: true });
-      
 
-        const baseQuery={
-            isBlocked:false,
-            category:{$in:listedCategories}
-        }
+        const baseQuery = {
+            isBlocked: false,
+            category: { $in: listedCategories.map(cat => cat._id) }
+        };
 
-        if(categoryFilter){
-          
+        if (categoryFilter) {
             const categoryDoc = await Category.findOne({
-                isListed:true,
-                name: { 
-                    $regex: new RegExp(`^${categoryFilter}$`, 'i') 
-                }
-            })
-            if(categoryDoc){
-                baseQuery.category = categoryDoc._id
+                isListed: true,
+                name: { $regex: new RegExp(`^${categoryFilter}$`, 'i') }
+            });
+            if (categoryDoc) {
+                baseQuery.category = categoryDoc._id;
             } else {
                 console.log('No category found for:', categoryFilter);
             }
@@ -816,17 +769,16 @@ const loadShop = async (req, res) => {
         if (query) {
             baseQuery.$or = [
                 { productName: { $regex: query, $options: 'i' } },
-               
             ];
         }
-        let sortConfig={};
 
-        switch(sortOption) {
+        let sortConfig = {};
+        switch (sortOption) {
             case 'price-high-low':
-                sortConfig = {'variants.0.price': -1};
+                sortConfig = { 'variants.0.price': -1 };
                 break;
             case 'price-low-high':
-                sortConfig = {'variants.0.price': 1};
+                sortConfig = { 'variants.0.price': 1 };
                 break;
             case 'name-a-z':
                 sortConfig = { productName: 1 };
@@ -835,104 +787,97 @@ const loadShop = async (req, res) => {
                 sortConfig = { productName: -1 };
                 break;
             case 'new-arrivals':
-                sortConfig = {createdOn: -1};
+                sortConfig = { createdOn: -1 };
                 break;
             default:
-                sortConfig = {createdOn: -1};
+                sortConfig = { createdOn: -1 };
                 break;
         }
-        
-        
+
         const totalProducts = await Product.countDocuments(baseQuery);
         const totalPages = Math.ceil(totalProducts / productsPerPage);
-        
-       
+
         const products = await Product.find(baseQuery)
-        .lean()
-        .populate('productOffer')
-        .populate({
-            path: 'category',
-            populate: {
-                path: 'categoryOffer'
-            }
-        })
-        .select("productName variants category productOffer")
-        .sort(sortConfig)
-        .skip((page - 1) * productsPerPage)
-        .limit(productsPerPage);
+            .lean()
+            .populate('productOffer')
+            .populate({
+                path: 'category',
+                populate: {
+                    path: 'categoryOffer'
+                }
+            })
+            .select("productName variants category productOffer")
+            .sort(sortConfig)
+            .skip((page - 1) * productsPerPage)
+            .limit(productsPerPage);
 
-    // Calculate best offer for each product
-    const productsWithOffers = products.map(product => {
-        const now = new Date();
-        let bestDiscount = 0;
-        let originalPrice = 0;
-        let finalPrice = 0;
-        let offerName = '';
+        const productsWithOffers = products.map(product => {
+            const now = new Date();
+            let bestDiscount = 0;
+            let originalPrice = 0;
+            let finalPrice = 0;
+            let offerName = '';
 
+            if (product.variants && product.variants.length > 0) {
+                originalPrice = product.variants[0].price;
+                finalPrice = originalPrice;
 
-        // Get the first variant's price as base price
-        if (product.variants && product.variants.length > 0) {
-            originalPrice = product.variants[0].price;
-            finalPrice = originalPrice;
+                if (product.productOffer &&
+                    now >= new Date(product.productOffer.startDate) &&
+                    now <= new Date(product.productOffer.expiryDate)) {
+                    const productDiscount = product.productOffer.discount;
+                    if (productDiscount > bestDiscount) {
+                        bestDiscount = productDiscount;
+                        finalPrice = originalPrice - (originalPrice * (productDiscount / 100));
+                        offerName = product.productOffer.offerName;
+                    }
+                }
 
-            // Check product offer
-            if (product.productOffer && 
-                now >= new Date(product.productOffer.startDate) && 
-                now <= new Date(product.productOffer.expiryDate)) {
-                const productDiscount = product.productOffer.discount;
-                if (productDiscount > bestDiscount) {
-                    bestDiscount = productDiscount;
-                    finalPrice = originalPrice - (originalPrice * (productDiscount / 100));
-                    offerName = product.productOffer.offerName;
+                if (product.category?.categoryOffer &&
+                    now >= new Date(product.category.categoryOffer.startDate) &&
+                    now <= new Date(product.category.categoryOffer.expiryDate)) {
+                    const categoryDiscount = product.category.categoryOffer.discount;
+                    if (categoryDiscount > bestDiscount) {
+                        bestDiscount = categoryDiscount;
+                        finalPrice = originalPrice - (originalPrice * (categoryDiscount / 100));
+                        offerName = product.category.categoryOffer.offerName;
+                    }
                 }
             }
 
-            // Check category offer
-            if (product.category?.categoryOffer && 
-                now >= new Date(product.category.categoryOffer.startDate) && 
-                now <= new Date(product.category.categoryOffer.expiryDate)) {
-                const categoryDiscount = product.category.categoryOffer.discount;
-                if (categoryDiscount > bestDiscount) {
-                    bestDiscount = categoryDiscount;
-                    finalPrice = originalPrice - (originalPrice * (categoryDiscount / 100));
-                    offerName = product.category.categoryOffer.offerName;
-                }
-            }
+            return {
+                ...product,
+                originalPrice,
+                finalPrice: Math.round(finalPrice),
+                discount: bestDiscount,
+                offerName
+            };
+        });
+
+        if (req.xhr || req.headers['x-requested-with'] === 'XMLHttpRequest') {
+            return res.json({
+                products: productsWithOffers,
+                currentSort: sortOption,
+                currentPage: page,
+                totalPages,
+                hasPrevPage: page > 1,
+                hasNextPage: page < totalPages,
+                prevPage: page - 1,
+                nextPage: page + 1,
+                currentCategory: categoryFilter
+            });
         }
 
-        return {
-            ...product,
-            originalPrice,
-            finalPrice: Math.round(finalPrice),
-            discount: bestDiscount,
-            offerName
-        };
-    });
-           
-
-    if (req.xhr || req.headers['x-requested-with'] === 'XMLHttpRequest') {
-        return res.json({
-            products: productsWithOffers,
-            currentSort: sortOption,
-            currentPage: page,
-            totalPages,
-            hasPrevPage: page > 1,
-            hasNextPage: page < totalPages,
-            prevPage: page - 1,
-            nextPage: page + 1,
-            currentCategory: categoryFilter
-        });
-    }
-        const categories  = await Category.find({isListed:true})
+        const categories = await Category.find({ isListed: true });
         return res.render('user/shop', {
-            products:productsWithOffers,
+            products: productsWithOffers,
             currentPage: page,
             user,
-            currentSort:sortOption,
+            currentSort: sortOption,
             totalPages,
-            search:query,
+            search: query,
             categories,
-            currentCategory:categoryFilter,
+            currentCategory: categoryFilter,
             hasNextPage: page < totalPages,
             hasPrevPage: page > 1
         });
@@ -942,27 +887,23 @@ const loadShop = async (req, res) => {
     }
 };
 
-
-
 const otpStore = {};
-const otpForPassword = async (req, res,next) => {
+const otpForPassword = async (req, res, next) => {
     const { email } = req.body;
-
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     if (!emailRegex.test(email)) {
         return res.status(400).json({ message: "Invalid email format" });
-    
     }
 
     if (!email) {
         return res.status(400).json({ message: "Email is required" });
     }
 
-    const user = await Users.findOne({email});
+    const user = await Users.findOne({ email });
 
-     if (!user) {
+    if (!user) {
         return res.status(404).json({ message: "Email not registered" });
     }
 
@@ -970,8 +911,8 @@ const otpForPassword = async (req, res,next) => {
 
     otpStore[email] = { otp, expiresAt: Date.now() + 5 * 60 * 1000 };
 
-    console.log("otp store",otpStore);
-    
+    console.log("otp store", otpStore);
+
     try {
         const isMailSent = await sendVerificationEmail(email, otp);
         if (!isMailSent) {
@@ -980,101 +921,86 @@ const otpForPassword = async (req, res,next) => {
         return res.status(200).json({ message: "OTP sent successfully" });
     } catch (err) {
         console.error("Error sending OTP:", err);
-        next(err)
+        next(err);
     }
 };
 
-
-const resetPassword = async (req,res,next) => {
+const resetPassword = async (req, res, next) => {
     console.log(req.body);
-        
-    const {newPassword,email} = req.body;
 
-    if(!newPassword || !email){
-        return res.status(400).json({message:"password or email is required"})
+    const { newPassword, email } = req.body;
+
+    if (!newPassword || !email) {
+        return res.status(400).json({ message: "password or email is required" });
     }
-    
-    const hashedPassword = await bcrypt.hash(newPassword,10);
 
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
 
     try {
-        const user = await Users.findOne({email:email});
-        console.log("usesr",user)
-        
-        if(!user){
-            return res.status(400).json({message:"user not found"})
+        const user = await Users.findOne({ email: email });
+        console.log("user", user);
+
+        if (!user) {
+            return res.status(400).json({ message: "user not found" });
         }
         user.password = hashedPassword;
         await user.save();
-        return res.status(200).json({ok:true,message:"password reset successfully"})
-    } catch (error) {   
-        next(error)
-        
+        return res.status(200).json({ ok: true, message: "password reset successfully" });
+    } catch (error) {
+        next(error);
     }
-}
+};
 
-
-
- const updatePassword = async (req, res,next) => {
-        try {
-            const { oldPassword, newPassword } = req.body;
-            const userId = req.session.user || req.session?.passport?.user
-
-            const user = await Users.findById(userId);
-            if (!user) {
-                return res.status(404).json({ message: "User not found" });
-            }
-
-            
-            // Compare with user's current hashed password
-            const isValidPassword = await bcrypt.compare(oldPassword, user.password);
-            
-            if (!isValidPassword) {
-                return res.status(400).json({ message: "Current password is incorrect" });
-            }
-
-            const salt = await bcrypt.genSalt(10);
-            const hashedPassword = await bcrypt.hash(newPassword, salt);
-
-            user.password = hashedPassword;
-            await user.save();
-
-            req.session.destroy(err => {
-                if (err) {
-                    console.error("Error destroying session:", err);
-                    return res.status(500).json({ message: "Internal server error" });
-                }
-
-                
-                return res.status(200).json({ message: "Password updated successfully", redirectUrl: "/user/login" });
-            });
-
-        } catch (error) {
-            console.log("Error in update password:", error.message);
-            next(error)
-        }
-    }
-
-
-
-
-
-
-    const userSearch = async (req, res, next) => {    
+const updatePassword = async (req, res, next) => {
     try {
-        const query = req.query.q || req.query.search; // Support both q and search parameters
+        const { oldPassword, newPassword } = req.body;
+        const userId = req.session.user || req.session?.passport?.user;
+
+        const user = await Users.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        const isValidPassword = await bcrypt.compare(oldPassword, user.password);
+
+        if (!isValidPassword) {
+            return res.status(400).json({ message: "Current password is incorrect" });
+        }
+
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+        user.password = hashedPassword;
+        await user.save();
+
+        req.session.destroy(err => {
+            if (err) {
+                console.error("Error destroying session:", err);
+                return res.status(500).json({ message: "Internal server error" });
+            }
+
+            return res.status(200).json({ message: "Password updated successfully", redirectUrl: "/user/login" });
+        });
+
+    } catch (error) {
+        console.log("Error in update password:", error.message);
+        next(error);
+    }
+};
+
+const userSearch = async (req, res, next) => {
+    try {
+        const query = req.query.q || req.query.search;
         const sort = req.query.sort || 'default';
         const isSuggestion = req.query.suggest === 'true';
         const category = req.query.category || req.query.page_context;
         const page = parseInt(req.query.page) || 1;
         const productsPerPage = 8;
 
-        // Create base search criteria
         const searchCriteria = {
             isBlocked: false,
         };
 
-        // Add search query criteria if present
         if (query) {
             searchCriteria.$or = [
                 { productName: { $regex: query, $options: 'i' } },
@@ -1082,21 +1008,18 @@ const resetPassword = async (req,res,next) => {
             ];
         }
 
-        // Handle category filtering
         if (category) {
-            // Find category document based on the current page context
             const categoryName = category.charAt(0).toUpperCase() + category.slice(1).toLowerCase();
-            const categoryDoc = await Category.findOne({ 
-                isListed: true, 
-                name: categoryName 
+            const categoryDoc = await Category.findOne({
+                isListed: true,
+                name: categoryName
             });
-            
+
             if (categoryDoc) {
                 searchCriteria.category = categoryDoc._id;
             }
         }
 
-        // Create sort options
         let sortOptions = {};
         switch (sort) {
             case 'price-high-low':
@@ -1112,13 +1035,12 @@ const resetPassword = async (req,res,next) => {
                 sortOptions = { productName: -1 };
                 break;
             case 'new-arrivals':
-                sortOptions = { createdAt: -1 };    
+                sortOptions = { createdAt: -1 };
                 break;
             default:
                 sortOptions = { createdAt: -1 };
         }
 
-        // For suggestions (quick search results)
         if (isSuggestion) {
             const suggestions = await Product.find(searchCriteria)
                 .sort(sortOptions)
@@ -1126,13 +1048,12 @@ const resetPassword = async (req,res,next) => {
                 .populate('category')
                 .lean();
 
-            return res.json({ 
+            return res.json({
                 suggestions,
-                category 
+                category
             });
         }
 
-        // For full search with pagination
         const totalProducts = await Product.countDocuments(searchCriteria);
         const totalPages = Math.ceil(totalProducts / productsPerPage);
 
@@ -1161,9 +1082,8 @@ const resetPassword = async (req,res,next) => {
                 originalPrice = product.variants[0].price;
                 finalPrice = originalPrice;
 
-                // Check product offer
-                if (product.productOffer && 
-                    now >= new Date(product.productOffer.startDate) && 
+                if (product.productOffer &&
+                    now >= new Date(product.productOffer.startDate) &&
                     now <= new Date(product.productOffer.expiryDate)) {
                     const productDiscount = product.productOffer.discount;
                     if (productDiscount > bestDiscount) {
@@ -1173,9 +1093,8 @@ const resetPassword = async (req,res,next) => {
                     }
                 }
 
-                // Check category offer
-                if (product.category?.categoryOffer && 
-                    now >= new Date(product.category.categoryOffer.startDate) && 
+                if (product.category?.categoryOffer &&
+                    now >= new Date(product.category.categoryOffer.startDate) &&
                     now <= new Date(product.category.categoryOffer.expiryDate)) {
                     const categoryDiscount = product.category.categoryOffer.discount;
                     if (categoryDiscount > bestDiscount) {
@@ -1196,7 +1115,6 @@ const resetPassword = async (req,res,next) => {
             };
         });
 
-        // Determine template based on category
         let template = 'user/userlandingpage';
         if (category) {
             switch (category.toLowerCase()) {
@@ -1228,32 +1146,27 @@ const resetPassword = async (req,res,next) => {
             prevPage: page - 1
         };
 
-        // Handle AJAX requests
         if (req.xhr || req.headers['x-requested-with'] === 'XMLHttpRequest') {
             return res.json(response);
         }
 
-        // Regular page render
         res.render(template, response);
 
     } catch (error) {
         next(error);
     }
-};  
-
-
-
+};
 
 const verifyResetPasswordOtp = async (req, res) => {
-    console.log("hello",req.body);
-    
-    const { email, otp } = req.body; 
+    console.log("hello", req.body);
+
+    const { email, otp } = req.body;
 
     if (!email || !otp) {
         return res.status(400).json({ message: "Email and OTP are required" });
     }
 
-    const storedOtpDetails = otpStore[email]; 
+    const storedOtpDetails = otpStore[email];
 
     if (!storedOtpDetails) {
         return res.status(400).json({ message: "Expired or invalid OTP" });
@@ -1261,58 +1174,50 @@ const verifyResetPasswordOtp = async (req, res) => {
 
     const { otp: storedOtp, expiresAt } = storedOtpDetails;
 
-   
     if (storedOtp !== parseInt(otp)) {
         return res.status(400).json({ message: "OTP does not match" });
     }
 
-   
     if (expiresAt < Date.now()) {
         delete otpStore[email];
         return res.status(400).json({ message: "OTP has expired" });
     }
 
-    
-    delete otpStore[email]; // Cleanup after successful verification
-    return res.status(200).json({ok:true, message: "OTP verified successfully" });
+    delete otpStore[email];
+    return res.status(200).json({ ok: true, message: "OTP verified successfully" });
 };
-
-
 
 const otp_verification = (req, res) => {
     return res.render('user/otp-verification');
 };
 
-    const checkYourGmail = (req,res)=>{
-        return res.render("user/checkYourGmail")
-    }
+const checkYourGmail = (req, res) => {
+    return res.render("user/checkYourGmail");
+};
 
-   const emailverification = (req,res)=>{
-    return res.render('user/resetPassword')
-   }
-   
-     const loadAboutUs = (req,res)=>{
-    return res.render('user/Aboutuspage')
-   }
+const emailverification = (req, res) => {
+    return res.render('user/resetPassword');
+};
 
-   const managePassword = async(req,res)=>{
-    return res.render('user/managePassword')
-}
+const loadAboutUs = (req, res) => {
+    return res.render('user/Aboutuspage');
+};
 
+const managePassword = async (req, res) => {
+    return res.render('user/managePassword');
+};
 
+const thankYou = async (req, res) => {
+    return res.render("user/orderConfirmpage");
+};
 
+const orderDetails = async (req, res) => {
+    return res.render("user/orderDetails");
+};
 
-const thankYou = async(req,res)=>{
-    return res.render("user/orderConfirmpage")
-}
-
-const orderDetails = async(req,res)=>{
-    return res.render("user/orderDetails")
-}
-
- const setNewPassword = (req,res)=>{
-    return res.render("user/resetForgotPassword")
-   }
+const setNewPassword = (req, res) => {
+    return res.render("user/resetForgotPassword");
+};
 
 export default {
     loadRegister,

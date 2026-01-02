@@ -466,7 +466,7 @@ const verifyPaymentFailure = async (req, res) => {
 
         const finalAmount = subtotal - couponDiscount;
 
-        const order = await Order.create({
+         await Order.create({
             userId,
             orderItems,
             shippingAddress: address,
