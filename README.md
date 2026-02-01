@@ -38,3 +38,13 @@ The platform provides a smooth shopping experience with server-side rendered pag
 ---
 
 ## 📁 Project Structure
+blur-vintage/
+│
+├── controllers/ # Route handling logic
+├── models/ # MongoDB schemas
+├── routes/ # Express route definitions
+├── views/ # EJS templates
+├── public/ # Static assets (CSS, images, JS)
+├── config/ # Database & app configuration
+├── app.js # Application entry point
+└── package.json
